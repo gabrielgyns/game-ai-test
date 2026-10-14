@@ -45,11 +45,62 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 
 ## Próximos
 
-Itens técnicos (desempenho, qualidade gráfica, memória) ficam no [BACKLOG](BACKLOG.md).
+Itens técnicos (desempenho, pathfinding, qualidade gráfica, memória) ficam no [BACKLOG](BACKLOG.md).
 
-1. **Lock-on.** Travar a câmera num alvo (Zelda) como alternativa ao modo livre.
-2. **Mais quests.** Objetivos de coleta e exploração e quests repetíveis diárias.
-3. **Save na nuvem** (quando houver servidor); os slots locais já existem.
-4. **Áudio com assets.** Trocar a síntese por samples e trilha composta quando houver arte sonora.
-5. **Mais dungeons.** Novos temas (mina, templo do deserto), salas especiais (armadilhas, desafios) e modificadores de dificuldade.
-6. **Multiplayer.** Servidor rodando o mesmo domínio; cliente só renderiza.
+O problema que puxa tudo abaixo: **no nível 20 o vale acaba.** O inimigo mais forte é nível 9, o chefe
+mais forte é 12 e só a cripta acompanha o herói. A ordem dos marcos ataca isso primeiro.
+
+### Fase 1: o que fazer depois do nível 12
+
+1. **Baú no santuário.** Um baú compartilhado entre os heróis do mesmo slot (ou do save), com abas, para
+   guardar conjuntos, peças de troca e materiais. Pequeno e sentido na hora.
+2. **Dificuldade do mundo** (como no Minecraft Dungeons). Níveis Aventureiro, Apocalipse e acima,
+   destravados ao vencer os três chefes. Inimigos, chefes, níveis e loot sobem juntos, e o vale ganha
+   uma segunda volta. Base para o fim de jogo de cada zona nova.
+3. **Elites com modificadores.** Inimigos raros com nome dourado e um ou dois modificadores (Veloz,
+   Vampírico, Gélido, Explosivo, Escudeiro), reaproveitando status e afixos. Mais loot e XP.
+4. **Ferreiro reforja.** Pagar ouro para trocar um afixo, subir a raridade ou melhorar uma peça de
+   conjunto. Dá função ao Ferreiro e um destino para o ouro e o loot repetido.
+
+### Fase 2: um mundo maior, em zonas (estilo Ragnarok)
+
+5. **Sistema de zonas.** O mundo vira vários mapas ligados por saídas na borda; só a zona atual fica
+   carregada. Cada zona tem terreno, biomas, faixa de nível, população, chefe com conjunto, quests e
+   a entrada de uma dungeon. O save guarda a zona. O vale atual vira a primeira zona (níveis 1 a 12).
+   - *Por que zonas e não um mundo contínuo:* cabe no desempenho (cenário e grama de uma zona só), cada
+     zona é desenhada com cuidado e dá ritmo de progressão. O caminho já existe: a cripta vive numa
+     região separada do mesmo `World` e o herói é levado para lá e de volta.
+6. **Zonas novas**, cada uma com cara própria, uma dungeon e um chefe com conjunto:
+   - Floresta Ancestral (níveis 12 a 20): árvores gigantes, ruínas élficas, lobos e entes.
+   - Picos Gelados (20 a 28): neve, gelo escorregadio, yetis, nevasca.
+   - Terras Vulcânicas (28 a 36): lava, cinzas, demônios do fogo.
+7. **Viagem rápida.** Pedras de teleporte por zona, ativadas ao tocar e usadas pelo mapa grande. Só
+   faz sentido com várias zonas e dungeons, então vem depois delas.
+8. **Mundo vivo.** Eventos no mapa (acampamento goblin que aparece, chefe errante à noite, baú
+   amaldiçoado) e clima por bioma (chuva, névoa, tempestade de areia, nevasca).
+9. **Mais quests.** Coleta, exploração e escolta, uma linha de história por zona e quests repetíveis
+   diárias.
+
+### Fase 3: dungeons maiores e mais elaboradas
+
+10. **Dungeon 2.0 (a cripta refeita).** Base para todas as próximas:
+    - Planta com mais forma: salas em L, em cruz, redondas, com desníveis e rampas; ramos laterais com
+      tesouro; portas trancadas e chaves; salas secretas.
+    - Andares: 2 ou 3 níveis descendo até o chefe, com escada entre eles.
+    - Salas com evento: emboscada, ondas, armadilhas (espinhos, lâminas, chão que cai), santuário com
+      bênção, minichefe.
+    - Visual no nível do cenário novo: paredes, arcos e colunas esculpidos em 1/12 m, adereços (caixões,
+      barris, estandartes, teias, ossadas, correntes), luz colorida, névoa baixa e partículas.
+    - Inimigos que contornam paredes (depende do pathfinding do BACKLOG).
+11. **Temas de dungeon**, um por zona, cada um com inimigos, armadilhas, chefe e conjunto próprios: Mina
+    Abandonada, Templo do Deserto, Covil da Rainha, Santuário Élfico, Caverna de Gelo, Forja Vulcânica.
+12. **Dungeons de fim de jogo.** Modificadores sorteados (escuridão, inimigos explosivos, sem cura),
+    níveis de dificuldade acima do mundo e chaves que caem como loot (como mapas no Path of Exile), com
+    recordes locais de tempo.
+
+### Depois
+
+13. **Lock-on.** Travar a câmera num alvo (Zelda) como alternativa ao modo livre.
+14. **Áudio com assets.** Trocar a síntese por samples e trilha composta quando houver arte sonora.
+15. **Save na nuvem** (quando houver servidor); os slots locais já existem.
+16. **Multiplayer.** Servidor rodando o mesmo domínio; cliente só renderiza.

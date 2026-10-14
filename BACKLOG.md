@@ -48,3 +48,21 @@ valem a pena.
    Soltar os dados de montagem (VoxelBuilder) depois que viram geometria, compactar as listas de
    posição da grama em `Float32Array`, conferir geometrias duplicadas (`renderer.info.memory`).
    *Pronto quando:* a memória JS cair para menos de 200 MB na mesma cena.
+
+## Jogabilidade (técnico)
+
+6. [ ] **Pathfinding na cripta.**
+   Hoje os inimigos andam em linha reta até o herói e deslizam nas paredes, e podem ficar presos numa
+   quina. Proposta: A* na grade da planta (`dungeonLayout`), com o caminho recalculado a cada ~0,5 s ou
+   quando o herói muda de célula, e linha reta quando há visão direta. Pré-requisito da Dungeon 2.0.
+   *Pronto quando:* um teste de domínio mostrar um esqueleto contornando um pilar e um corredor em L até
+   alcançar o herói, sem custo perceptível com 30 inimigos acordados.
+
+## Não priorizados
+
+Ideias registradas para não se perderem. O dono disse que não são prioridade agora.
+
+- **Acessibilidade.** Modo para daltônicos (as cores de nível usam verde contra vermelho) e tamanho de
+  fonte ajustável.
+- **Controle (gamepad).** Mover, mirar e habilidades pela Gamepad API.
+
