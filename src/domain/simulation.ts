@@ -1,4 +1,5 @@
 import type { GameEvent } from "./events";
+import { abilitySystem } from "./systems/abilities";
 import { aiSystem } from "./systems/ai";
 import { combatSystem } from "./systems/combat";
 import { movementSystem } from "./systems/movement";
@@ -11,6 +12,7 @@ export function stepWorld(world: World, dt: number): GameEvent[] {
   world.time += dt;
   respawnSystem(world, dt);
   aiSystem(world, dt);
+  abilitySystem(world, dt);
   movementSystem(world, dt);
   combatSystem(world, dt);
   pickupSystem(world, dt);

@@ -12,6 +12,9 @@ import { Input } from "./game/input";
 import { PauseMenu } from "./game/menu";
 import { InventoryUI } from "./game/inventoryUI";
 import { DropViews } from "./game/dropViews";
+import { SkillBar } from "./game/skillBar";
+import { SKILL_BAR, SKILLS } from "./domain/skills";
+import { directionFromYaw } from "./domain/math";
 import { useFirstPotion } from "./domain/inventory";
 import { createTerrainMesh } from "./game/terrainMesh";
 
@@ -58,6 +61,7 @@ const floats = new FloatingTexts(scene);
 const menu = new PauseMenu();
 const inventoryUI = new InventoryUI(world, player);
 const dropViews = new DropViews(scene);
+const skillBar = new SkillBar();
 let started = false;
 let paused = false;
 
@@ -189,6 +193,25 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         if (item) hud.pushLog(`Equipado: ${item.name}`, `loot-${item.rarity}`);
         break;
       }
+      case "skill": {
+        const def = SKILLS[ev.skill];
+        if (ev.skill === "whirlwind") {
+          views.get(ev.entity)?.triggerSpin();
+          hud.pushLog(ev.hits > 0 ? `${def.name} acertou ${ev.hits} inimigo${ev.hits > 1 ? "s" : ""}!` : `${def.name} não acertou ninguém.`, ev.hits > 0 ? "dmg-out" : "gain");
+        } else if (ev.skill === "warcry") {
+          floats.spawn(player.transform.position, "GRITO DE GUERRA!", "#ff9f43", 1.1);
+          hud.pushLog("+50% de dano por 8 s!", "level");
+        } else if (ev.skill === "charge") {
+          views.get(ev.entity)?.triggerSwing();
+        }
+        break;
+      }
+      case "dodge":
+        if (ev.entity === player.id) floats.spawn(player.transform.position, "Esquivou!", "#d0f0ff", 0.8);
+        break;
+      case "buffEnd":
+        hud.pushLog("Grito de Guerra acabou.", "dmg-out");
+        break;
     }
   }
 }
@@ -205,7 +228,7 @@ function frame(): void {
   const frameDt = Math.min(timer.getDelta(), 0.1);
 
   // Input → intenções no domínio.
-  const { lookX, lookY, zoom, attack, inventory, potion } = input.flush();
+  const { lookX, lookY, zoom, attack, inventory, potion, roll, skill } = input.flush();
   if (inventory && started && !menu.isOpen) {
     if (inventoryUI.isOpen) closeInventory();
     else openInventory();
@@ -227,6 +250,19 @@ function frame(): void {
     const backpedaling = axes.z > 0;
     player.movement.speed = (input.running ? 10.5 : 7) * (backpedaling ? 0.65 : 1);
     if (attack) player.combat.wantsAttack = true;
+    const ab = player.abilities!;
+    // Esquiva vai na direção do movimento (ou para a frente se parado); investida segue a câmera.
+    const moving = player.movement.intent.x !== 0 || player.movement.intent.z !== 0;
+    ab.aimDirection = moving && roll ? { ...player.movement.intent } : directionFromYaw(cam.facingYaw);
+    if (roll) ab.wantsRoll = true;
+    if (skill !== null) {
+      const id = SKILL_BAR[skill];
+      if (id) {
+        const state = ab.skills.find((s) => s.id === id);
+        if (state && state.cooldownLeft > 0) hud.pushLog(`${SKILLS[id].name} em recarga (${Math.ceil(state.cooldownLeft)}s)`, "dmg-out");
+        else ab.queuedSkill = id;
+      }
+    }
   } else {
     player.movement.intent = { x: 0, z: 0 };
   }
@@ -248,6 +284,7 @@ function frame(): void {
   dropViews.update(world, world.time);
   floats.update(frameDt);
   hud.update(player, target);
+  skillBar.update(player);
   renderer.render(scene, cam.camera);
 }
 
@@ -262,6 +299,9 @@ if (import.meta.env.DEV) {
       started = true;
       paused = true;
       menu.open();
+    },
+    setPaused: (v: boolean) => {
+      paused = v;
     },
   };
 }

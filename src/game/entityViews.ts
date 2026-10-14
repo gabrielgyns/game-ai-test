@@ -1,12 +1,13 @@
 import * as THREE from "three";
 import { isAlive, type Entity, type EntityId } from "../domain/components";
 import type { World } from "../domain/world";
-import { createModel, type CharacterModel } from "./models";
+import { createModel, equipmentSignature, type CharacterModel } from "./models";
 import { clamp } from "../domain/math";
 
 /** Liga uma entidade do domínio a um modelo na cena, com animação procedural. */
 class EntityView {
-  readonly model: CharacterModel;
+  model: CharacterModel;
+  private modelSignature: string;
   readonly healthBar: THREE.Group;
   private readonly healthFill: THREE.Mesh;
   private readonly targetRing: THREE.Mesh;
@@ -14,9 +15,14 @@ class EntityView {
   private walkPhase = 0;
   private deathTime = 0;
   private visualY: number | null = null;
+  private spinTime = Infinity;
+  private readonly scene: THREE.Scene;
 
   constructor(readonly entity: Entity, scene: THREE.Scene) {
-    this.model = createModel(entity.archetype);
+    this.scene = scene;
+    this.modelSignature = equipmentSignature(entity.equipment);
+    this.model = createModel(entity.archetype, entity.equipment);
+    this.model.root.rotation.order = "YXZ"; // yaw primeiro, depois a cambalhota em torno do próprio eixo
     scene.add(this.model.root);
 
     this.healthBar = new THREE.Group();
@@ -44,8 +50,25 @@ class EntityView {
     this.swingTime = 0;
   }
 
+  /** Golpe Giratório: o modelo inteiro gira 360°. */
+  triggerSpin(): void {
+    this.spinTime = 0;
+  }
+
+  /** Troca o modelo quando o equipamento visível muda. */
+  private syncEquipment(): void {
+    const sig = equipmentSignature(this.entity.equipment);
+    if (sig === this.modelSignature) return;
+    this.modelSignature = sig;
+    this.scene.remove(this.model.root);
+    this.model = createModel(this.entity.archetype, this.entity.equipment);
+    this.model.root.rotation.order = "YXZ";
+    this.scene.add(this.model.root);
+  }
+
   update(dt: number, camera: THREE.Camera, isTarget: boolean, time: number): void {
     const e = this.entity;
+    this.syncEquipment();
     const root = this.model.root;
     const alive = isAlive(e);
     const p = e.transform.position;
@@ -69,6 +92,33 @@ class EntityView {
     root.visible = true;
     root.scale.setScalar(1);
 
+    // Esquiva: cambalhota para a frente. Investida: inclinação para a frente.
+    const dash = e.abilities?.dash;
+    root.rotation.x = 0;
+    if (dash) {
+      const progress = 1 - dash.timeLeft / dash.duration;
+      if (dash.kind === "roll") {
+        // Cambalhota em torno do centro do corpo (o pivô do modelo fica nos pés).
+        const theta = -progress * Math.PI * 2;
+        const c = this.model.height / 2;
+        root.rotation.x = theta;
+        // Compensa o pivô: o centro (0, c, 0) girado por theta vai para (0, c·cos, c·sin) no espaço local.
+        const w = -c * Math.sin(theta);
+        root.position.y += c - c * Math.cos(theta) + Math.sin(progress * Math.PI) * 0.35;
+        root.position.x += w * Math.sin(root.rotation.y);
+        root.position.z += w * Math.cos(root.rotation.y);
+      } else {
+        root.rotation.x = -0.35;
+      }
+    }
+    // Golpe Giratório.
+    this.spinTime += dt;
+    const spinning = this.spinTime < 0.45;
+    const spin = spinning ? (this.spinTime / 0.45) * Math.PI * 2 : 0;
+    root.rotation.y += spin;
+    if (this.model.weaponArm && spinning) this.model.weaponArm.rotation.z = -Math.PI / 2;
+    else if (this.model.weaponArm) this.model.weaponArm.rotation.z = 0;
+
     // Caminhada: balanço vertical e leve inclinação enquanto se move.
     const moving = e.movement.intent.x !== 0 || e.movement.intent.z !== 0;
     if (moving) {
@@ -86,8 +136,8 @@ class EntityView {
       this.swingTime += dt;
       const d = 0.3;
       const k = this.swingTime < d ? Math.sin((this.swingTime / d) * Math.PI) : 0;
-      this.model.weaponArm.rotation.x = k * 1.9;
-      this.model.weaponArm.rotation.y = k * 0.4;
+      this.model.weaponArm.rotation.x = k * 2.4;
+      this.model.weaponArm.rotation.y = k * 0.3;
     } else if (this.swingTime < 0.3) {
       // Gosma "pula" para atacar.
       this.swingTime += dt;

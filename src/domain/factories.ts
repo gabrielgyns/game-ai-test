@@ -3,6 +3,7 @@ import { vec3, type Vec3 } from "./math";
 import { xpForLevel } from "./progression";
 import { createEquipment as createEquipmentSlots, createInventory, recomputeStats } from "./inventory";
 import { createPotion, type Item } from "./items";
+import { createAbilities } from "./skills";
 
 /** Espada inicial do herói: fixa, sem id de loot. */
 function starterSword(): Item {
@@ -23,6 +24,7 @@ export function createPlayer(id: EntityId, position: Vec3): Entity {
     wallet: { gold: 0 },
     inventory: createInventory(20),
     equipment: createEquipmentSlots(),
+    abilities: createAbilities(),
   };
   player.equipment!.weapon = starterSword();
   player.inventory!.items[0] = createPotion();

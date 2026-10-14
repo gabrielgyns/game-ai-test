@@ -1,5 +1,6 @@
 import type { EntityId } from "./components";
 import type { EquipSlot } from "./items";
+import type { SkillId } from "./skills";
 
 export type GameEvent =
   | { type: "damage"; source: EntityId; target: EntityId; amount: number }
@@ -15,4 +16,8 @@ export type GameEvent =
   | { type: "equip"; entity: EntityId; itemId: number; slot: EquipSlot }
   | { type: "unequip"; entity: EntityId; itemId: number; slot: EquipSlot }
   | { type: "consume"; entity: EntityId; itemId: number }
-  | { type: "heal"; entity: EntityId; amount: number };
+  | { type: "heal"; entity: EntityId; amount: number }
+  | { type: "skill"; entity: EntityId; skill: SkillId; hits: number }
+  | { type: "roll"; entity: EntityId }
+  | { type: "dodge"; entity: EntityId; source: EntityId }
+  | { type: "buffEnd"; entity: EntityId };

@@ -7,6 +7,8 @@ export class Input {
   attackQueued = false;
   inventoryToggled = false;
   potionQueued = false;
+  rollQueued = false;
+  skillQueued: number | null = null;
   pointerLocked = false;
   onFirstInteraction: (() => void) | null = null;
   /** Chamado quando o pointer lock é perdido (ESC) ou obtido. */
@@ -23,9 +25,12 @@ export class Input {
         return;
       }
       if (e.code === "Space") {
-        this.attackQueued = true;
+        this.rollQueued = true;
         e.preventDefault();
       }
+      if (e.code === "KeyE") this.attackQueued = true;
+      const digit = /^Digit([1-4])$/.exec(e.code);
+      if (digit) this.skillQueued = Number(digit[1]) - 1;
       if (e.code === "KeyI") this.inventoryToggled = true;
       if (e.code === "KeyQ") this.potionQueued = true;
     });
@@ -79,7 +84,16 @@ export class Input {
   }
 
   /** Consome os acumuladores de frame. */
-  flush(): { lookX: number; lookY: number; zoom: number; attack: boolean; inventory: boolean; potion: boolean } {
+  flush(): {
+    lookX: number;
+    lookY: number;
+    zoom: number;
+    attack: boolean;
+    inventory: boolean;
+    potion: boolean;
+    roll: boolean;
+    skill: number | null;
+  } {
     const out = {
       lookX: this.lookDeltaX,
       lookY: this.lookDeltaY,
@@ -87,7 +101,11 @@ export class Input {
       attack: this.attackQueued,
       inventory: this.inventoryToggled,
       potion: this.potionQueued,
+      roll: this.rollQueued,
+      skill: this.skillQueued,
     };
+    this.rollQueued = false;
+    this.skillQueued = null;
     this.lookDeltaX = 0;
     this.lookDeltaY = 0;
     this.zoomDelta = 0;

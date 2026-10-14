@@ -6,16 +6,18 @@ const TURN_SPEED = 14; // quão rápido a entidade gira para a direção de movi
 
 export function movementSystem(world: World, dt: number): void {
   for (const e of world.alive()) {
-    const { intent } = e.movement;
-    const speed = e.movement.speed * e.movement.speedMultiplier;
     const pos = e.transform.position;
+    const dash = e.abilities?.dash;
+    // Um dash substitui o movimento normal: direção e velocidade fixas, corpo virado para onde vai.
+    const intent = dash ? dash.direction : e.movement.intent;
+    const speed = dash ? dash.speed : e.movement.speed * e.movement.speedMultiplier;
     const moving = intent.x !== 0 || intent.z !== 0;
 
     if (moving) {
       pos.x = clamp(pos.x + intent.x * speed * dt, -WORLD_HALF + 2, WORLD_HALF - 2);
       pos.z = clamp(pos.z + intent.z * speed * dt, -WORLD_HALF + 2, WORLD_HALF - 2);
     }
-    const targetYaw = e.movement.faceYaw ?? (moving ? yawFromDirection(intent) : undefined);
+    const targetYaw = dash ? yawFromDirection(intent) : (e.movement.faceYaw ?? (moving ? yawFromDirection(intent) : undefined));
     if (targetYaw !== undefined) {
       e.transform.yaw = lerpAngle(e.transform.yaw, targetYaw, clamp(TURN_SPEED * dt, 0, 1));
     }

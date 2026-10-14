@@ -148,3 +148,36 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0d12; col
 #log .loot-uncommon { color: var(--r-uncommon); }
 #log .loot-rare { color: var(--r-rare); }
 #log .loot-epic { color: var(--r-epic); font-weight: 600; }
+
+#skillbar {
+  position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%);
+  display: flex; gap: 10px; pointer-events: none;
+}
+.skill {
+  position: relative; width: 58px; height: 58px; border-radius: 10px;
+  background: var(--panel); border: 2px solid rgba(255,255,255,0.14);
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.skill .icon { width: 40px; height: 40px; image-rendering: pixelated; }
+.skill .key {
+  position: absolute; top: 3px; left: 5px; font-size: 11px; font-weight: 700; color: var(--muted);
+}
+.skill .cd {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 0%;
+  background: rgba(0,0,0,0.65); transition: height 80ms linear;
+}
+.skill .cd-text {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 18px; text-shadow: 0 1px 3px #000;
+}
+.skill.ready { border-color: rgba(255,255,255,0.35); }
+.skill.active { border-color: #ffd37a; box-shadow: 0 0 10px rgba(255,211,122,0.5); }
+.skill .name {
+  position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%);
+  font-size: 10px; color: var(--muted); white-space: nowrap;
+}
+#skilltip {
+  position: absolute; left: 50%; bottom: 92px; transform: translateX(-50%);
+  background: rgba(10, 12, 18, 0.9); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+  padding: 6px 10px; font-size: 12px; color: var(--muted); white-space: nowrap;
+}

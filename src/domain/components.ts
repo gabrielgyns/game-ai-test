@@ -1,5 +1,6 @@
 import type { Vec2, Vec3 } from "./math";
 import type { Equipment, Inventory } from "./inventory";
+import type { Abilities } from "./skills";
 
 export type EntityId = number;
 export type EntityKind = "player" | "enemy";
@@ -97,6 +98,7 @@ export interface Entity {
   respawn?: Respawn;
   inventory?: Inventory;
   equipment?: Equipment;
+  abilities?: Abilities;
 }
 
 export function isAlive(e: Entity): boolean {

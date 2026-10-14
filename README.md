@@ -15,7 +15,9 @@ Abra `http://localhost:5173` e clique na tela para começar.
 | --- | --- |
 | WASD / setas | mover (S anda de ré, A/D de lado, o corpo segue a câmera) |
 | Mouse | girar a câmera |
-| Clique esquerdo / Espaço | atacar |
+| Clique esquerdo / E | atacar |
+| Espaço | esquiva com rolamento (invulnerável durante o rolamento) |
+| 1 a 4 | habilidades: Golpe Giratório, Investida, Grito de Guerra, Segundo Fôlego |
 | Scroll | zoom |
 | Shift | correr |
 | Q | beber poção |
@@ -50,23 +52,25 @@ src/
     components.ts  Entity e seus componentes (Transform, Health, Combat, Progression, EnemyAI…)
     world.ts       agregado raiz: entidades, tempo e fila de eventos
     factories.ts   criação de jogador e inimigos (templates por tipo)
-    systems/       movimento, IA (máquina de estados), combate, coleta de drops, renascimento
+    systems/       movimento, IA (máquina de estados), habilidades/esquiva, combate, coleta, renascimento
     simulation.ts  stepWorld(world, dt): roda os sistemas e devolve eventos
     progression.ts XP e nível
     items.ts       definições de itens, raridades e geração por tier
     inventory.ts   mochila, equipamento e recálculo de atributos
     loot.ts        tabelas de drop por inimigo
+    skills.ts      definições das habilidades, esquiva e buffs
     terrain.ts     função de altura do terreno (compartilhada com a malha visual)
     worldgen.ts    geração determinística do mundo por anéis de dificuldade
   game/            apresentação em Three.js e HUD em HTML
     camera.ts      câmera orbital em terceira pessoa
     input.ts       teclado, mouse e pointer lock
     voxel.ts       VoxelBuilder: pinta cubos numa grade e gera a malha (greedy meshing)
-    models.ts      herói e inimigos desenhados em voxels
+    models.ts      herói (com o equipamento visível) e inimigos desenhados em voxels
     entityViews.ts liga entidades a modelos, animação procedural e barras de vida
     effects.ts     números de dano flutuantes
     hud.ts         painéis de status, alvo e log de combate
     inventoryUI.ts painel da mochila com tooltips e comparação de itens
+    skillBar.ts    barra de habilidades com recarga
     itemIcons.ts   ícones de itens em pixel art (usados na UI e nos drops 3D)
     dropViews.ts   itens caídos no chão: ícone extrudado em voxel, anel e feixe por raridade
     terrainMesh.ts terreno em blocos (colunas por célula, degraus de 0,5 m)

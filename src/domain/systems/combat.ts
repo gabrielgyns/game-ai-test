@@ -11,10 +11,11 @@ export function combatSystem(world: World, dt: number): void {
     e.combat.wantsAttack = false;
     if (e.combat.cooldownLeft > 0) continue;
 
+    if (e.abilities?.dash) continue; // não ataca no meio de uma esquiva ou investida
     e.combat.cooldownLeft = e.combat.cooldown;
     const target = findTarget(world, e);
     world.emit({ type: "attack", source: e.id, target: target?.id });
-    if (target) applyDamage(world, e, target, e.combat.damage);
+    if (target) applyDamage(world, e, target, effectiveDamage(e));
   }
 
   regenerate(world, dt);
@@ -40,8 +41,18 @@ export function findTarget(world: World, attacker: Entity): Entity | undefined {
   return best;
 }
 
+/** Dano do ataque básico com buffs aplicados. */
+export function effectiveDamage(e: Entity): number {
+  const buff = e.abilities?.damageBuff;
+  return Math.round(e.combat.damage * (buff ? buff.multiplier : 1));
+}
+
 export function applyDamage(world: World, source: Entity, target: Entity, amount: number): void {
   if (!isAlive(target)) return;
+  if (target.abilities?.dash?.invulnerable) {
+    world.emit({ type: "dodge", entity: target.id, source: source.id });
+    return;
+  }
   target.health.current = Math.max(0, target.health.current - amount);
   target.health.lastDamagedAt = world.time;
   world.emit({ type: "damage", source: source.id, target: target.id, amount });

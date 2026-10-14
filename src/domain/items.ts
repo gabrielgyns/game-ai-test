@@ -21,6 +21,8 @@ export interface Item {
   healFraction?: number;
   /** Identificador do ícone/modelo visual. */
   icon: string;
+  /** Variante visual no corpo do herói (ex.: tunic, chain, plate). */
+  visual?: string;
   /** Valor em ouro (futuro: venda). */
   value: number;
 }
@@ -49,6 +51,7 @@ interface EquipmentTemplate {
   name: string;
   slot: EquipSlot;
   icon: string;
+  visual?: string;
   stats: ItemStats;
   value: number;
 }
@@ -58,21 +61,21 @@ const EQUIPMENT_TEMPLATES: Record<1 | 2 | 3, EquipmentTemplate[]> = {
   1: [
     { name: "Adaga", slot: "weapon", icon: "dagger", stats: { damage: 3 }, value: 8 },
     { name: "Espada Curta", slot: "weapon", icon: "sword", stats: { damage: 5 }, value: 12 },
-    { name: "Túnica de Couro", slot: "armor", icon: "armor", stats: { maxHealth: 15 }, value: 10 },
+    { name: "Túnica de Couro", slot: "armor", icon: "armor", visual: "tunic", stats: { maxHealth: 15 }, value: 10 },
     { name: "Anel de Vigor", slot: "accessory", icon: "ring", stats: { maxHealth: 10 }, value: 15 },
     { name: "Botas Ligeiras", slot: "accessory", icon: "boots", stats: { speedPercent: 8 }, value: 15 },
   ],
   2: [
     { name: "Machado de Guerra", slot: "weapon", icon: "axe", stats: { damage: 9 }, value: 30 },
     { name: "Espada Longa", slot: "weapon", icon: "sword", stats: { damage: 8 }, value: 28 },
-    { name: "Cota de Malha", slot: "armor", icon: "armor", stats: { maxHealth: 35 }, value: 32 },
+    { name: "Cota de Malha", slot: "armor", icon: "armor", visual: "chain", stats: { maxHealth: 35 }, value: 32 },
     { name: "Amuleto de Força", slot: "accessory", icon: "amulet", stats: { damage: 4 }, value: 35 },
     { name: "Botas do Vento", slot: "accessory", icon: "boots", stats: { speedPercent: 14 }, value: 35 },
   ],
   3: [
     { name: "Montante", slot: "weapon", icon: "sword", stats: { damage: 14 }, value: 80 },
     { name: "Machado Duplo", slot: "weapon", icon: "axe", stats: { damage: 16 }, value: 85 },
-    { name: "Armadura de Placas", slot: "armor", icon: "armor", stats: { maxHealth: 70 }, value: 90 },
+    { name: "Armadura de Placas", slot: "armor", icon: "armor", visual: "plate", stats: { maxHealth: 70 }, value: 90 },
     { name: "Anel do Titã", slot: "accessory", icon: "ring", stats: { maxHealth: 40, damage: 3 }, value: 100 },
     { name: "Amuleto do Berserker", slot: "accessory", icon: "amulet", stats: { damage: 8 }, value: 100 },
   ],
@@ -114,6 +117,7 @@ export function createEquipment(rand: () => number, tier: 1 | 2 | 3, rarity: Rar
     rarity,
     stats,
     icon: t.icon,
+    visual: t.visual,
     value: Math.round(t.value * mult),
   };
 }

@@ -14,23 +14,27 @@ export class FloatingTexts {
 
   spawn(position: { x: number; y: number; z: number }, text: string, color: string, scale = 1): void {
     const canvas = document.createElement("canvas");
-    canvas.width = 256;
+    const font = "bold 56px system-ui, sans-serif";
+    const measure = canvas.getContext("2d")!;
+    measure.font = font;
+    const width = Math.max(96, Math.ceil(measure.measureText(text).width) + 24);
+    canvas.width = width;
     canvas.height = 96;
     const ctx = canvas.getContext("2d")!;
-    ctx.font = "bold 56px system-ui, sans-serif";
+    ctx.font = font;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.lineWidth = 8;
     ctx.strokeStyle = "rgba(0,0,0,0.8)";
-    ctx.strokeText(text, 128, 48);
+    ctx.strokeText(text, width / 2, 48);
     ctx.fillStyle = color;
-    ctx.fillText(text, 128, 48);
+    ctx.fillText(text, width / 2, 48);
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     const material = new THREE.SpriteMaterial({ map: texture, depthTest: false, transparent: true });
     const sprite = new THREE.Sprite(material);
-    sprite.scale.set(2.2 * scale, 0.82 * scale, 1);
+    sprite.scale.set((width / 96) * 0.82 * scale, 0.82 * scale, 1);
     sprite.position.set(position.x + (Math.random() - 0.5) * 0.6, position.y + 1.8, position.z);
     sprite.renderOrder = 20;
     this.scene.add(sprite);
