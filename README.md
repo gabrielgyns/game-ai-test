@@ -75,6 +75,14 @@ Grito deixa todos lentos, o Segundo Fôlego dispara sozinho quando a vida fica c
 vira uma rajada de três flechas que atordoam, a Chuva de Flechas vira tempestade, a Bola de Fogo dobra e
 deixa o chão em chamas, a Nova Gélida congela, o Teleporte explode na partida e o Escudo Arcano explode
 ao acabar. Chefes resistem a atordoamento e lentidão (metade do tempo). Reiniciar a árvore custa ouro.
+Cada chefe guarda um **conjunto de itens** de três peças (arma, armadura e acessório), em verde-água:
+os Espólios do Rei Goblin, a Seda da Rainha, a Armadura do Imperador e as Relíquias do Lorde Esqueleto.
+Duas peças vestidas dão um bônus (crítico, roubo de vida, vida, recarga); as três liberam um poder:
+**Fúria Real** (+30% de dano com menos de metade da vida), **Veneno** (golpes básicos deixam lento),
+**Casca de Areia** (-20% de dano recebido) e **Colheita de Almas** (cada abate cura e adianta as
+habilidades). Cada vitória sobre o chefe derruba uma peça que você ainda não tem, e a arma vem no tipo
+da sua classe. O tooltip mostra as peças que faltam e quais bônus estão ligados.
+
 No canto superior direito fica o **minimapa**, que gira com a câmera (para cima é para onde você olha):
 inimigos em vermelho, chefes em losango, `!` e `?` nos personagens com quest, o portal da cripta, e,
 lá dentro, as salas, a saída e o baú. Chefes e quests fora do alcance ficam presos na borda, apontando

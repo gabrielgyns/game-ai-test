@@ -42,22 +42,28 @@ export function mesh(builder: VoxelBuilder, material: THREE.Material = voxelMate
   return m;
 }
 
-export const RARITY_GLOW: Record<Rarity, string | null> = {
+/** Raridade como aparece no corpo: peças de conjunto brilham em verde-água. */
+export type LookRarity = Rarity | "set";
+export const lookRarity = (item: { rarity: Rarity; set?: string }): LookRarity => (item.set ? "set" : item.rarity);
+
+export const RARITY_GLOW: Record<LookRarity, string | null> = {
   common: null,
   uncommon: "#5fd36b",
   rare: "#5b8def",
   epic: "#b06cf0",
+  set: "#2fe0a8",
 };
 
-export const BLADE_BY_RARITY: Record<Rarity, string> = {
+export const BLADE_BY_RARITY: Record<LookRarity, string> = {
   common: "#d8dde6",
   uncommon: "#9fe3a8",
   rare: "#8fb3ff",
   epic: "#d29bff",
+  set: "#8ff0d0",
 };
 
 /** Material da peça: tingido leve na cor da raridade (a cor do item continua legível). */
-export function glowMaterial(rarity: Rarity, intensity: number): { material: THREE.MeshStandardMaterial; baseIntensity: number } | null {
+export function glowMaterial(rarity: LookRarity, intensity: number): { material: THREE.MeshStandardMaterial; baseIntensity: number } | null {
   const color = RARITY_GLOW[rarity];
   if (!color) return null;
   const material = voxelMaterial();
@@ -70,7 +76,7 @@ export function glowMaterial(rarity: Rarity, intensity: number): { material: THR
  * Aura neon: uma casca da mesma geometria, um pouco maior, aditiva e acima do limiar do bloom.
  * É o que dá o contorno brilhante em volta da peça sem mudar a cor dela.
  */
-export function addAura(part: THREE.Mesh, rarity: Rarity, strength = 1): THREE.Mesh | null {
+export function addAura(part: THREE.Mesh, rarity: LookRarity, strength = 1): THREE.Mesh | null {
   const color = RARITY_GLOW[rarity];
   if (!color) return null;
   const geometry = part.geometry;

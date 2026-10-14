@@ -6,12 +6,13 @@ import type { ClassId } from "../../domain/classes";
 import {
   BLADE_BY_RARITY, HERO_BUILD, PAL, V, addAura, glowMaterial, mesh as meshWith, paintArm, paintFace, paintHairShort, paintHead, paintLeg, pivot, shades, tone,
   type CharacterModel, type Shades,
+  lookRarity,
 } from "./common";
 
 /** Assinatura visual do equipamento: quando muda, o modelo do herói é reconstruído. */
 export function equipmentSignature(eq: Equipment | undefined): string {
   if (!eq) return "";
-  return [eq.weapon?.icon, eq.weapon?.rarity, eq.weapon?.stats.damage, eq.armor?.visual, eq.armor?.rarity, eq.accessory?.icon, eq.accessory?.rarity].join("|");
+  return [eq.weapon?.icon, eq.weapon?.rarity, eq.weapon?.set, eq.weapon?.stats.damage, eq.armor?.visual, eq.armor?.rarity, eq.armor?.set, eq.accessory?.icon, eq.accessory?.rarity, eq.accessory?.set].join("|");
 }
 
 const mesh = (b: VoxelBuilder, material?: THREE.Material): THREE.Mesh => meshWith(b, material, V, HERO_BUILD);
@@ -28,7 +29,7 @@ const HEAD_Y = 26;
 
 /** Armas em repouso apontam para baixo (-Y) a partir da mão; o golpe gira o braço para a frente. */
 export function paintWeapon(b: VoxelBuilder, weapon: Item): void {
-  const blade = shades(BLADE_BY_RARITY[weapon.rarity], 0.14);
+  const blade = shades(BLADE_BY_RARITY[lookRarity(weapon)], 0.14);
   const gold = PAL.gold;
   const wood = PAL.wood;
   const grip = PAL.leather;
@@ -227,9 +228,9 @@ export function createHero(equipment?: Equipment, classId: ClassId = "warrior"):
   const visual = armor?.visual ?? "none";
   const look = heroLook(classId, visual, accessory?.icon === "boots");
   const glows: NonNullable<CharacterModel["glowMaterials"]> = [];
-  const armorGlow = armor ? glowMaterial(armor.rarity, 0.08) : null;
-  const accGlow = accessory ? glowMaterial(accessory.rarity, 0.15) : null;
-  const weaponGlow = weapon ? glowMaterial(weapon.rarity, 0.22) : null;
+  const armorGlow = armor ? glowMaterial(lookRarity(armor), 0.08) : null;
+  const accGlow = accessory ? glowMaterial(lookRarity(accessory), 0.15) : null;
+  const weaponGlow = weapon ? glowMaterial(lookRarity(weapon), 0.22) : null;
   for (const g of [armorGlow, accGlow, weaponGlow]) if (g) glows.push(g);
 
   const root = new THREE.Group();
@@ -238,7 +239,7 @@ export function createHero(equipment?: Equipment, classId: ClassId = "warrior"):
   const torso = new VoxelBuilder();
   paintTorso(torso, look, visual);
   const torsoMesh = mesh(torso, armorGlow?.material ?? voxelMaterial());
-  if (armor) addAura(torsoMesh, armor.rarity, 0.8);
+  if (armor) addAura(torsoMesh, lookRarity(armor), 0.8);
   root.add(torsoMesh);
 
   // Acessório no corpo: amuleto no peito.
@@ -247,9 +248,9 @@ export function createHero(equipment?: Equipment, classId: ClassId = "warrior"):
     acc.box(-3, HIP_Y + 12, -TORSO.hd - 1, 3, HIP_Y + 13, -TORSO.hd, PAL.gold.dark); // corrente
     acc.set(-3, HIP_Y + 11, -TORSO.hd - 1, PAL.gold.dark).set(2, HIP_Y + 11, -TORSO.hd - 1, PAL.gold.dark);
     acc.box(-1, HIP_Y + 9, -TORSO.hd - 2, 1, HIP_Y + 11, -TORSO.hd, PAL.gold.base);
-    acc.set(0, HIP_Y + 10, -TORSO.hd - 2, BLADE_BY_RARITY[accessory.rarity]).set(-1, HIP_Y + 10, -TORSO.hd - 2, BLADE_BY_RARITY[accessory.rarity]);
+    acc.set(0, HIP_Y + 10, -TORSO.hd - 2, BLADE_BY_RARITY[lookRarity(accessory)]).set(-1, HIP_Y + 10, -TORSO.hd - 2, BLADE_BY_RARITY[lookRarity(accessory)]);
     const accMesh = mesh(acc, accGlow?.material ?? voxelMaterial());
-    addAura(accMesh, accessory.rarity, 0.9);
+    addAura(accMesh, lookRarity(accessory), 0.9);
     root.add(accMesh);
   }
 
@@ -287,7 +288,7 @@ export function createHero(equipment?: Equipment, classId: ClassId = "warrior"):
       boot.box(-LEG.hw - 1, -LEG.length + 3, -LEG.hd - 1, LEG.hw + 1, -LEG.length + 4, LEG.hd + 1, look.boots.light);
       boot.box(-LEG.hw - 1, -LEG.length, -LEG.hd - 2, LEG.hw + 1, -LEG.length + 1, LEG.hd + 1, look.boots.dark);
       const bootMesh = mesh(boot, bootsGlow.material);
-      addAura(bootMesh, accessory!.rarity, 0.9);
+      addAura(bootMesh, lookRarity(accessory!), 0.9);
       group.add(bootMesh);
     }
     legs.push(group);
@@ -299,7 +300,7 @@ export function createHero(equipment?: Equipment, classId: ClassId = "warrior"):
   const sleeveLen = classId === "mage" ? 10 : visual === "none" && classId === "archer" ? 4 : 6;
   const left = new VoxelBuilder();
   paintArm(left, ARM, sleeve, look.skin, sleeveLen);
-  if (accessory?.icon === "ring") left.box(-ARM.hw, -ARM.length + 1, -ARM.hd - 1, -ARM.hw + 2, -ARM.length + 2, -ARM.hd, PAL.gold.base).set(-ARM.hw + 1, -ARM.length + 1, -ARM.hd - 1, BLADE_BY_RARITY[accessory.rarity]);
+  if (accessory?.icon === "ring") left.box(-ARM.hw, -ARM.length + 1, -ARM.hd - 1, -ARM.hw + 2, -ARM.length + 2, -ARM.hd, PAL.gold.base).set(-ARM.hw + 1, -ARM.length + 1, -ARM.hd - 1, BLADE_BY_RARITY[lookRarity(accessory)]);
   const offArm = pivot(-9, SHOULDER_Y, 0, mesh(left, accessory?.icon === "ring" ? (accGlow?.material ?? voxelMaterial()) : voxelMaterial()));
   root.add(offArm);
 
@@ -310,7 +311,7 @@ export function createHero(equipment?: Equipment, classId: ClassId = "warrior"):
     const w = new VoxelBuilder();
     paintWeapon(w, weapon);
     const weaponMesh = mesh(w, weaponGlow?.material ?? voxelMaterial());
-    addAura(weaponMesh, weapon.rarity, 1.1);
+    addAura(weaponMesh, lookRarity(weapon), 1.1);
     weaponArm.add(weaponMesh);
   }
   root.add(weaponArm);

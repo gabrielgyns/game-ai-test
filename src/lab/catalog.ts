@@ -13,6 +13,7 @@ import { createProjectileMesh } from "../game/projectileViews";
 import { createBraziers, stallGeometry } from "../game/environment";
 import { buildLods, PROP_MODELS, propVoxels, type PropKind, type PropLods } from "../game/props/catalog";
 import { LEGACY_PROPS } from "./legacyProps";
+import { createSetPiece } from "../domain/sets";
 import type { VoxelBuilder } from "../game/voxel";
 import { FOLIAGE_BUILDERS } from "../game/foliage";
 import { createPortal } from "../game/portal";
@@ -104,6 +105,13 @@ const GEAR_SETS: GearSet[] = [
     weapon: (c) => item("Arma", "weapon", c === "warrior" ? "sword" : STARTER[c], "epic", { damage: 16 }),
     armor: item("Armadura de Placas", "armor", "armor", "epic", { maxHealth: 70 }, "plate"),
     accessory: item("Anel do Titã", "accessory", "ring", "epic", { maxHealth: 40 }),
+  },
+  {
+    id: "set",
+    label: "Armadura do Imperador (conjunto)",
+    weapon: (c) => createSetPiece("scorpionEmperor", "weapon", c),
+    armor: createSetPiece("scorpionEmperor", "armor"),
+    accessory: createSetPiece("scorpionEmperor", "accessory"),
   },
 ];
 

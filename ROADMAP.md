@@ -40,14 +40,14 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 - [x] Modelos `.vox` do MagicaVoxel: `assets/vox/<id>.vox` substitui a escultura; o lab exporta qualquer adereço como `.vox` e mostra um arquivo arrastado para a cena
 - [x] Nível de inimigos e chefes ao lado do nome e da vida, na cor da dificuldade para o herói
 - [x] Minimapa que gira com a câmera (inimigos, chefes, quests, portal, baú, loot raro) e mapa grande na tecla M, no vale e na cripta
+- [x] Conjuntos de itens: 4 conjuntos de 3 peças (um por chefe), bônus com 2 peças e poder com 3 (Fúria Real, Veneno, Casca de Areia, Colheita de Almas); o chefe derruba a peça que falta
 - [x] Lab de modelos (`/lab.html`): vitrine de tudo que aparece no jogo, luz, animações e comparação com a versão anterior
 
 ## Próximos
 
-1. **Conjuntos de itens.** Peças que dão bônus quando vestidas juntas; afixos e mercador já existem.
-2. **Lock-on.** Travar a câmera num alvo (Zelda) como alternativa ao modo livre.
-3. **Mais quests.** Objetivos de coleta e exploração e quests repetíveis diárias.
-4. **Save na nuvem** (quando houver servidor); os slots locais já existem.
-5. **Áudio com assets.** Trocar a síntese por samples e trilha composta quando houver arte sonora.
-6. **Mais dungeons.** Novos temas (mina, templo do deserto), salas especiais (armadilhas, desafios) e modificadores de dificuldade.
-7. **Multiplayer.** Servidor rodando o mesmo domínio; cliente só renderiza.
+1. **Lock-on.** Travar a câmera num alvo (Zelda) como alternativa ao modo livre.
+2. **Mais quests.** Objetivos de coleta e exploração e quests repetíveis diárias.
+3. **Save na nuvem** (quando houver servidor); os slots locais já existem.
+4. **Áudio com assets.** Trocar a síntese por samples e trilha composta quando houver arte sonora.
+5. **Mais dungeons.** Novos temas (mina, templo do deserto), salas especiais (armadilhas, desafios) e modificadores de dificuldade.
+6. **Multiplayer.** Servidor rodando o mesmo domínio; cliente só renderiza.

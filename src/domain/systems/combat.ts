@@ -5,7 +5,8 @@ import { directionFromYaw, directionXZ, distanceXZ } from "../math";
 import { CHARGE } from "../skills";
 import { CLASSES } from "../classes";
 import { fireProjectile } from "./projectiles";
-import { vulnerability } from "../status";
+import { applySlow, vulnerability } from "../status";
+import { hasSetPower } from "../sets";
 import { hasTalent } from "../skillTree";
 import { playerRespawnPoint } from "../dungeon";
 import { grantXp } from "../progression";
@@ -209,6 +210,10 @@ export function applyDamage(world: World, source: Entity, target: Entity, amount
     if (kind !== "hazard") world.emit({ type: "dodge", entity: target.id, source: source.id });
     return;
   }
+  // Fúria Real (Rei Goblin, 3 peças): ferido, bate mais forte.
+  if (kind !== "hazard" && hasSetPower(source, "royalFury") && source.health.current < source.health.max * 0.5) {
+    amount = Math.round(amount * (1 + SET_POWERS.royalFuryBonus));
+  }
   // Crítico (afixo da Águia): sorteado antes de escudos, para o número grande valer o golpe inteiro.
   let crit = false;
   const critChance = kind === "hazard" ? 0 : (source.bonuses?.critChance ?? 0) + (source.abilities?.damageBuff?.critBonus ?? 0);
@@ -241,6 +246,8 @@ export function applyDamage(world: World, source: Entity, target: Entity, amount
   // Vulnerável (Redemoinho, Estilhaços) e Pele de Ferro.
   const vuln = vulnerability(target);
   if (vuln > 0) amount = Math.round(amount * (1 + vuln));
+  // Casca de Areia (Imperador, 3 peças).
+  if (hasSetPower(target, "sandShell")) amount = Math.max(1, Math.round(amount * (1 - SET_POWERS.sandShellReduction)));
   const guard = target.abilities?.guard;
   if (guard && guard.timeLeft > 0) amount = Math.max(1, Math.round(amount * (1 - guard.reduction)));
   // Escudo absorve antes da vida.
@@ -262,6 +269,11 @@ export function applyDamage(world: World, source: Entity, target: Entity, amount
   const lifesteal = kind === "hazard" ? 0 : (source.bonuses?.lifesteal ?? 0);
   if (lifesteal > 0 && isAlive(source)) {
     source.health.current = Math.min(source.health.max, source.health.current + (dealt * lifesteal) / 100);
+  }
+
+  // Veneno (Rainha, 3 peças): golpe básico deixa o alvo lento.
+  if (kind === "basic" && hasSetPower(source, "venom") && target.health.current > 0) {
+    applySlow(world, target, SET_POWERS.venomSlow, SET_POWERS.venomSeconds);
   }
 
   // Último Suspiro: o Segundo Fôlego dispara sozinho quando a vida fica crítica.
@@ -291,6 +303,11 @@ function kill(world: World, victim: Entity, killer: Entity): void {
       rollLoot(world, victim);
       advanceKillQuests(world, killer, victim.archetype);
       grantXp(world, killer, victim.ai.xpReward);
+      // Colheita de Almas (Lorde Esqueleto, 3 peças): cada abate cura e adianta as habilidades.
+      if (hasSetPower(killer, "soulHarvest") && isAlive(killer)) {
+        killer.health.current = Math.min(killer.health.max, killer.health.current + killer.health.max * SET_POWERS.soulHarvestHeal);
+        for (const s of killer.abilities?.skills ?? []) s.cooldownLeft = Math.max(0, s.cooldownLeft - SET_POWERS.soulHarvestCooldown);
+      }
       if (killer.wallet) {
         // Afixo da Fortuna: ouro extra por inimigo.
         const gold = Math.round(victim.ai.goldReward * (1 + (killer.bonuses?.goldPercent ?? 0) / 100));
@@ -303,6 +320,16 @@ function kill(world: World, victim: Entity, killer: Entity): void {
     victim.respawn = { timeLeft: 5, at: playerRespawnPoint(world, victim) };
   }
 }
+
+/** Números dos poderes de conjunto (os textos ficam em `sets.ts`). */
+export const SET_POWERS = {
+  royalFuryBonus: 0.3,
+  sandShellReduction: 0.2,
+  venomSlow: 0.6,
+  venomSeconds: 2,
+  soulHarvestHeal: 0.06,
+  soulHarvestCooldown: 1,
+};
 
 const REGEN_DELAY_SECONDS = 5;
 export const CRIT_MULTIPLIER = 1.75;

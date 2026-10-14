@@ -102,7 +102,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0d12; col
 .row.quick b { background: rgba(255,255,255,0.12); border-radius: 4px; padding: 0 5px; margin-right: 4px; }
 
 :root {
-  --r-common: #d0d0d0; --r-uncommon: #5fd36b; --r-rare: #5b8def; --r-epic: #b06cf0;
+  --r-common: #d0d0d0; --r-uncommon: #5fd36b; --r-rare: #5b8def; --r-epic: #b06cf0; --r-set: #2fe0a8;
 }
 #inventory {
   position: absolute; inset: 0; display: flex; justify-content: center; align-items: center;
@@ -128,6 +128,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0d12; col
 .cell[data-rarity="common"] { border-color: var(--r-common); }
 .cell[data-rarity="uncommon"] { border-color: var(--r-uncommon); box-shadow: 0 0 6px rgba(95,211,107,0.45), inset 0 0 6px rgba(95,211,107,0.18); }
 .cell[data-rarity="rare"] { border-color: var(--r-rare); box-shadow: 0 0 6px rgba(91,141,239,0.5), inset 0 0 6px rgba(91,141,239,0.2); }
+.cell[data-rarity="set"] { border-color: var(--r-set); box-shadow: 0 0 8px rgba(47,224,168,0.6), inset 0 0 6px rgba(47,224,168,0.25); }
 .cell[data-rarity="epic"] { border-color: var(--r-epic); box-shadow: 0 0 7px rgba(176,108,240,0.55), inset 0 0 6px rgba(176,108,240,0.22); }
 .cell .icon { width: 44px; height: 44px; image-rendering: pixelated; }
 .stats { margin-top: 6px; font-size: 13px; color: var(--muted); display: grid; gap: 4px; }
@@ -148,10 +149,18 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0d12; col
 .item-tip[data-rarity="uncommon"] .name, .item-tip[data-rarity="uncommon"] .rarity { color: var(--r-uncommon); }
 .item-tip[data-rarity="rare"] .name, .item-tip[data-rarity="rare"] .rarity { color: var(--r-rare); }
 .item-tip[data-rarity="epic"] .name, .item-tip[data-rarity="epic"] .rarity { color: var(--r-epic); }
+.item-tip[data-rarity="set"] .name, .item-tip[data-rarity="set"] .rarity { color: var(--r-set); }
+.item-tip .set { margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(47,224,168,0.25); font-size: 12px; }
+.item-tip .set-name { color: var(--r-set); font-weight: 600; margin-bottom: 3px; }
+.item-tip .set .piece, .item-tip .set .tier { color: var(--muted); }
+.item-tip .set .piece.on { color: var(--text); }
+.item-tip .set .tier { margin-top: 3px; }
+.item-tip .set .tier.on { color: var(--r-set); }
 #log .loot-common { color: var(--r-common); }
 #log .loot-uncommon { color: var(--r-uncommon); }
 #log .loot-rare { color: var(--r-rare); }
 #log .loot-epic { color: var(--r-epic); font-weight: 600; }
+#log .loot-set { color: var(--r-set); font-weight: 600; }
 
 #skillbar {
   position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%);
@@ -380,6 +389,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0d12; col
 .offer[data-rarity="uncommon"] .oname { color: var(--r-uncommon); }
 .offer[data-rarity="rare"] .oname { color: var(--r-rare); }
 .offer[data-rarity="epic"] .oname { color: var(--r-epic); }
+.offer[data-rarity="set"] .oname { color: var(--r-set); }
 .offer.sold { opacity: 0.4; }
 #shop button {
   font: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: rgba(255,255,255,0.08);

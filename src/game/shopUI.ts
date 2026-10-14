@@ -8,7 +8,7 @@ import {
 import { createPotion } from "../domain/items";
 import type { World } from "../domain/world";
 import { iconCanvas } from "./itemIcons";
-import { itemTooltipHTML } from "./itemTooltip";
+import { displayRarity, itemTooltipHTML } from "./itemTooltip";
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -124,7 +124,7 @@ export class ShopUI {
   private row(item: Item, price: number, gold: number, sold: boolean, buy: () => void, note?: string): HTMLElement {
     const row = document.createElement("div");
     row.className = `offer${sold ? " sold" : ""}`;
-    row.dataset.rarity = item.rarity;
+    row.dataset.rarity = displayRarity(item);
     const cell = document.createElement("div");
     this.renderCell(cell, item);
     const info = document.createElement("div");
@@ -161,7 +161,7 @@ export class ShopUI {
       return;
     }
     cell.className = "cell";
-    cell.dataset.rarity = item.rarity;
+    cell.dataset.rarity = displayRarity(item);
     const icon = iconCanvas(item.icon).cloneNode(true) as HTMLCanvasElement;
     icon.getContext("2d")!.drawImage(iconCanvas(item.icon), 0, 0);
     icon.className = "icon";
@@ -176,8 +176,8 @@ export class ShopUI {
 
   private showTip(item: Item, price: string, hint: string): void {
     const compare = item.slot ? this.player.equipment?.[item.slot] ?? null : null;
-    this.tooltip.innerHTML = itemTooltipHTML(item, { compare, price, hint });
-    this.tooltip.dataset.rarity = item.rarity;
+    this.tooltip.innerHTML = itemTooltipHTML(item, { compare, price, hint, equipment: this.player.equipment, classId: this.player.classId });
+    this.tooltip.dataset.rarity = displayRarity(item);
     this.tooltip.classList.remove("hidden");
   }
 

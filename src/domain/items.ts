@@ -1,4 +1,5 @@
 import { AFFIXES, rollAffixes, type Affix } from "./affixes";
+import type { SetId } from "./sets";
 
 export type EquipSlot = "weapon" | "armor" | "accessory";
 export type Rarity = "common" | "uncommon" | "rare" | "epic";
@@ -35,6 +36,8 @@ export interface Item {
   affixes?: Affix[];
   /** Tier de origem (1 perto do spawn, 3 na borda). */
   tier?: 1 | 2 | 3;
+  /** Peça de conjunto (ver `sets.ts`): bônus quando vestida junto com as outras do mesmo conjunto. */
+  set?: SetId;
 }
 
 export const RARITY_MULTIPLIER: Record<Rarity, number> = {
@@ -119,6 +122,11 @@ let nextItemId = 1;
 /** Reinicia o contador de ids (usado em testes e ao carregar um jogo salvo). */
 export function resetItemIds(start = 1): void {
   nextItemId = start;
+}
+
+/** Próximo id de item (para quem cria itens fora daqui, como as peças de conjunto). */
+export function newItemId(): number {
+  return nextItemId++;
 }
 
 /** Ouro que cada afixo soma ao valor do item, por tier. */

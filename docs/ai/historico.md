@@ -140,6 +140,17 @@ com screenshots antes de serem considerados prontos.
     `placeProps`) e o da cripta a partir da planta (salas limpas em verde); minimapa redondo que gira
     com a câmera, com "N", nome da região e marcadores importantes presos na borda; mapa grande na
     tecla M, norte para cima, com nomes dos chefes e legenda. 4 testes novos.
+26. **Conjuntos de itens** (pedido do dono, primeiro do roadmap). Domínio: `sets.ts` com 4 conjuntos
+    de 3 peças, um por chefe (Espólios do Rei Goblin, Seda da Rainha, Armadura do Imperador,
+    Relíquias do Lorde); a arma acompanha a classe de quem a encontra. 2 peças: bônus de atributo
+    (somado em `equipmentBonus`); 3 peças: poder em `Bonuses.powers`, lido em `combat.ts` (Fúria
+    Real +30% de dano abaixo de metade da vida, Veneno deixa lento no golpe básico, Casca de Areia
+    -20% de dano recebido, Colheita de Almas cura 6% e adianta as habilidades a cada abate). Cada
+    chefe derruba uma peça do seu conjunto, de preferência uma que o herói ainda não tem
+    (`pickSetSlot`). `Item.set` vai no save sem migração. Apresentação: cor verde-água "Peça de
+    conjunto" na mochila, loja, log e drop (feixe mais alto), brilho verde-água no herói, tooltip com
+    as três peças (vestidas acesas) e os bônus de 2 e 3, aviso ao ligar o bônus. Lab: herói com o
+    conjunto do Imperador. 12 testes novos.
 
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).

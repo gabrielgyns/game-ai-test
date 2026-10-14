@@ -162,3 +162,10 @@ o id do modelo, sem registrar nada. O carregamento é um `await` no topo do `mai
 cenário, então não há troca visível depois do boot. Eixos: o editor é Z para cima com a vista Front
 em -Y; o jogo é Y para cima com a frente em -Z, então (x, y, z) do editor vira (-x, z, y).
 
+## D33. Conjuntos: atributo com 2 peças, poder com 3, um conjunto por chefe
+O herói tem só três espaços, então cada conjunto tem três peças. O bônus de 2 peças é um atributo
+comum (entra na mesma soma dos afixos); o de 3 é um poder com efeito no combate, lido por nome em
+`combat.ts` (os números ficam em `SET_POWERS`). Cada chefe guarda um conjunto e derruba a peça que
+falta, para que o farm de chefe tenha um fim visível. As peças são épicas por baixo (brilho, preço,
+regras de loot) e só a apresentação as pinta de verde-água, sem uma raridade nova no domínio.
+

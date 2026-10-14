@@ -1,4 +1,5 @@
 import type { Bonuses, Entity } from "./components";
+import { activeSetBonuses } from "./sets";
 import { AFFIXES, type BonusStat } from "./affixes";
 import { canStack, type EquipSlot, type Item } from "./items";
 import type { World } from "./world";
@@ -74,6 +75,9 @@ export function equipmentBonus(eq: Equipment): BonusTotals {
     const b = itemBonus(item);
     for (const k of Object.keys(total) as BonusStat[]) total[k] += b[k];
   }
+  // Conjuntos: duas peças do mesmo conjunto somam o bônus de atributo.
+  const sets = activeSetBonuses(eq).stats;
+  for (const k of Object.keys(sets) as BonusStat[]) total[k] += sets[k] ?? 0;
   return total;
 }
 
@@ -95,6 +99,7 @@ export function recomputeStats(entity: Entity): void {
       cooldownPercent: Math.min(MAX_COOLDOWN_REDUCTION, bonus.cooldownPercent),
       goldPercent: bonus.goldPercent,
       regen: bonus.regen,
+      powers: activeSetBonuses(eq).powers,
     };
     entity.bonuses = bonuses;
   }

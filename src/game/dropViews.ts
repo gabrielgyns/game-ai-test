@@ -1,14 +1,15 @@
 import * as THREE from "three";
-import type { Rarity } from "../domain/items";
+import { displayRarity, type DisplayRarity } from "./itemTooltip";
 import type { World } from "../domain/world";
 import { iconPixels } from "./itemIcons";
 import { VoxelBuilder, voxelMaterial } from "./voxel";
 
-const RARITY_COLOR: Record<Rarity, string> = {
+const RARITY_COLOR: Record<DisplayRarity, string> = {
   common: "#d0d0d0",
   uncommon: "#5fd36b",
   rare: "#5b8def",
   epic: "#b06cf0",
+  set: "#2fe0a8",
 };
 
 const geometryCache = new Map<string, THREE.BufferGeometry>();
@@ -35,7 +36,7 @@ export class DropView {
   private readonly phase = Math.random() * Math.PI * 2;
 
 
-  constructor(icon: string, rarity: Rarity) {
+  constructor(icon: string, rarity: DisplayRarity) {
     const color = new THREE.Color(RARITY_COLOR[rarity]);
     const material = voxelMaterial();
     if (rarity !== "common") {
@@ -52,7 +53,7 @@ export class DropView {
     );
     this.ring.rotation.x = -Math.PI / 2;
     this.ring.position.y = 0.04;
-    const beamHeight = rarity === "common" ? 0 : rarity === "uncommon" ? 1.6 : rarity === "rare" ? 2.6 : 3.6;
+    const beamHeight = rarity === "common" ? 0 : rarity === "uncommon" ? 1.6 : rarity === "rare" ? 2.6 : rarity === "set" ? 4.4 : 3.6;
     this.beam = new THREE.Mesh(
       new THREE.CylinderGeometry(0.08, 0.2, Math.max(beamHeight, 0.01), 8, 1, true),
       new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.35, depthWrite: false }),
@@ -79,7 +80,7 @@ export class DropViews {
     for (const drop of world.drops.values()) {
       let view = this.views.get(drop.id);
       if (!view) {
-        view = new DropView(drop.item.icon, drop.item.rarity);
+        view = new DropView(drop.item.icon, displayRarity(drop.item));
         view.group.position.set(drop.position.x, drop.position.y, drop.position.z);
         this.scene.add(view.group);
         this.views.set(drop.id, view);

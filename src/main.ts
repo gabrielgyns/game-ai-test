@@ -44,6 +44,9 @@ import {
 import { ShopUI } from "./game/shopUI";
 import { SkillTreeUI } from "./game/skillTreeUI";
 import { Minimap } from "./game/minimap";
+import { displayRarity } from "./game/itemTooltip";
+import { equippedSetCounts, SETS } from "./domain/sets";
+import type { Item } from "./domain/items";
 import { DayNightSky } from "./game/sky";
 import { Foliage } from "./game/foliage";
 import { HIT_COLORS, Particles } from "./game/particles";
@@ -595,8 +598,8 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         const item = player.inventory?.items.find((i) => i?.id === ev.itemId);
         if (item) {
           audio.play(item.rarity === "common" ? "pickupCommon" : "pickupRare", { pitch: item.rarity === "epic" ? 1.25 : item.rarity === "rare" ? 1.1 : 1 });
-          hud.pushLog(`Você pegou ${item.name}`, `loot-${item.rarity}`);
-          floats.spawn(player.transform.position, item.name, RARITY_FLOAT[item.rarity], item.rarity === "common" ? 0.7 : 0.9);
+          hud.pushLog(`Você pegou ${item.name}`, `loot-${displayRarity(item)}`);
+          floats.spawn(player.transform.position, item.name, RARITY_FLOAT[displayRarity(item)], item.rarity === "common" ? 0.7 : 0.9);
         }
         break;
       }
@@ -611,7 +614,10 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         break;
       case "equip": {
         const item = player.equipment?.[ev.slot];
-        if (item) hud.pushLog(`Equipado: ${item.name}`, `loot-${item.rarity}`);
+        if (item) {
+          hud.pushLog(`Equipado: ${item.name}`, `loot-${displayRarity(item)}`);
+          announceSet(item);
+        }
         break;
       }
       case "skill": {
@@ -787,7 +793,19 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
   }
 }
 
-const RARITY_FLOAT = { common: "#e8e8e8", uncommon: "#7fe58a", rare: "#8fb3ff", epic: "#d29bff" } as const;
+const RARITY_FLOAT = { common: "#e8e8e8", uncommon: "#7fe58a", rare: "#8fb3ff", epic: "#d29bff", set: "#5ff0c0" } as const;
+
+/** Ao vestir a 2ª ou a 3ª peça de um conjunto, avisa o bônus que acabou de ligar. */
+function announceSet(item: Item): void {
+  if (!item.set || !player.equipment) return;
+  const set = SETS[item.set];
+  const worn = equippedSetCounts(player.equipment).get(set.id) ?? 0;
+  if (worn === 2) hud.pushLog(`${set.name} (2): ${set.two.text}`, "loot-set");
+  if (worn === 3) {
+    hud.pushLog(`${set.name} completo! ${set.three.text}`, "loot-set");
+    floats.spawn(player.transform.position, "Conjunto completo!", RARITY_FLOAT.set, 1.1);
+  }
+}
 
 const timer = new THREE.Timer();
 const FIXED_DT = 1 / 60;
@@ -939,6 +957,7 @@ if (import.meta.env.DEV) {
     foliage,
     environment,
     minimap,
+    openInventory,
     enterDungeon: (seed?: number) => afterDungeonChange(() => enterDungeon(world, player, seed)),
     exitDungeon: () => afterDungeonChange(() => exitDungeon(world, player, "leave")),
     activeSlot: () => activeSlot,

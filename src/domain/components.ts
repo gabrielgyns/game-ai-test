@@ -1,3 +1,4 @@
+import type { SetPower } from "./sets";
 import type { Vec2, Vec3 } from "./math";
 import type { Equipment, Inventory } from "./inventory";
 import type { Abilities } from "./skills";
@@ -79,6 +80,8 @@ export interface Bonuses {
   goldPercent: number;
   /** Vida por segundo que regenera sempre, mesmo em combate. */
   regen: number;
+  /** Poderes de conjunto ativos (três peças vestidas). */
+  powers?: SetPower[];
 }
 
 export interface Progression {

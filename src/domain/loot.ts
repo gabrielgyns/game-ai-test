@@ -1,5 +1,6 @@
 import type { Entity } from "./components";
 import { createEquipment, createPotion, rollRarity } from "./items";
+import { createSetPiece, pickSetSlot, setForBoss } from "./sets";
 import type { World } from "./world";
 
 interface LootTable {
@@ -33,9 +34,12 @@ export function rollLoot(world: World, victim: Entity): void {
     z: victim.transform.position.z + (rand() - 0.5) * spread,
   });
   if (victim.boss) {
-    // Chefe: loot garantido e generoso.
-    world.addDrop(createEquipment(rand, 3, "epic"), scatter(3));
-    world.addDrop(createEquipment(rand, 3, rand() < 0.5 ? "rare" : "epic"), scatter(3));
+    // Chefe: loot garantido e generoso, com uma peça do conjunto dele (de preferência uma que falta).
+    const set = setForBoss(victim.archetype);
+    const hero = world.player;
+    if (set) world.addDrop(createSetPiece(set.id, pickSetSlot(set.id, hero ?? {}, rand), hero?.classId ?? "warrior"), scatter(3));
+    world.addDrop(createEquipment(rand, 3, set ? (rand() < 0.5 ? "rare" : "epic") : "epic"), scatter(3));
+    if (!set) world.addDrop(createEquipment(rand, 3, rand() < 0.5 ? "rare" : "epic"), scatter(3));
     world.addDrop(createPotion("large", 2), scatter(3));
     return;
   }

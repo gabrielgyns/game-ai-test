@@ -3,7 +3,7 @@ import { equipFromInventory, removeAt, unequip, useItem } from "../domain/invent
 import type { EquipSlot, Item } from "../domain/items";
 import type { World } from "../domain/world";
 import { iconCanvas } from "./itemIcons";
-import { itemTooltipHTML } from "./itemTooltip";
+import { displayRarity, itemTooltipHTML } from "./itemTooltip";
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -100,7 +100,7 @@ export class InventoryUI {
       return;
     }
     cell.className = "cell";
-    cell.dataset.rarity = item.rarity;
+    cell.dataset.rarity = displayRarity(item);
     const icon = iconCanvas(item.icon).cloneNode(true) as HTMLCanvasElement;
     const ctx = icon.getContext("2d")!;
     ctx.drawImage(iconCanvas(item.icon), 0, 0);
@@ -120,8 +120,8 @@ export class InventoryUI {
     const hint = item.kind === "equipment"
       ? equipped ? "Clique para guardar na mochila" : "Clique para equipar · Botão direito larga no chão"
       : "Clique para beber uma (ou Q no jogo) · Botão direito larga a pilha";
-    this.tooltip.innerHTML = itemTooltipHTML(item, { compare, hint });
-    this.tooltip.dataset.rarity = item.rarity;
+    this.tooltip.innerHTML = itemTooltipHTML(item, { compare, hint, equipment: this.player.equipment, classId: this.player.classId });
+    this.tooltip.dataset.rarity = displayRarity(item);
     this.tooltip.classList.remove("hidden");
   }
 
