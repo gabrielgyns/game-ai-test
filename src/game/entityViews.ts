@@ -186,9 +186,9 @@ class EntityView {
     const spinning = this.spinTime < 0.45;
     const spin = spinning ? (this.spinTime / 0.45) * Math.PI * 2 : 0;
     root.rotation.y += spin;
-    if (this.model.weaponArm && spinning) this.model.weaponArm.rotation.z = Math.PI / 2;
+    // Os dois braços abrem durante o giro e voltam ao lado do corpo quando ele acaba.
+    if (this.model.weaponArm) this.model.weaponArm.rotation.z = spinning ? Math.PI / 2 : 0;
     if (this.model.offArm) this.model.offArm.rotation.z = spinning ? -Math.PI / 2 : 0;
-    else if (this.model.weaponArm) this.model.weaponArm.rotation.z = 0;
 
     // Glow de equipamento pulsa de leve.
     if (this.model.glowMaterials) {

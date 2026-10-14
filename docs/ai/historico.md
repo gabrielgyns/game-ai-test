@@ -48,7 +48,10 @@ com screenshots antes de serem considerados prontos.
     o ciclo de caminhada, o braço livre no aviso e a pose de repouso da arma. `lab.html` reaproveita
     `World` + `EntityViews` para mostrar as animações reais, com presets de luz e comparação com a
     versão anterior (`src/lab/legacyModels.ts`). Custo: ~600k triângulos por quadro no spawn (antes
-    ~245k); grão em manchas de 2 voxels nos mobs e fino só no herói.
+    ~245k); grão em manchas de 2 voxels nos mobs e fino só no herói. Aprovado pelo dono e mesclado
+    na `main`. Bug reportado no teste dele: depois do Golpe Giratório o braço da arma ficava
+    esticado no herói, porque o reset só rodava em modelos sem braço livre; agora os dois braços
+    voltam e um teste em `src/game/entityViews.test.ts` cobre isso.
 
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).
