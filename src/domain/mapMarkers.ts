@@ -1,5 +1,6 @@
 import { isAlive, type Entity, type EntityId } from "./components";
 import { DUNGEON_ENTRANCE } from "./dungeon";
+import { ALTAR_SPOT, STASH_SPOT } from "./sanctuary";
 import { questsForNpc } from "./quests";
 import { DUNGEON_REGION_X } from "./terrain";
 import type { World } from "./world";
@@ -16,6 +17,9 @@ export type MarkerKind =
   | "questOffer"
   | "questTurnIn"
   | "portal"
+  /** Baú compartilhado e Altar das Eras, no santuário. */
+  | "stash"
+  | "altar"
   | "chest"
   | "exit"
   /** Item raro ou épico no chão. */
@@ -54,7 +58,11 @@ export function mapMarkers(world: World, player: Entity): MapMarker[] {
   }
 
   const run = world.dungeon;
-  if (here(DUNGEON_ENTRANCE.x)) out.push({ kind: "portal", x: DUNGEON_ENTRANCE.x, z: DUNGEON_ENTRANCE.z, label: "Cripta Esquecida" });
+  if (here(DUNGEON_ENTRANCE.x)) {
+    out.push({ kind: "portal", x: DUNGEON_ENTRANCE.x, z: DUNGEON_ENTRANCE.z, label: "Cripta Esquecida" });
+    out.push({ kind: "stash", x: STASH_SPOT.x, z: STASH_SPOT.z, label: "Baú" });
+    out.push({ kind: "altar", x: ALTAR_SPOT.x, z: ALTAR_SPOT.z, label: "Altar das Eras" });
+  }
   if (run && here(run.startPortal.x)) {
     out.push({ kind: "exit", x: run.startPortal.x, z: run.startPortal.z, label: "Saída" });
     if (run.exitPortal) out.push({ kind: "exit", x: run.exitPortal.x, z: run.exitPortal.z, label: "Saída" });

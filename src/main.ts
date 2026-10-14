@@ -9,7 +9,7 @@ import { stepWorld } from "./domain/simulation";
 import { DEFAULT_SEED, generateWorld } from "./domain/worldgen";
 import { restoreGame, serializeGame, type SaveData } from "./domain/save";
 import { formatPlayTime, summarize } from "./domain/saveSlots";
-import { exportSave, importSave, readNewGameIntent, saveSlots, writeNewGameIntent } from "./game/storage";
+import { exportSave, importSave, loadStash, readNewGameIntent, saveSlots, saveStash, writeNewGameIntent } from "./game/storage";
 import { SlotsUI } from "./game/slotsUI";
 import { GameAudio } from "./game/audio";
 import { ThirdPersonCamera } from "./game/camera";
@@ -44,6 +44,10 @@ import {
 import { ShopUI } from "./game/shopUI";
 import { SkillTreeUI } from "./game/skillTreeUI";
 import { Minimap } from "./game/minimap";
+import { StashUI } from "./game/stashUI";
+import { TierUI } from "./game/tierUI";
+import { sanctuaryInteraction } from "./domain/sanctuary";
+import { WORLD_TIERS, worldTierOf } from "./domain/worldTier";
 import { displayRarity } from "./game/itemTooltip";
 import { equippedSetCounts, SETS } from "./domain/sets";
 import type { Item } from "./domain/items";
@@ -200,6 +204,9 @@ function currentInteraction(): { label: string; act: () => void } | null {
       },
     };
   }
+  const spot = sanctuaryInteraction(player);
+  if (spot === "stash") return { label: "Abrir o baú do santuário", act: () => openPanel(stashUI) };
+  if (spot === "altar") return { label: `Altar das Eras (era: ${worldTierOf(world).name})`, act: () => openPanel(tierUI) };
   const npc = nearestNpc();
   return npc ? { label: `Falar com ${npc.name}`, act: () => openDialogue(npc) } : null;
 }
@@ -240,6 +247,37 @@ function closeShop(): void {
 }
 shopUI.onClose = closeShop;
 dialogue.onShop = openShop;
+// Baú do santuário (compartilhado entre os slots) e Altar das Eras (dificuldade do mundo).
+const stash = loadStash();
+const stashUI = new StashUI(stash, player);
+stashUI.onChange = () => saveStash(stash);
+stashUI.onMessage = (text) => toast(text);
+const tierUI = new TierUI(world, player);
+tierUI.onMessage = (text) => toast(text);
+tierUI.onChange = () => {
+  handleEvents(world.drainEvents());
+  saveGame("manual");
+};
+function openPanel(panel: { open(): void }): void {
+  panel.open();
+  paused = true;
+  document.exitPointerLock();
+}
+function closeStash(): void {
+  stashUI.close();
+  saveStash(stash);
+  paused = false;
+  input.requestLock();
+}
+function closeTiers(): void {
+  tierUI.close();
+  paused = false;
+  input.requestLock();
+}
+stashUI.onClose = closeStash;
+tierUI.onClose = closeTiers;
+/** Painéis do santuário abertos (bloqueiam as outras teclas de painel). */
+const sanctuaryPanelOpen = () => stashUI.isOpen || tierUI.isOpen;
 // Árvore de habilidades (K): painel modal como a mochila.
 const treeUI = new SkillTreeUI(world, player);
 treeUI.onAction = () => handleEvents(world.drainEvents());
@@ -305,6 +343,14 @@ input.onPointerLockChange = (locked) => {
   }
   if (shopUI.isOpen) {
     if (locked) closeShop();
+    return;
+  }
+  if (stashUI.isOpen) {
+    if (locked) closeStash();
+    return;
+  }
+  if (tierUI.isOpen) {
+    if (locked) closeTiers();
     return;
   }
   if (treeUI.isOpen) {
@@ -426,6 +472,8 @@ input.onEscape = () => {
   if (inventoryUI.isOpen) closeInventory();
   else if (treeUI.isOpen) closeTree();
   else if (shopUI.isOpen) closeShop();
+  else if (stashUI.isOpen) closeStash();
+  else if (tierUI.isOpen) closeTiers();
   else if (dialogue.isOpen) closeDialogue();
   else if (menu.isOpen) resume();
 };
@@ -759,6 +807,17 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         audio.play("questAccept");
         hud.pushLog(`Sala limpa (${ev.cleared}/${ev.total}).`, "gain");
         break;
+      case "worldTierUnlocked": {
+        const tier = WORLD_TIERS[ev.tier - 1]!;
+        audio.play("questComplete");
+        floats.spawn(player.transform.position, `NOVA ERA: ${tier.name.toUpperCase()}`, "#ffb36b", 1.5);
+        hud.pushLog(`Os três chefes caíram. A era ${tier.name} está aberta no Altar das Eras.`, "level");
+        break;
+      }
+      case "worldTierChanged":
+        audio.play("levelUp");
+        hud.pushLog(`O vale entrou na era ${WORLD_TIERS[ev.tier - 1]!.name}: inimigos ${WORLD_TIERS[ev.tier - 1]!.levelBonus ? `+${WORLD_TIERS[ev.tier - 1]!.levelBonus} níveis` : "no nível original"}.`, "level");
+        break;
       case "dungeonComplete":
         audio.play("questComplete");
         floats.spawn(player.transform.position, "CRIPTA VENCIDA!", "#ffe57a", 1.5);
@@ -819,16 +878,18 @@ function frame(): void {
   // Input → intenções no domínio.
   const { lookX, lookY, zoom, attack, inventory, potion, roll, skill, interact, tree, map } = input.flush();
   if (map && started && !menu.isOpen) minimap.toggleFull();
-  if (tree && started && !menu.isOpen && !dialogue.isOpen && !shopUI.isOpen && !inventoryUI.isOpen) {
+  if (tree && started && !menu.isOpen && !dialogue.isOpen && !shopUI.isOpen && !inventoryUI.isOpen && !sanctuaryPanelOpen()) {
     if (treeUI.isOpen) closeTree();
     else openTree();
   }
-  if (inventory && started && !menu.isOpen && !dialogue.isOpen && !shopUI.isOpen && !treeUI.isOpen) {
+  if (inventory && started && !menu.isOpen && !dialogue.isOpen && !shopUI.isOpen && !treeUI.isOpen && !sanctuaryPanelOpen()) {
     if (inventoryUI.isOpen) closeInventory();
     else openInventory();
   }
   if (interact && started && !menu.isOpen && !inventoryUI.isOpen && !treeUI.isOpen) {
     if (shopUI.isOpen) closeShop();
+    else if (stashUI.isOpen) closeStash();
+    else if (tierUI.isOpen) closeTiers();
     else if (dialogue.isOpen) closeDialogue();
     else if (isAlive(player)) {
       const action = currentInteraction();
@@ -919,7 +980,7 @@ function frame(): void {
   hud.setClock(formatClock(clockAt(world.time)), sky.night > 0.5);
   views.update(simDt, cam.camera, target?.id, world.time, player);
   const action = isAlive(player) ? currentInteraction() : null;
-  interactEl.classList.toggle("hidden", !action || dialogue.isOpen || shopUI.isOpen);
+  interactEl.classList.toggle("hidden", !action || dialogue.isOpen || shopUI.isOpen || sanctuaryPanelOpen());
   if (action && interactText.textContent !== action.label) interactText.textContent = action.label;
   questTracker.update(player);
   dropViews.update(world, world.time);

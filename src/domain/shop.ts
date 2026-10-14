@@ -50,7 +50,8 @@ export function rollStock(day: number, level: number): ShopOffer[] {
   const tier = stockTier(level);
   const rarities: Rarity[] = ["uncommon", "uncommon", "rare", rand() < 0.2 ? "epic" : "rare"];
   return rarities.slice(0, OFFERS_PER_DAY).map((rarity) => {
-    const item = createEquipment(rand, tier, rarity);
+    // A Mercadora acompanha o herói: o estoque tem o nível dele.
+    const item = createEquipment(rand, tier, rarity, level);
     return { item, price: Math.round(item.value * BUY_RATE), sold: false };
   });
 }

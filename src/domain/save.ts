@@ -1,4 +1,5 @@
 import type { Equipment } from "./inventory";
+import { applyWorldTier, newWorldTierState, type WorldTierState } from "./worldTier";
 import { recomputeStats } from "./inventory";
 import { resetItemIds, type Item } from "./items";
 import type { Vec3 } from "./math";
@@ -37,6 +38,8 @@ export interface SaveData {
     quests: QuestLog;
     /** Ranks da árvore de habilidades (opcional: saves antigos não têm). */
     talents?: TalentRanks;
+    /** Dificuldade do mundo (opcional: saves antigos começam no Aventureiro). */
+    worldTier?: WorldTierState;
   };
   drops: { item: Item; position: Vec3; age: number; requireLeave?: boolean }[];
   /** Estoque do dia e recompra da Mercadora (opcional: saves antigos não têm). */
@@ -69,6 +72,7 @@ export function serializeGame(world: World, seed: number): SaveData {
       equipment: structuredClone(p.equipment ?? { weapon: null, armor: null, accessory: null }),
       quests: structuredClone(p.quests ?? {}),
       talents: { ...(p.talents ?? {}) },
+      worldTier: structuredClone(p.worldTier ?? newWorldTierState()),
     },
     drops: [...world.drops.values()].filter((d) => d.position.x < DUNGEON_REGION_X).map((d) => ({ item: structuredClone(d.item), position: { ...d.position }, age: d.age, requireLeave: d.requireLeave })),
     shop: world.shop ? structuredClone(world.shop) : undefined,
@@ -107,6 +111,8 @@ export function restoreGame(save: SaveData): World {
   p.equipment = structuredClone(s.equipment);
   p.quests = structuredClone(s.quests);
   p.talents = { ...(s.talents ?? {}) };
+  p.worldTier = structuredClone(s.worldTier ?? newWorldTierState());
+  applyWorldTier(world);
   recomputeStats(p);
   p.health.current = Math.min(p.health.max, Math.max(1, s.health));
 

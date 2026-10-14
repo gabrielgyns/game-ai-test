@@ -75,6 +75,13 @@ Grito deixa todos lentos, o Segundo Fôlego dispara sozinho quando a vida fica c
 vira uma rajada de três flechas que atordoam, a Chuva de Flechas vira tempestade, a Bola de Fogo dobra e
 deixa o chão em chamas, a Nova Gélida congela, o Teleporte explode na partida e o Escudo Arcano explode
 ao acabar. Chefes resistem a atordoamento e lentidão (metade do tempo). Reiniciar a árvore custa ouro.
+No santuário ficam o **baú**, compartilhado entre todos os seus heróis (3 abas de 30 espaços: guarde
+num e tire no outro), e o **Altar das Eras**, onde se escolhe a **dificuldade do mundo**: Aventureiro,
+Veterano (+10 níveis), Apocalipse (+20) e Pesadelo (+30). Vencer os três chefes numa era abre a
+seguinte. Inimigos e chefes sobem de nível, dão bem mais XP e ouro, e todo item tem o **nível** de quem
+o derrubou: acima do nível 10, dano e vida dele crescem junto (a cripta e a Mercadora acompanham o seu
+nível).
+
 Cada chefe guarda um **conjunto de itens** de três peças (arma, armadura e acessório), em verde-água:
 os Espólios do Rei Goblin, a Seda da Rainha, a Armadura do Imperador e as Relíquias do Lorde Esqueleto.
 Duas peças vestidas dão um bônus (crítico, roubo de vida, vida, recarga); as três liberam um poder:

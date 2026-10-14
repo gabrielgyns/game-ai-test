@@ -364,7 +364,41 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0d12; col
 .item-tip .affix { color: #8fc2ff; }
 .item-tip .price { color: #ffd37a; font-weight: 600; margin-top: 4px; }
 
-/* Loja da Mercadora */
+/* Loja da Mercadora (o baú e o altar usam o mesmo esqueleto de painel) */
+#stash, #tiers {
+  position: absolute; inset: 0; display: flex; justify-content: center; align-items: center;
+  background: rgba(5, 6, 10, 0.5); pointer-events: auto;
+}
+#stash .panel, #tiers .panel {
+  width: min(820px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto;
+  background: var(--panel); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 18px 20px; backdrop-filter: blur(6px);
+}
+#tiers .panel { width: min(620px, calc(100vw - 32px)); }
+#stash .shop-body { grid-template-columns: 1fr 1fr; }
+#stash-grid { grid-template-columns: repeat(6, 56px); }
+#stash-bag { grid-template-columns: repeat(5, 56px); }
+#stash .cell { width: 56px; height: 56px; }
+#stash-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+#stash button, #tiers button {
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.16); border-radius: 8px; padding: 6px 12px; cursor: pointer; white-space: nowrap;
+}
+#stash button:hover, #tiers button:hover { background: rgba(255,255,255,0.16); }
+#stash-tabs button.active { background: rgba(255, 211, 122, 0.16); border-color: #c9a83a; color: #ffe7a0; }
+#tiers button:disabled { cursor: default; opacity: 0.55; }
+.tiers-intro { font-size: 13px; color: var(--muted); margin: 0 0 12px; line-height: 1.45; }
+.tier { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,0.04); margin-bottom: 8px; border: 1px solid transparent; }
+.tier.current { border-color: #c9a83a; background: rgba(255, 211, 122, 0.08); }
+.tier.locked { opacity: 0.55; }
+.tier .info { flex: 1; }
+.tier .tname { font-weight: 700; font-size: 15px; }
+.tier .bonus { font-size: 11px; font-weight: 600; color: #ffb36b; margin-left: 6px; }
+.tier .tdesc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.tier .tseal { font-size: 12px; margin-top: 6px; color: var(--text); }
+.tier .tseal span { margin-right: 8px; color: var(--muted); }
+.tier .tseal span.done { color: #9ce39c; }
+#tier-label { font-size: 11px; font-weight: 700; color: #ffb36b; margin-left: 6px; }
+
 #shop {
   position: absolute; inset: 0; display: flex; justify-content: center; align-items: center;
   background: rgba(5, 6, 10, 0.5); pointer-events: auto;

@@ -28,7 +28,9 @@ const LEGEND: { kind: MapMarker["kind"]; label: string }[] = [
   { kind: "boss", label: "Chefe" },
   { kind: "portal", label: "Portal da cripta" },
   { kind: "exit", label: "Saída" },
-  { kind: "chest", label: "Baú" },
+  { kind: "chest", label: "Baú da cripta" },
+  { kind: "stash", label: "Baú do santuário" },
+  { kind: "altar", label: "Altar das Eras" },
   { kind: "loot", label: "Item raro ou épico" },
 ];
 
@@ -140,8 +142,15 @@ function drawMarker(ctx: CanvasRenderingContext2D, kind: MapMarker["kind"], x: n
       ctx.arc(0, 0, r * 1.1, 0, Math.PI * 2);
       ctx.stroke();
       break;
+    case "altar":
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = "#ffb36b";
+      ctx.fillRect(-r * 0.9, -r * 0.9, r * 1.8, r * 1.8);
+      ctx.strokeRect(-r * 0.9, -r * 0.9, r * 1.8, r * 1.8);
+      break;
+    case "stash":
     case "chest":
-      ctx.fillStyle = "#e0b040";
+      ctx.fillStyle = kind === "stash" ? "#a8743a" : "#e0b040";
       ctx.fillRect(-r, -r * 0.75, r * 2, r * 1.5);
       ctx.strokeRect(-r, -r * 0.75, r * 2, r * 1.5);
       break;

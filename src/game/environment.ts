@@ -4,6 +4,7 @@ import { BOSS_HOME, seededRandom } from "../domain/worldgen";
 import { biomeAt, DESERT_BOSS_HOME, SWAMP_BOSS_HOME } from "../domain/biomes";
 import { isWater } from "../domain/terrain";
 import { DUNGEON_ENTRANCE } from "../domain/dungeon";
+import { ALTAR_SPOT, STASH_SPOT } from "../domain/sanctuary";
 import { VoxelBuilder, voxelMaterial } from "./voxel";
 import { PropField, type PropPlacement } from "./props/field";
 import type { PropKind } from "./props/catalog";
@@ -73,6 +74,9 @@ export function placeProps(seed = 4242): PropPlacement[] {
     const a = (i / 8) * Math.PI * 2;
     out.push({ kind: "pillar", x: Math.round(Math.cos(a) * 8) + 0.5, y: terrainHeight(0, 0), z: Math.round(Math.sin(a) * 8) + 0.5, yaw: -a, scale: 1 });
   }
+  // Baú compartilhado e Altar das Eras, na praça, virados para o centro.
+  out.push({ kind: "stash", x: STASH_SPOT.x, y: terrainHeight(STASH_SPOT.x, STASH_SPOT.z), z: STASH_SPOT.z, yaw: Math.atan2(STASH_SPOT.x, STASH_SPOT.z), scale: 1 });
+  out.push({ kind: "altar", x: ALTAR_SPOT.x, y: terrainHeight(ALTAR_SPOT.x, ALTAR_SPOT.z), z: ALTAR_SPOT.z, yaw: Math.atan2(ALTAR_SPOT.x, ALTAR_SPOT.z), scale: 1 });
   // Arena do Rei Goblin: anel de totens com crânios, virados para o centro.
   for (let i = 0; i < 10; i++) {
     const a = (i / 10) * Math.PI * 2;

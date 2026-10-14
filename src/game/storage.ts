@@ -1,6 +1,7 @@
 import { isSaveData, type SaveData } from "../domain/save";
 import { heroNameOf, isValidSlot, SaveSlots, type KeyValueStore } from "../domain/saveSlots";
 import { isClassId, type ClassId } from "../domain/classes";
+import { createStash, restoreStash, type Stash } from "../domain/stash";
 
 /** localStorage como porta do domínio; se o navegador bloquear, vira um armazenamento só da sessão. */
 function browserStore(): KeyValueStore {
@@ -15,7 +16,28 @@ function browserStore(): KeyValueStore {
   }
 }
 
-export const saveSlots = new SaveSlots(browserStore());
+const store = browserStore();
+export const saveSlots = new SaveSlots(store);
+
+/** Baú do santuário: um só para todos os slots, fora do save de cada herói. */
+const STASH_KEY = "vale.stash";
+
+export function loadStash(): Stash {
+  try {
+    const raw = store.getItem(STASH_KEY);
+    return raw ? restoreStash(JSON.parse(raw)) : createStash();
+  } catch {
+    return createStash();
+  }
+}
+
+export function saveStash(stash: Stash): void {
+  try {
+    store.setItem(STASH_KEY, JSON.stringify(stash));
+  } catch {
+    // Sem espaço: o baú continua na memória até a próxima tentativa.
+  }
+}
 
 /**
  * Pedido de "novo jogo" num slot, guardado na sessão enquanto a página recarrega com a classe

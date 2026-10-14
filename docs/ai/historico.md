@@ -151,6 +151,17 @@ com screenshots antes de serem considerados prontos.
     conjunto" na mochila, loja, log e drop (feixe mais alto), brilho verde-água no herói, tooltip com
     as três peças (vestidas acesas) e os bônus de 2 e 3, aviso ao ligar o bônus. Lab: herói com o
     conjunto do Imperador. 12 testes novos.
+27. **Baú e dificuldade do mundo** (pedido do dono: "estou nível 20 e já não tem mais nada"). Domínio:
+    `worldTier.ts` (Aventureiro, Veterano +10, Apocalipse +20, Pesadelo +30; vencer os três chefes no
+    maior nível destrava o próximo; `scaleEnemyToLevel` reescala vida ×1,13, dano ×1,11, XP ×1,25 e
+    ouro ×1,12 por nível a partir dos números de nascença em `tierBase`, então trocar de era é
+    reversível; lacaios de chefe também escalam), **nível do item** (`Item.level` = nível de quem
+    derrubou; `itemPower` cresce 8% por nível acima de 10 em dano, vida e regeneração, não em
+    porcentagens; vale para drops, chefes, conjuntos, baú da cripta e estoque da Mercadora), `stash.ts`
+    (baú de 3 abas × 30, compartilhado entre os slots, com ids novos ao carregar) e `sanctuary.ts`
+    (pontos de uso). Save guarda a era e reescala o vale ao carregar. Apresentação: baú e Altar das Eras
+    esculpidos na praça, painéis do baú e do altar, "Era X" no painel do herói, marcadores no mapa,
+    nível do item no tooltip, baú salvo em `vale.stash`. 12 testes novos.
 
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).

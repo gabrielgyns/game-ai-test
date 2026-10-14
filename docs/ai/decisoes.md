@@ -169,3 +169,10 @@ comum (entra na mesma soma dos afixos); o de 3 é um poder com efeito no combate
 falta, para que o farm de chefe tenha um fim visível. As peças são épicas por baixo (brilho, preço,
 regras de loot) e só a apresentação as pinta de verde-água, sem uma raridade nova no domínio.
 
+## D34. Dificuldade do mundo reescala a partir da nascença; loot pelo nível de quem derrubou
+Cada inimigo guarda os números com que nasceu (`tierBase`) e a era aplica um bônus de nível sobre eles,
+então trocar de era é idempotente e reversível, sem recriar o mundo. O poder do item vem do nível da
+criatura que o derrubou (não da era nem do herói): uma regra só serve vale, cripta, chefes e conjuntos.
+Só números absolutos crescem; porcentagens (crítico, roubo de vida, recarga) ficam, senão estourariam.
+O baú é compartilhado entre os slots e mora fora do save (`vale.stash`), como no Diablo.
+

@@ -243,8 +243,8 @@ export function openChest(world: World, player: Entity): boolean {
   if (player.wallet) player.wallet.gold += gold;
   const at = (dx: number, dz: number) => ({ x: chest.position.x + dx, y: 0, z: chest.position.z + dz });
   const items = [
-    createEquipment(rand, tier, rand() < 0.35 ? "epic" : "rare"),
-    createEquipment(rand, tier, rollRarity(rand, tier) === "common" ? "rare" : rand() < 0.5 ? "rare" : "epic"),
+    createEquipment(rand, tier, rand() < 0.35 ? "epic" : "rare", run.level),
+    createEquipment(rand, tier, rollRarity(rand, tier) === "common" ? "rare" : rand() < 0.5 ? "rare" : "epic", run.level),
     createPotion("large", 2),
   ];
   items.forEach((item, i) => world.addDrop(item, at((i - 1) * 1.4, -1.2)));

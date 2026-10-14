@@ -15,7 +15,7 @@
           <span id="hud-name">Herói</span>
           <span id="hud-level">Nv 1</span>
         </div>
-        <div class="row small clock"><span id="hud-clock"></span></div>
+        <div class="row small clock"><span id="hud-clock"></span><span id="tier-label"></span></div>
         <div class="bar hp"><div id="hud-hp-fill"></div><span id="hud-hp-text"></span></div>
         <div class="bar xp"><div id="hud-xp-fill"></div><span id="hud-xp-text"></span></div>
         <div class="row small"><span id="hud-gold">0 ouro</span><span id="hud-kills">0 abates</span></div>
@@ -109,6 +109,33 @@
           <div class="shop-footer"><span class="hint">ESC ou F: fechar</span><button id="shop-close" type="button">Fechar</button></div>
         </div>
         <div id="shop-tooltip" class="item-tip hidden"></div>
+      </div>
+
+      <div id="stash" class="hidden">
+        <div class="panel">
+          <div class="inv-header"><h2>Baú do santuário</h2><span class="hint" id="stash-count"></span></div>
+          <div class="shop-body">
+            <div class="shop-col">
+              <div id="stash-tabs"></div>
+              <div class="grid" id="stash-grid"></div>
+            </div>
+            <div class="shop-col">
+              <h3>Sua mochila <span class="hint">clique guarda no baú</span></h3>
+              <div class="grid" id="stash-bag"></div>
+            </div>
+          </div>
+          <div class="shop-footer"><span class="hint">Clique leva o item para o outro lado · ESC ou F: fechar</span><button id="stash-close" type="button">Fechar</button></div>
+        </div>
+        <div id="stash-tooltip" class="item-tip hidden"></div>
+      </div>
+
+      <div id="tiers" class="hidden">
+        <div class="panel">
+          <div class="inv-header"><h2>Altar das Eras</h2><span class="hint">dificuldade do mundo</span></div>
+          <p class="tiers-intro">O mesmo vale, numa era mais dura. Inimigos e chefes sobem de nível, dão mais XP e ouro, e o loot vem no nível deles. A cripta acompanha o seu nível em qualquer era.</p>
+          <div id="tiers-list"></div>
+          <div class="shop-footer"><span class="hint">ESC ou F: fechar</span><button id="tiers-close" type="button">Fechar</button></div>
+        </div>
       </div>
 
       <div id="tree" class="hidden">

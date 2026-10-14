@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { VoxelBuilder } from "../voxel";
 import { parseVox, voxToBuilder } from "../vox";
-import { cactus, bones, cocoon, goblinTotem, mushrooms, obelisk, shrinePillar } from "./landmarks";
+import { ageAltar, bones, cactus, cocoon, goblinTotem, mushrooms, obelisk, shrinePillar, stashChest } from "./landmarks";
 import { boulder, rockCluster, sandstone, slab } from "./rocks";
 import { birch, bush, deadTree, oak, pine } from "./trees";
 
@@ -54,6 +54,8 @@ export const PROP_MODELS = {
   cocoon: model("casulo", "Casulo de teia", () => cocoon(2)),
   obelisk: model("obelisco", "Obelisco do deserto", () => obelisk(4, false)),
   obeliskBroken: model("obelisco-quebrado", "Obelisco quebrado", () => obelisk(9, true)),
+  stash: model("bau-do-santuario", "Baú do santuário", () => stashChest(3)),
+  altar: model("altar-das-eras", "Altar das Eras", () => ageAltar(6)),
 } satisfies Record<string, PropModel>;
 
 export type PropKind = keyof typeof PROP_MODELS;

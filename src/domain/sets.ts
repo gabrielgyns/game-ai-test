@@ -1,7 +1,7 @@
 import type { ClassId } from "./classes";
 import type { BonusStat } from "./affixes";
 import type { Equipment, Inventory } from "./inventory";
-import { newItemId, type EquipSlot, type Item, type ItemStats } from "./items";
+import { itemPower, newItemId, scaleStats, type EquipSlot, type Item, type ItemStats } from "./items";
 
 /**
  * Conjuntos de itens: três peças (arma, armadura, acessório) que cada chefe guarda. Vestir duas
@@ -108,7 +108,7 @@ function template(set: SetDefinition, slot: EquipSlot, classId: ClassId): PieceT
 }
 
 /** Cria uma peça do conjunto. A arma acompanha a classe; as outras são iguais para todos. */
-export function createSetPiece(setId: SetId, slot: EquipSlot, classId: ClassId = "warrior"): Item {
+export function createSetPiece(setId: SetId, slot: EquipSlot, classId: ClassId = "warrior", level = 1): Item {
   const set = SETS[setId];
   const t = template(set, slot, classId);
   return {
@@ -117,14 +117,15 @@ export function createSetPiece(setId: SetId, slot: EquipSlot, classId: ClassId =
     kind: "equipment",
     slot,
     rarity: "epic",
-    stats: { ...t.stats },
+    stats: scaleStats(t.stats, itemPower(level)),
     icon: t.icon,
     visual: t.visual,
-    value: PIECE_VALUE,
+    value: Math.round(PIECE_VALUE * itemPower(level)),
     quantity: 1,
     maxStack: 1,
     tier: 3,
     set: setId,
+    level,
   };
 }
 

@@ -26,6 +26,7 @@ export function createPlayer(id: EntityId, position: Vec3, classId: ClassId = "w
     quests: {},
     stats: { kills: 0 },
     talents: {},
+    worldTier: { current: 1, unlocked: 1, defeated: [] },
   };
   player.equipment!.weapon = c.starterWeapon();
   player.inventory!.items[0] = createPotion("small", 2);

@@ -38,6 +38,25 @@ export interface Item {
   tier?: 1 | 2 | 3;
   /** Peça de conjunto (ver `sets.ts`): bônus quando vestida junto com as outras do mesmo conjunto. */
   set?: SetId;
+  /** Nível do item: o da criatura que o derrubou. Acima de 10, os números crescem com ele. */
+  level?: number;
+}
+
+/**
+ * Quanto os números de um item crescem com o nível dele. Até o nível 10 nada muda (o vale original);
+ * depois, 8% por nível, um pouco abaixo dos 10% que o herói ganha de dano por nível: o equipamento
+ * acompanha, mas subir de nível continua valendo.
+ */
+export function itemPower(level = 1): number {
+  return level <= 10 ? 1 : Math.pow(1.08, level - 10);
+}
+
+/** Atributos fixos (dano, vida) multiplicados pelo poder do nível; porcentagens não mudam. */
+export function scaleStats(stats: ItemStats, power: number): ItemStats {
+  const out: ItemStats = { ...stats };
+  if (out.damage) out.damage = Math.round(out.damage * power);
+  if (out.maxHealth) out.maxHealth = Math.round(out.maxHealth * power);
+  return out;
 }
 
 export const RARITY_MULTIPLIER: Record<Rarity, number> = {
@@ -132,7 +151,7 @@ export function newItemId(): number {
 /** Ouro que cada afixo soma ao valor do item, por tier. */
 const AFFIX_VALUE = [6, 14, 30] as const;
 
-export function createEquipment(rand: () => number, tier: 1 | 2 | 3, rarity: Rarity): Item {
+export function createEquipment(rand: () => number, tier: 1 | 2 | 3, rarity: Rarity, level = 1): Item {
   const pool = EQUIPMENT_TEMPLATES[tier];
   const t = pool[Math.floor(rand() * pool.length)]!;
   const mult = RARITY_MULTIPLIER[rarity];
@@ -140,7 +159,8 @@ export function createEquipment(rand: () => number, tier: 1 | 2 | 3, rarity: Rar
   if (t.stats.damage) stats.damage = Math.round(t.stats.damage * mult);
   if (t.stats.maxHealth) stats.maxHealth = Math.round(t.stats.maxHealth * mult);
   if (t.stats.speedPercent) stats.speedPercent = Math.round(t.stats.speedPercent * mult);
-  const affixes = rollAffixes(rand, t.slot, tier, rarity);
+  const power = itemPower(level);
+  const affixes = rollAffixes(rand, t.slot, tier, rarity, power);
   // O primeiro afixo dá sobrenome ao item: "Espada Longa Encantada da Serpente".
   const surname = affixes[0] ? AFFIXES[affixes[0].id].suffix : "";
   return {
@@ -149,14 +169,15 @@ export function createEquipment(rand: () => number, tier: 1 | 2 | 3, rarity: Rar
     kind: "equipment",
     slot: t.slot,
     rarity,
-    stats,
+    stats: scaleStats(stats, power),
     icon: t.icon,
     visual: t.visual,
-    value: Math.round(t.value * mult) + affixes.length * (AFFIX_VALUE[tier - 1] ?? 6),
+    value: Math.round((Math.round(t.value * mult) + affixes.length * (AFFIX_VALUE[tier - 1] ?? 6)) * power),
     quantity: 1,
     maxStack: 1,
     affixes: affixes.length ? affixes : undefined,
     tier,
+    level,
   };
 }
 

@@ -27,7 +27,8 @@ export function itemTooltipHTML(item: Item, opts: { compare?: Item | null; hint?
   const lines = [`<div class="name">${item.name}${item.quantity > 1 ? ` <span class="qty-inline">×${item.quantity}</span>` : ""}</div>`];
   const kind = item.kind === "equipment" && item.slot ? SLOT_LABEL[item.slot] : "Consumível";
   const label = item.set ? "Peça de conjunto" : RARITY_LABEL[item.rarity];
-  lines.push(`<div class="rarity">${label} · ${kind}${item.tier && !item.set ? ` · tier ${item.tier}` : ""}</div>`);
+  const level = item.level && item.level > 1 ? ` · nível ${item.level}` : item.tier && !item.set ? ` · tier ${item.tier}` : "";
+  lines.push(`<div class="rarity">${label} · ${kind}${level}</div>`);
   if (item.kind === "equipment") {
     const base = describeStats(item.stats);
     if (base) lines.push(`<div class="stat">${base}</div>`);

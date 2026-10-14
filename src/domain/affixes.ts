@@ -52,14 +52,16 @@ export function affixCount(rarity: Rarity, rand: () => number): number {
 const RARITY_POWER: Record<Rarity, number> = { common: 1, uncommon: 1, rare: 1.15, epic: 1.3 };
 
 /** Sorteia afixos distintos permitidos no slot, com valor variando ±20% em volta da base. */
-export function rollAffixes(rand: () => number, slot: EquipSlot, tier: 1 | 2 | 3, rarity: Rarity): Affix[] {
+export function rollAffixes(rand: () => number, slot: EquipSlot, tier: 1 | 2 | 3, rarity: Rarity, power = 1): Affix[] {
   const pool = Object.values(AFFIXES).filter((a) => a.slots.includes(slot));
   const count = Math.min(pool.length, affixCount(rarity, rand));
   const out: Affix[] = [];
   for (let i = 0; i < count; i++) {
     const options = pool.filter((a) => !out.some((o) => o.id === a.id));
     const def = options[Math.floor(rand() * options.length)]!;
-    const raw = (def.values[tier - 1] ?? def.values[0]) * RARITY_POWER[rarity] * (0.8 + rand() * 0.4);
+    // O nível do item só cresce o que é número absoluto (dano, vida, regeneração), não porcentagens.
+    const flat = def.stat === "damage" || def.stat === "maxHealth" || def.stat === "regen";
+    const raw = (def.values[tier - 1] ?? def.values[0]) * RARITY_POWER[rarity] * (0.8 + rand() * 0.4) * (flat ? power : 1);
     // Regeneração aceita meio ponto; o resto é inteiro, nunca zero.
     const value = def.stat === "regen" ? Math.max(0.5, Math.round(raw * 2) / 2) : Math.max(1, Math.round(raw));
     out.push({ id: def.id, value });

@@ -188,3 +188,70 @@ export function obelisk(seed: number, broken: boolean): VoxelBuilder {
   }
   return trimBelow(b);
 }
+
+/**
+ * Baú do santuário: tábuas de madeira com frestas, tampa abaulada, cintas e cantoneiras de ferro e
+ * fechadura dourada na frente (-Z). Cabe nele o que não cabe na mochila.
+ */
+export function stashChest(seed: number): VoxelBuilder {
+  const b = new VoxelBuilder();
+  const wood: Paint = (x, y, z) => (x % 4 === 0 ? "#5a3a20" : pickTone(["#7a5230", "#86603a", "#8f6a40"], noise3(x / 2, y / 6, z / 2, seed)));
+  const iron = "#4a4a52", ironLight = "#6a6a74";
+  // Caixa.
+  for (let x = -9; x < 9; x++) for (let y = 1; y < 9; y++) for (let z = -6; z < 6; z++) b.set(x, y, z, wood(x, y, z));
+  // Tampa abaulada.
+  for (let x = -9; x < 9; x++)
+    for (let z = -6; z < 6; z++)
+      for (let y = 9; y < 13; y++) {
+        const r = Math.hypot((z + 0.5) / 6, (y - 8) / 4.2);
+        if (r <= 1) b.set(x, y, z, wood(x, y, z));
+      }
+  // Pés, cintas e cantoneiras de ferro.
+  for (const x of [-9, 8]) for (const z of [-6, 5]) b.set(x, 0, z, iron);
+  for (const x of [-6, 5]) {
+    for (let y = 1; y < 13; y++) for (let z = -7; z < 7; z++) if (b.has(x, y, z) && (!b.has(x, y, z - 1) || !b.has(x, y, z + 1) || !b.has(x, y + 1, z))) b.set(x, y, z, y % 3 ? iron : ironLight);
+  }
+  for (const x of [-9, 8]) for (let y = 1; y < 9; y++) for (const z of [-6, 5]) b.set(x, y, z, ironLight);
+  // Fechadura e fresta da tampa.
+  b.box(-2, 6, -7, 2, 10, -6, "#c9a23a").box(-1, 7, -7, 1, 9, -6, "#f0d070").set(0, 7, -7, "#2a2018");
+  for (let x = -9; x < 9; x++) if (Math.abs(x) > 2) b.set(x, 9, -6, "#3a2414");
+  return b;
+}
+
+/**
+ * Altar das Eras: plataforma de pedra em degraus, um pedestal com quatro runas (uma cor por nível de
+ * dificuldade: verde, azul, roxo e vermelho) e um cristal âmbar no topo, onde se escolhe a era do mundo.
+ */
+export function ageAltar(seed: number): VoxelBuilder {
+  const b = new VoxelBuilder();
+  const stone: Paint = (x, y, z) => pickTone(["#8a8478", "#9a9488", "#aaa496", "#b8b2a4"], Math.min(0.999, noise3(x / 4, y / 4, z / 4, seed) * 0.7 + hash3(x, y, z, seed) * 0.3));
+  const fill = (x0: number, y0: number, z0: number, x1: number, y1: number, z1: number) => {
+    for (let x = x0; x < x1; x++) for (let y = y0; y < y1; y++) for (let z = z0; z < z1; z++) b.set(x, y, z, stone(x, y, z));
+  };
+  fill(-13, 0, -13, 13, 2, 13);
+  fill(-10, 2, -10, 10, 4, 10);
+  fill(-5, 4, -5, 5, 15, 5);
+  fill(-7, 15, -7, 7, 17, 7);
+  // Runas: uma em cada face do pedestal, na cor do nível.
+  const runes: [string, (u: number, v: number) => [number, number, number]][] = [
+    ["#5fd36b", (u, v) => [u, v, -6]],
+    ["#5b8def", (u, v) => [5, v, u]],
+    ["#b06cf0", (u, v) => [u, v, 5]],
+    ["#e5484d", (u, v) => [-6, v, u]],
+  ];
+  for (const [color, at] of runes)
+    for (const [u, v] of [[-1, 11], [0, 11], [-1, 10], [0, 9], [-1, 8], [0, 8], [-2, 9], [1, 9]] as const) {
+      const [x, y, z] = at(u, v);
+      b.set(x, y, z, color);
+    }
+  // Cristal âmbar em ponta, com faces claras.
+  for (let y = 17; y < 29; y++) {
+    const r = y < 22 ? (y - 16) * 0.75 : (29 - y) * 0.6;
+    for (let x = -4; x <= 4; x++)
+      for (let z = -4; z <= 4; z++)
+        if (Math.abs(x + 0.5) + Math.abs(z + 0.5) <= r) b.set(x, y, z, x + z > 0 ? "#ffd27a" : y % 3 ? "#e8a840" : "#f4c060");
+  }
+  // Musgo nas frestas dos degraus.
+  coatTop(b, (x, y, z) => (y <= 3 && noise3(x / 3, y, z / 3, seed + 2) > 0.72 ? pickTone(["#4d7a30", "#5c8a38"], hash3(x, y, z)) : null));
+  return b;
+}

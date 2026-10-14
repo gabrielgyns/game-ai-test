@@ -47,6 +47,8 @@ export type GameEvent =
   | { type: "dungeonLifeLost"; livesLeft: number }
   | { type: "roomCleared"; cleared: number; total: number }
   | { type: "dungeonComplete"; level: number }
+  | { type: "worldTierChanged"; tier: number }
+  | { type: "worldTierUnlocked"; tier: number }
   | { type: "chestOpened"; gold: number; items: string[] }
   | { type: "sell"; entity: EntityId; itemName: string; gold: number }
   | { type: "buy"; entity: EntityId; itemName: string; gold: number }

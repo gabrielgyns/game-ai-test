@@ -4,6 +4,7 @@ import { isAlive } from "../domain/components";
 import type { World } from "../domain/world";
 import { entityLevel, levelDifficulty, type LevelDifficulty } from "../domain/levels";
 import { DIFFICULTY_COLOR } from "./levelBadge";
+import { WORLD_TIERS } from "../domain/worldTier";
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -53,6 +54,7 @@ export class Hud {
   }
 
   private readonly clock = el("hud-clock");
+  private readonly tierLabel = el("tier-label");
   private clockText = "";
 
   /** Relógio do mundo no painel de status, com sol ou lua. */
@@ -111,6 +113,8 @@ export class Hud {
     const prog = player.progression;
     if (this.name.textContent !== player.name) this.name.textContent = player.name;
     this.level.textContent = `Nível ${prog?.level ?? 1}`;
+    const tier = player.worldTier && player.worldTier.current > 1 ? `Era ${WORLD_TIERS[player.worldTier.current - 1]!.name}` : "";
+    if (this.tierLabel.textContent !== tier) this.tierLabel.textContent = tier;
     const hp = Math.ceil(player.health.current);
     this.hpFill.style.width = `${(player.health.current / player.health.max) * 100}%`;
     this.hpText.textContent = `${hp} / ${player.health.max}`;

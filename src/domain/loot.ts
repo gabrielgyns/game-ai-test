@@ -1,4 +1,5 @@
 import type { Entity } from "./components";
+import { entityLevel } from "./levels";
 import { createEquipment, createPotion, rollRarity } from "./items";
 import { createSetPiece, pickSetSlot, setForBoss } from "./sets";
 import type { World } from "./world";
@@ -33,22 +34,24 @@ export function rollLoot(world: World, victim: Entity): void {
     y: victim.transform.position.y,
     z: victim.transform.position.z + (rand() - 0.5) * spread,
   });
+  // O item tem o nível de quem o derrubou: na dificuldade alta (ou na cripta) o loot cresce junto.
+  const level = entityLevel(victim);
   if (victim.boss) {
     // Chefe: loot garantido e generoso, com uma peça do conjunto dele (de preferência uma que falta).
     const set = setForBoss(victim.archetype);
     const hero = world.player;
-    if (set) world.addDrop(createSetPiece(set.id, pickSetSlot(set.id, hero ?? {}, rand), hero?.classId ?? "warrior"), scatter(3));
-    world.addDrop(createEquipment(rand, 3, set ? (rand() < 0.5 ? "rare" : "epic") : "epic"), scatter(3));
-    if (!set) world.addDrop(createEquipment(rand, 3, rand() < 0.5 ? "rare" : "epic"), scatter(3));
+    if (set) world.addDrop(createSetPiece(set.id, pickSetSlot(set.id, hero ?? {}, rand), hero?.classId ?? "warrior", level), scatter(3));
+    world.addDrop(createEquipment(rand, 3, set ? (rand() < 0.5 ? "rare" : "epic") : "epic", level), scatter(3));
+    if (!set) world.addDrop(createEquipment(rand, 3, rand() < 0.5 ? "rare" : "epic", level), scatter(3));
     world.addDrop(createPotion("large", 2), scatter(3));
     return;
   }
   const table = LOOT_TABLES[victim.archetype];
   if (!table) return;
-  // Inimigos de dungeon carregam o tier do nível da dungeon.
-  const tier = victim.ai?.lootTier ?? table.tier;
+  // Inimigos de dungeon carregam o tier do nível da dungeon; acima do nível 12 (dificuldade alta), tier 3.
+  const tier = victim.ai?.lootTier ?? (level > 12 ? 3 : table.tier);
   if (rand() < table.equipmentChance) {
-    world.addDrop(createEquipment(rand, tier, rollRarity(rand, tier)), scatter());
+    world.addDrop(createEquipment(rand, tier, rollRarity(rand, tier), level), scatter());
   }
   if (rand() < table.potionChance) {
     world.addDrop(createPotion(rand() < table.largePotionChance ? "large" : "small"), scatter());
