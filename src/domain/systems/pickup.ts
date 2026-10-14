@@ -19,7 +19,13 @@ export function pickupSystem(world: World, dt: number): void {
       continue;
     }
     if (!canPick || world.time < drop.blockedUntil) continue;
-    if (distanceXZ(drop.position, player.transform.position) > PICKUP_RADIUS) continue;
+    const dist = distanceXZ(drop.position, player.transform.position);
+    // Item largado: fica no chão até o jogador sair da área de coleta uma vez.
+    if (drop.requireLeave) {
+      if (dist > PICKUP_RADIUS + 0.6) drop.requireLeave = false;
+      continue;
+    }
+    if (dist > PICKUP_RADIUS) continue;
 
     if (addItem(player.inventory!, drop.item)) {
       world.drops.delete(drop.id);

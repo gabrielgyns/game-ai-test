@@ -159,6 +159,20 @@ describe("loot e coleta", () => {
     expect(world.drops.size).toBe(0);
   });
 
+  it("item largado pelo jogador só é recoletado depois que ele se afasta", () => {
+    const { world, player } = setup();
+    const drop = world.addDrop(createPotion(), { x: 0.8, y: 0, z: 0 });
+    drop.requireLeave = true;
+    stepWorld(world, 1);
+    expect(world.drops.size).toBe(1); // em cima dele, mas não pega
+    player.transform.position.x = 5; // afasta
+    stepWorld(world, 1 / 60);
+    expect(world.drops.size).toBe(1);
+    player.transform.position.x = 0.5; // volta
+    stepWorld(world, 1 / 60);
+    expect(world.drops.size).toBe(0);
+  });
+
   it("com inventário cheio o drop fica no chão e avisa", () => {
     const { world, player } = setup();
     for (let i = 0; i < 30; i++) addItem(player.inventory!, createEquipment(() => 0, 1, "common"));

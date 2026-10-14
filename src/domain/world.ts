@@ -16,6 +16,8 @@ export interface Drop {
   age: number;
   /** Até quando (world.time) ignorar tentativas de coleta (inventário cheio). */
   blockedUntil: number;
+  /** Item largado pelo jogador: só volta a ser coletável depois que ele se afasta. */
+  requireLeave: boolean;
 }
 
 export class World {
@@ -56,7 +58,7 @@ export class World {
   }
 
   addDrop(item: Item, position: Vec3): Drop {
-    const drop: Drop = { id: this.nextDropId++, item, position: { ...position }, age: 0, blockedUntil: 0 };
+    const drop: Drop = { id: this.nextDropId++, item, position: { ...position }, age: 0, blockedUntil: 0, requireLeave: false };
     this.drops.set(drop.id, drop);
     this.emit({ type: "drop", dropId: drop.id });
     return drop;

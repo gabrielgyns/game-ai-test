@@ -143,7 +143,8 @@ let paused = false;
 inventoryUI.onDiscard = (item) => {
   const p = player.transform.position;
   const yaw = player.transform.yaw;
-  world.addDrop(item, { x: p.x - Math.sin(yaw) * 1.2, y: p.y, z: p.z - Math.cos(yaw) * 1.2 });
+  const drop = world.addDrop(item, { x: p.x - Math.sin(yaw) * 2.2, y: p.y, z: p.z - Math.cos(yaw) * 2.2 });
+  drop.requireLeave = true; // não volta para a mochila ao fechar o painel
   hud.pushLog(`Você largou ${item.name}.`, "dmg-out");
 };
 
