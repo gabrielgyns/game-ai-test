@@ -53,6 +53,18 @@ Todo o áudio é sintetizado em tempo real com Web Audio, sem arquivos: efeitos 
 esquiva, coleta (acorde por raridade), poção, nível, quests e habilidades, mais uma trilha ambiente
 generativa que vira um tema pulsante quando um chefe entra em combate. Volumes no menu (ESC).
 
+Os personagens são voxels de 16 por metro com rosto, roupa com costuras, armas detalhadas, oclusão
+ambiente nos cantos e grão leve; pernas e braços são articulados e andam de verdade.
+
+## Lab de modelos
+
+`http://localhost:5173/lab.html` abre a vitrine: todos os heróis (3 classes × 4 conjuntos de
+equipamento), mobs, chefes, NPCs, itens por raridade, habilidades, projéteis e adereços de cenário,
+num pedestal com câmera orbital. Dá para trocar a luz (campina, pântano, deserto, noite, estúdio),
+disparar as animações do jogo (andar, atacar, aviso de golpe, rolamento, investida, Golpe Giratório,
+escudo, morte) e comparar lado a lado com a versão anterior dos modelos. É onde o visual é
+trabalhado antes de ir para o jogo.
+
 Veja o [ROADMAP](ROADMAP.md) para a visão e os próximos marcos.
 
 ## Para IAs e novos colaboradores

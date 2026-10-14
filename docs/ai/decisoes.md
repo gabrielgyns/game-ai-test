@@ -60,3 +60,24 @@ samples é um marco futuro no roadmap.
 
 ## D15. Lock-on adiado
 Explicado ao dono (lanterna vs. holofote); ele preferiu seguir com conteúdo. Fica no roadmap.
+
+## D16. Personagens em 16 voxels/m, com AO e grão cozidos nos vértices
+Dobrar a resolução (de 8 para 16 por metro) e cozinhar oclusão ambiente e grão nas cores dos
+vértices foi o que mais aproximou o visual de Minecraft Dungeons sem sair do voxel. Alternativas
+descartadas: trocar para low-poly (eu modelo às cegas, rostos ficariam ruins) e assets glTF
+(perderia a identidade e a dependência de arte externa). Custo aceito: ~2,5× mais triângulos por
+personagem; mitigado com manchas de grão de 2 voxels nos mobs.
+
+## D17. Rig humanoide com membros em pivôs
+Pernas, braços e cabeça são malhas separadas com pivô na articulação. O ciclo de caminhada e as
+poses (aviso, golpe, giro) ficam na view, sem esqueleto nem animações gravadas. Simples, barato e
+suficiente para o estilo.
+
+## D18. Lab de modelos reaproveita as views do jogo
+`/lab.html` cria um `World` com uma entidade e passa pelo `EntityViews` de verdade, em vez de
+duplicar a animação. O que se vê no lab é o que se vê no jogo. A versão anterior dos modelos fica
+congelada em `src/lab/legacyModels.ts` só para comparação.
+
+## D19. Trabalho visual em branch separada (`design/lab`)
+A pedido do dono: mudanças de design ficam em `design/lab` até ele aprovar, e só então vão para a
+`main`. Os marcos de gameplay continuam indo direto para a `main`.

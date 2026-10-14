@@ -2,7 +2,7 @@ import * as THREE from "three";
 import type { ProjectileKind } from "../domain/projectiles";
 import type { World } from "../domain/world";
 
-function makeMesh(kind: ProjectileKind): THREE.Object3D {
+export function createProjectileMesh(kind: ProjectileKind): THREE.Object3D {
   switch (kind) {
     case "arrow":
     case "piercingArrow": {
@@ -51,7 +51,7 @@ export class ProjectileViews {
     for (const p of world.projectiles.values()) {
       let view = this.views.get(p.id);
       if (!view) {
-        view = makeMesh(p.kind);
+        view = createProjectileMesh(p.kind);
         this.scene.add(view);
         this.views.set(p.id, view);
       }

@@ -27,7 +27,7 @@ function dropGeometry(icon: string): THREE.BufferGeometry {
   return geometry;
 }
 
-class DropView {
+export class DropView {
   readonly group = new THREE.Group();
   private readonly card: THREE.Mesh;
   private readonly ring: THREE.Mesh;

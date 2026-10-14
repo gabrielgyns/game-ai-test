@@ -39,5 +39,16 @@ com screenshots antes de serem considerados prontos.
     corrigido no caminho: "Novo jogo" pelo menu era desfeito pelo autosave de `beforeunload`
     (flag `suppressAutosave`).
 
+16. **Voxel rico e lab de modelos** (branch `design/lab`, a pedido do dono: "continuar com voxel,
+    voxel mais rico, um /lab para mostrar tudo"). VoxelBuilder ganhou oclusão ambiente por vértice,
+    grão por voxel (com manchas de N voxels), `sphere`, `carve`, `stampXY/XZ` (ASCII art), `recolorFront`
+    (pintar na superfície de uma bola) e `tone/shades` para paletas. Todos os personagens foram
+    redesenhados em 16 voxels/m em `src/game/characters/` (herói, mobs, chefes, NPCs) com um rig
+    humanoide articulado (`buildHumanoid`): pernas, braços e cabeça em pivôs; o `entityViews` anima
+    o ciclo de caminhada, o braço livre no aviso e a pose de repouso da arma. `lab.html` reaproveita
+    `World` + `EntityViews` para mostrar as animações reais, com presets de luz e comparação com a
+    versão anterior (`src/lab/legacyModels.ts`). Custo: ~600k triângulos por quadro no spawn (antes
+    ~245k); grão em manchas de 2 voxels nos mobs e fino só no herói.
+
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).

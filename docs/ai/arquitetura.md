@@ -66,6 +66,24 @@ o servidor roda `stepWorld` e o cliente roda só `src/game`.
   `skillBar.ts`, `menu.ts`. Painéis modais (mochila, diálogo, menu) pausam a simulação e soltam o
   pointer lock; `main.ts` coordena quem está aberto.
 
+## Personagens voxel (`src/game/characters/`)
+- `common.ts`: tipo `CharacterModel` (root, weaponArm, offArm, legs, head, height, glowMaterials,
+  weaponArmRest), escala `V = 1/16`, materiais de glow e aura, paletas (`PAL`), e os "pintores" de
+  peças (perna, braço, cabeça, rosto, cabelo).
+- `humanoid.ts`: `buildHumanoid(spec)` monta um humanoide articulado a partir de medidas e callbacks
+  de detalhe (tronco, cabeça, arma, mão livre). Goblin, orc, salteador, zumbi, Rei Goblin e aldeões
+  usam isso; o herói (`hero.ts`) é montado à mão porque cada peça tem material próprio (glow).
+- `mobs.ts`, `bosses.ts`, `npcs.ts`: um `createX()` por criatura. `models.ts` é o índice
+  (`createModel(archetype)` e `ARCHETYPES`).
+- Convenção: origem nos pés, frente para -Z, coordenadas inteiras em voxels; braços com pivô no
+  ombro e geometria pendurada em -Y; arma em coordenadas do braço direito.
+
+## Lab (`lab.html`, `src/lab/`)
+- `catalog.ts` lista os `Exhibit`s (personagem via `World` + `EntityViews`, ou objeto estático).
+- `main.ts`: cena, presets de luz, animações (que mexem na entidade como o jogo faria) e o gancho
+  `window.__lab` (show, setAnim, setPreset, setCompare, orbit, step) para screenshots headless.
+- `legacyModels.ts`: cópia congelada dos modelos de 8 voxels/m, só para o modo "comparar".
+
 ## Dependências
 
 Three.js (render + addons de pós-processamento), Vite, Vitest, TypeScript estrito

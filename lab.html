@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vale das Gosmas — Lab</title>
+    <link rel="stylesheet" href="/src/lab/lab.css" />
+  </head>
+  <body>
+    <aside id="sidebar">
+      <header>
+        <h1>Lab de modelos</h1>
+        <p>Vitrine de tudo que aparece no jogo. <a href="/">Voltar ao jogo</a></p>
+      </header>
+      <nav id="catalog"></nav>
+    </aside>
+    <main>
+      <div id="toolbar">
+        <label>Luz <select id="preset"></select></label>
+        <label>Animação <select id="anim"></select></label>
+        <label><input type="checkbox" id="turntable" checked /> Girar</label>
+        <label><input type="checkbox" id="compare" /> Comparar com a versão anterior</label>
+        <label><input type="checkbox" id="grid" checked /> Chão</label>
+        <span id="stats"></span>
+      </div>
+      <canvas id="lab"></canvas>
+      <div id="info">
+        <h2 id="info-title"></h2>
+        <p id="info-desc"></p>
+      </div>
+    </main>
+    <script type="module" src="/src/lab/main.ts"></script>
+  </body>
+</html>

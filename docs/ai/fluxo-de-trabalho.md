@@ -31,6 +31,13 @@ npm run build      # produção em dist/
 - Novos itens: `items.ts` (templates por tier), ícone em `itemIcons.ts`, visual no herói em
   `models.ts` se for vestível.
 
+## Trabalho visual
+Mudanças de modelo passam primeiro pelo lab: `npm run dev` e abra `http://localhost:5173/lab.html`
+(ou `?e=mob.orc&anim=walk&preset=night&compare=1&turn=0` para um estado específico). No headless,
+`window.__lab.show(id)`, `setAnim`, `orbit(azimute, polar, escala)` e `step(dt, n)` deixam fotografar
+cada modelo com um único navegador. Branch de design: `design/lab`, mesclada na `main` só com o ok
+do dono.
+
 ## Ferramentas de verificação headless
 Scripts de exemplo viveram no scratchpad da sessão (não versionados). Padrão:
 ```js

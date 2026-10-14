@@ -15,6 +15,8 @@ class EntityView {
   private readonly targetRing: THREE.Mesh;
   private swingTime = Infinity;
   private walkPhase = 0;
+  /** Fase do passo (-1..1) suavizada, para pernas e braços. */
+  private stride = 0;
   private deathTime = 0;
   private visualY: number | null = null;
   private spinTime = Infinity;
@@ -184,7 +186,8 @@ class EntityView {
     const spinning = this.spinTime < 0.45;
     const spin = spinning ? (this.spinTime / 0.45) * Math.PI * 2 : 0;
     root.rotation.y += spin;
-    if (this.model.weaponArm && spinning) this.model.weaponArm.rotation.z = -Math.PI / 2;
+    if (this.model.weaponArm && spinning) this.model.weaponArm.rotation.z = Math.PI / 2;
+    if (this.model.offArm) this.model.offArm.rotation.z = spinning ? -Math.PI / 2 : 0;
     else if (this.model.weaponArm) this.model.weaponArm.rotation.z = 0;
 
     // Glow de equipamento pulsa de leve.
@@ -193,25 +196,46 @@ class EntityView {
       for (const g of this.model.glowMaterials) g.material.emissiveIntensity = g.baseIntensity * pulse;
     }
 
-    // Caminhada: balanço vertical e leve inclinação enquanto se move.
+    // Caminhada: pernas e braços alternam como um pêndulo; o corpo sobe no apoio de cada passo.
     const moving = e.movement.intent.x !== 0 || e.movement.intent.z !== 0;
+    const { legs, offArm, weaponArm, head } = this.model;
     if (moving) {
       this.walkPhase += dt * e.movement.speed * 1.6;
-      root.position.y += Math.abs(Math.sin(this.walkPhase)) * 0.12;
-      root.rotation.z = Math.sin(this.walkPhase) * 0.05;
+      const s = Math.sin(this.walkPhase);
+      root.position.y += Math.abs(s) * (legs ? 0.05 : 0.12);
+      root.rotation.z = s * (legs ? 0.025 : 0.05);
+      this.stride = s;
     } else {
       root.rotation.z = 0;
-      // Respiração ociosa.
+      // Respiração ociosa, e os membros voltam suavemente ao repouso.
       root.position.y += Math.sin(time * 2 + e.id) * 0.02;
+      this.stride += (0 - this.stride) * clamp(dt * 10, 0, 1);
+    }
+    const stride = this.stride;
+    if (legs) {
+      legs[0]!.rotation.x = stride * 0.75;
+      legs[1]!.rotation.x = -stride * 0.75;
+    }
+    if (offArm) offArm.rotation.x = -stride * 0.55;
+    const rest = this.model.weaponArmRest ?? 0;
+    if (weaponArm) weaponArm.rotation.x = rest + stride * 0.45;
+    if (head) {
+      head.rotation.x = Math.abs(stride) * 0.04;
+      head.rotation.y = Math.sin(time * 0.7 + e.id) * 0.06; // olha em volta de leve
     }
 
     // Golpe: braço desce rapidamente e volta.
-    if (this.model.weaponArm) {
+    if (weaponArm) {
       this.swingTime += dt;
       const d = 0.3;
-      const k = this.swingTime < d ? Math.sin((this.swingTime / d) * Math.PI) : 0;
-      this.model.weaponArm.rotation.x = k * 2.4;
-      this.model.weaponArm.rotation.y = k * 0.3;
+      if (this.swingTime < d) {
+        const k = Math.sin((this.swingTime / d) * Math.PI);
+        weaponArm.rotation.x = k * 2.4;
+        weaponArm.rotation.y = k * 0.3;
+        root.rotation.x -= k * 0.12; // o tronco acompanha o golpe
+      } else {
+        weaponArm.rotation.y = 0;
+      }
     } else if (this.swingTime < 0.3) {
       // Gosma "pula" para atacar.
       this.swingTime += dt;
@@ -267,7 +291,9 @@ class EntityView {
         (this.telegraphLineFill.material as THREE.MeshBasicMaterial).opacity = 0.2 + progress * 0.3;
       }
       root.rotation.x += 0.25 * Math.sin(progress * Math.PI / 2); // recua antes de bater
-      if (this.model.weaponArm) this.model.weaponArm.rotation.x = -1.2 * progress; // arma erguida
+      if (this.model.weaponArm) this.model.weaponArm.rotation.x = rest - (1.2 + rest) * progress; // arma erguida para trás
+      if (this.model.offArm) this.model.offArm.rotation.x = 0.6 * progress; // o outro braço vai à frente
+      if (this.model.head) this.model.head.rotation.x = -0.25 * progress; // encara o alvo
       if (!this.model.weaponArm) root.scale.y = 1 - progress * 0.25; // gosma se comprime
     }
   }

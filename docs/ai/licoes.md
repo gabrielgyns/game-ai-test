@@ -42,3 +42,21 @@
 - Telegraph e outros adereços por entidade devem ser escondidos **também** no ramo de morte da view.
 - O bloom pega tudo acima de 1,0 de luminância: cores HDR em materiais (multiplyScalar > 1) ou
   emissivo alto. Mantenha o resto da cena abaixo (neve e céu estão próximos do limite).
+
+## Sobre modelar voxels por código
+- `box(x0..x1)` com os cantos invertidos (comum ao espelhar com `sx * n`) virava uma caixa vazia e
+  sumia com metade das patas da aranha. Agora `box`/`carve` aceitam os cantos em qualquer ordem.
+- Olhos "colados" numa esfera ficam flutuando. Pinte na superfície (`recolorFront`) em vez de
+  posicionar caixas num z fixo.
+- Arma pendurada do ombro para baixo entra no chão se for mais longa que a altura da mão. Limite o
+  comprimento e dê uma inclinação de repouso ao braço (`weaponArmRest`).
+- Chapéu e capuz são a identidade da classe: o elmo da armadura de placas só vale para o guerreiro.
+- Grão por voxel quebra a fusão de faces (greedy): um orc passa de 1,5k para 13k triângulos. Use
+  manchas (`grainScale: 2`) fora do herói.
+
+## Sobre medir e fotografar no lab
+- `renderer.info` com `EffectComposer` mostra só o último passe (1 triângulo). Desligue
+  `info.autoReset`, zere por quadro e leia depois do `composer.render()`.
+- No headless, o `requestAnimationFrame` continua rodando enquanto o script chama `__lab.step`, então
+  animações cíclicas podem estar em outra fase na hora do screenshot. Para checar estado, leia a
+  cena por `evaluate` em vez de confiar só na imagem.
