@@ -20,6 +20,8 @@ export class DialogueUI {
   onClose: () => void = () => {};
   /** Chamado após aceitar ou entregar, para o jogo processar os eventos na hora (o mundo está pausado). */
   onAction: () => void = () => {};
+  /** NPC com loja: o botão "Negociar" pede ao jogo para abrir o painel da loja. */
+  onShop: (npc: Entity) => void = () => {};
 
   constructor(private readonly world: World, private readonly player: Entity) {}
 
@@ -73,6 +75,7 @@ export class DialogueUI {
       this.text.textContent = def.idle[this.idleIndex % def.idle.length] ?? "";
       this.idleIndex++;
     }
+    if (def.shop) this.button("Negociar", turnIn.length || offer.length ? "" : "primary", () => this.onShop(npc));
     this.button("Fechar", "", () => this.onClose());
   }
 

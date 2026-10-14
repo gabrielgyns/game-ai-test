@@ -15,7 +15,7 @@ export { createVillager } from "./characters/npcs";
 /** Todos os arquétipos conhecidos, na ordem em que aparecem no jogo. */
 export const ARCHETYPES = [
   "hero", "slime", "goblin", "goblinArcher", "orc", "spider", "bogZombie", "scorpion", "bandit", "banditArcher",
-  "goblinKing", "spiderQueen", "scorpionEmperor", "elder", "smith", "guard",
+  "goblinKing", "spiderQueen", "scorpionEmperor", "elder", "smith", "guard", "merchant",
 ] as const;
 
 export function createModel(archetype: string, equipment?: Equipment, classId?: ClassId): CharacterModel {
@@ -36,6 +36,7 @@ export function createModel(archetype: string, equipment?: Equipment, classId?: 
     case "elder": return createVillager("elder");
     case "smith": return createVillager("smith");
     case "guard": return createVillager("guard");
+    case "merchant": return createVillager("merchant");
     default: return createSlime();
   }
 }

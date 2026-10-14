@@ -1,3 +1,5 @@
+import { AFFIXES, rollAffixes, type Affix } from "./affixes";
+
 export type EquipSlot = "weapon" | "armor" | "accessory";
 export type Rarity = "common" | "uncommon" | "rare" | "epic";
 export type ItemKind = "equipment" | "consumable";
@@ -27,8 +29,12 @@ export interface Item {
   icon: string;
   /** Variante visual no corpo do herói (ex.: tunic, chain, plate). */
   visual?: string;
-  /** Valor em ouro (futuro: venda). */
+  /** Valor em ouro (base do preço de compra e venda). */
   value: number;
+  /** Propriedades extras sorteadas (equipamentos incomuns ou melhores). */
+  affixes?: Affix[];
+  /** Tier de origem (1 perto do spawn, 3 na borda). */
+  tier?: 1 | 2 | 3;
 }
 
 export const RARITY_MULTIPLIER: Record<Rarity, number> = {
@@ -98,10 +104,14 @@ const RARITY_SUFFIX: Record<Rarity, string> = {
   epic: " Lendári@",
 };
 
-/** Concorda o sufixo em gênero com o nome (heurística simples: nomes terminados em "a" são femininos). */
-function agree(suffix: string, name: string): string {
-  const feminine = /a$/i.test(name.split(" ")[0] ?? name);
-  return suffix.replace("@", feminine ? "a" : "o");
+/**
+ * Concorda o sufixo em gênero e número com a primeira palavra do nome (heurística simples:
+ * "Botas" → Reforçadas, "Espada" → Reforçada, "Arco" → Reforçado).
+ */
+export function agree(suffix: string, name: string): string {
+  const first = name.split(" ")[0] ?? name;
+  const ending = /as$/i.test(first) ? "as" : /os$/i.test(first) ? "os" : /a$/i.test(first) ? "a" : "o";
+  return suffix.replace("@", ending);
 }
 
 let nextItemId = 1;
@@ -111,6 +121,9 @@ export function resetItemIds(start = 1): void {
   nextItemId = start;
 }
 
+/** Ouro que cada afixo soma ao valor do item, por tier. */
+const AFFIX_VALUE = [6, 14, 30] as const;
+
 export function createEquipment(rand: () => number, tier: 1 | 2 | 3, rarity: Rarity): Item {
   const pool = EQUIPMENT_TEMPLATES[tier];
   const t = pool[Math.floor(rand() * pool.length)]!;
@@ -119,18 +132,23 @@ export function createEquipment(rand: () => number, tier: 1 | 2 | 3, rarity: Rar
   if (t.stats.damage) stats.damage = Math.round(t.stats.damage * mult);
   if (t.stats.maxHealth) stats.maxHealth = Math.round(t.stats.maxHealth * mult);
   if (t.stats.speedPercent) stats.speedPercent = Math.round(t.stats.speedPercent * mult);
+  const affixes = rollAffixes(rand, t.slot, tier, rarity);
+  // O primeiro afixo dá sobrenome ao item: "Espada Longa Encantada da Serpente".
+  const surname = affixes[0] ? AFFIXES[affixes[0].id].suffix : "";
   return {
     id: nextItemId++,
-    name: t.name + agree(RARITY_SUFFIX[rarity], t.name),
+    name: t.name + agree(RARITY_SUFFIX[rarity], t.name) + surname,
     kind: "equipment",
     slot: t.slot,
     rarity,
     stats,
     icon: t.icon,
     visual: t.visual,
-    value: Math.round(t.value * mult),
+    value: Math.round(t.value * mult) + affixes.length * (AFFIX_VALUE[tier - 1] ?? 6),
     quantity: 1,
     maxStack: 1,
+    affixes: affixes.length ? affixes : undefined,
+    tier,
   };
 }
 

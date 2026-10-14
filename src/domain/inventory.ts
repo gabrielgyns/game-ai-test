@@ -1,5 +1,6 @@
-import type { Entity } from "./components";
-import { canStack, type EquipSlot, type Item, type ItemStats } from "./items";
+import type { Bonuses, Entity } from "./components";
+import { AFFIXES, type BonusStat } from "./affixes";
+import { canStack, type EquipSlot, type Item } from "./items";
 import type { World } from "./world";
 
 export interface Inventory {
@@ -51,17 +52,33 @@ export function countItems(inv: Inventory, predicate: (item: Item) => boolean): 
   return inv.items.reduce((n, i) => (i && predicate(i) ? n + i.quantity : n), 0);
 }
 
+export type BonusTotals = Record<BonusStat, number>;
+
+export const emptyBonus = (): BonusTotals => ({ damage: 0, maxHealth: 0, speedPercent: 0, regen: 0, critChance: 0, lifesteal: 0, cooldownPercent: 0, goldPercent: 0 });
+
+/** Tudo que um item concede: atributos do modelo mais os afixos. */
+export function itemBonus(item: Item): BonusTotals {
+  const total = emptyBonus();
+  total.damage += item.stats.damage ?? 0;
+  total.maxHealth += item.stats.maxHealth ?? 0;
+  total.speedPercent += item.stats.speedPercent ?? 0;
+  for (const a of item.affixes ?? []) total[AFFIXES[a.id].stat] += a.value;
+  return total;
+}
+
 /** Soma dos bônus de tudo que está equipado. */
-export function equipmentBonus(eq: Equipment): Required<ItemStats> {
-  const total = { damage: 0, maxHealth: 0, speedPercent: 0 };
+export function equipmentBonus(eq: Equipment): BonusTotals {
+  const total = emptyBonus();
   for (const item of [eq.weapon, eq.armor, eq.accessory]) {
     if (!item) continue;
-    total.damage += item.stats.damage ?? 0;
-    total.maxHealth += item.stats.maxHealth ?? 0;
-    total.speedPercent += item.stats.speedPercent ?? 0;
+    const b = itemBonus(item);
+    for (const k of Object.keys(total) as BonusStat[]) total[k] += b[k];
   }
   return total;
 }
+
+/** Limite da redução de recarga, para habilidades nunca ficarem sem custo. */
+export const MAX_COOLDOWN_REDUCTION = 40;
 
 /**
  * Recalcula os atributos efetivos a partir dos valores base (que o nível altera)
@@ -69,8 +86,18 @@ export function equipmentBonus(eq: Equipment): Required<ItemStats> {
  */
 export function recomputeStats(entity: Entity): void {
   const eq = entity.equipment;
-  const bonus = eq ? equipmentBonus(eq) : { damage: 0, maxHealth: 0, speedPercent: 0 };
+  const bonus = eq ? equipmentBonus(eq) : emptyBonus();
   entity.combat.damage = entity.combat.baseDamage + bonus.damage;
+  if (eq) {
+    const bonuses: Bonuses = {
+      critChance: bonus.critChance,
+      lifesteal: bonus.lifesteal,
+      cooldownPercent: Math.min(MAX_COOLDOWN_REDUCTION, bonus.cooldownPercent),
+      goldPercent: bonus.goldPercent,
+      regen: bonus.regen,
+    };
+    entity.bonuses = bonuses;
+  }
   const oldMax = entity.health.max;
   entity.health.max = entity.health.baseMax + bonus.maxHealth;
   if (oldMax > 0 && entity.health.current > 0) {

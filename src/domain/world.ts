@@ -4,6 +4,7 @@ import type { Item } from "./items";
 import type { Vec3 } from "./math";
 import type { Projectile } from "./projectiles";
 import type { Hazard, PoolSpec } from "./hazards";
+import type { ShopState } from "./shop";
 
 /**
  * Agregado raiz do jogo. Guarda o estado completo e a fila de eventos do tick.
@@ -31,6 +32,8 @@ export class World {
   private nextProjectileId = 1;
   /** Poças e outros perigos ativos no chão. */
   readonly hazards = new Map<number, Hazard>();
+  /** Estoque e recompra da Mercadora (montado na primeira visita de cada dia). */
+  shop?: ShopState;
   private nextHazardId = 1;
   /** Gerador determinístico usado por loot e outras decisões aleatórias do domínio. */
   random: () => number = Math.random;

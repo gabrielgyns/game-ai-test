@@ -129,21 +129,21 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0d12; col
 .stats { margin-top: 6px; font-size: 13px; color: var(--muted); display: grid; gap: 4px; }
 .stats b { color: var(--text); float: right; }
 .grid { display: grid; grid-template-columns: repeat(5, 64px); gap: 8px; align-content: start; }
-#tooltip {
+.item-tip {
   position: fixed; pointer-events: none; z-index: 10; min-width: 180px; max-width: 260px;
   background: rgba(10, 12, 18, 0.95); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
   padding: 8px 10px; font-size: 13px;
 }
-#tooltip .name { font-weight: 700; margin-bottom: 2px; }
-#tooltip .rarity { font-size: 11px; margin-bottom: 6px; }
-#tooltip .stat { color: #9ce39c; }
-#tooltip .cmp { color: var(--muted); font-size: 11px; margin-top: 4px; }
-#tooltip .worse { color: #ff8a8a; }
-#tooltip .better { color: #9ce39c; }
-#tooltip[data-rarity="common"] .name, #tooltip[data-rarity="common"] .rarity { color: var(--r-common); }
-#tooltip[data-rarity="uncommon"] .name, #tooltip[data-rarity="uncommon"] .rarity { color: var(--r-uncommon); }
-#tooltip[data-rarity="rare"] .name, #tooltip[data-rarity="rare"] .rarity { color: var(--r-rare); }
-#tooltip[data-rarity="epic"] .name, #tooltip[data-rarity="epic"] .rarity { color: var(--r-epic); }
+.item-tip .name { font-weight: 700; margin-bottom: 2px; }
+.item-tip .rarity { font-size: 11px; margin-bottom: 6px; }
+.item-tip .stat { color: #9ce39c; }
+.item-tip .cmp { color: var(--muted); font-size: 11px; margin-top: 4px; }
+.item-tip .worse { color: #ff8a8a; }
+.item-tip .better { color: #9ce39c; }
+.item-tip[data-rarity="common"] .name, .item-tip[data-rarity="common"] .rarity { color: var(--r-common); }
+.item-tip[data-rarity="uncommon"] .name, .item-tip[data-rarity="uncommon"] .rarity { color: var(--r-uncommon); }
+.item-tip[data-rarity="rare"] .name, .item-tip[data-rarity="rare"] .rarity { color: var(--r-rare); }
+.item-tip[data-rarity="epic"] .name, .item-tip[data-rarity="epic"] .rarity { color: var(--r-epic); }
 #log .loot-common { color: var(--r-common); }
 #log .loot-uncommon { color: var(--r-uncommon); }
 #log .loot-rare { color: var(--r-rare); }
@@ -322,3 +322,45 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0d12; col
 
 #boss-carapace { margin-top: 6px; font-size: 13px; font-weight: 600; color: #f0d38a; text-align: center; letter-spacing: 0.3px; }
 #boss-carapace.stunned { color: #ffe57a; animation: pulse 0.6s infinite; }
+.item-tip .affix { color: #8fc2ff; }
+.item-tip .price { color: #ffd37a; font-weight: 600; margin-top: 4px; }
+
+/* Loja da Mercadora */
+#shop {
+  position: absolute; inset: 0; display: flex; justify-content: center; align-items: center;
+  background: rgba(5, 6, 10, 0.5); pointer-events: auto;
+}
+#shop .panel {
+  width: min(900px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto;
+  background: var(--panel); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 18px 20px; backdrop-filter: blur(6px);
+}
+.shop-gold { font-weight: 700; color: #ffd37a; font-size: 16px; }
+.shop-body { display: grid; grid-template-columns: 1fr 360px; gap: 22px; }
+.shop-col h3 { margin: 4px 0 8px; font-size: 14px; color: var(--text); }
+.shop-col h3 .hint { font-weight: 400; font-size: 11px; color: var(--muted); margin-left: 6px; }
+#shop-grid { grid-template-columns: repeat(5, 64px); }
+.offer { display: flex; align-items: center; gap: 10px; padding: 6px; border-radius: 10px; background: rgba(255,255,255,0.03); margin-bottom: 6px; }
+.offer .cell { width: 52px; height: 52px; flex: none; }
+.offer .cell .icon { width: 36px; height: 36px; }
+.offer .info { flex: 1; min-width: 0; }
+.offer .info .oname { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.offer .info .osub { font-size: 11px; color: var(--muted); }
+.offer .info .osub .aff { color: #8fc2ff; }
+.offer[data-rarity="common"] .oname { color: var(--r-common); }
+.offer[data-rarity="uncommon"] .oname { color: var(--r-uncommon); }
+.offer[data-rarity="rare"] .oname { color: var(--r-rare); }
+.offer[data-rarity="epic"] .oname { color: var(--r-epic); }
+.offer.sold { opacity: 0.4; }
+#shop button {
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.16); border-radius: 8px; padding: 6px 12px; cursor: pointer; white-space: nowrap;
+}
+#shop button:hover { background: rgba(255,255,255,0.16); }
+#shop button.buy { background: #6b5a1f; border-color: #c9a83a; color: #ffe7a0; min-width: 92px; }
+#shop button.buy:hover { background: #7d6a28; }
+#shop button.buy.poor { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.12); color: var(--muted); }
+#shop button:disabled { cursor: default; opacity: 0.6; }
+#shop-sell-common { margin-top: 10px; width: 100%; }
+.shop-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+.shop-footer .hint { font-size: 11px; color: var(--muted); }
+#shop-buyback:empty::after { content: "Nada vendido ainda."; font-size: 12px; color: var(--muted); }

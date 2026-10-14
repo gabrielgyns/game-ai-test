@@ -33,6 +33,7 @@ import { directionFromYaw } from "./domain/math";
 import { useFirstPotion } from "./domain/inventory";
 import { createTerrainMesh } from "./game/terrainMesh";
 import { HazardViews } from "./game/hazardViews";
+import { ShopUI } from "./game/shopUI";
 import { DayNightSky } from "./game/sky";
 import { Foliage } from "./game/foliage";
 import { HIT_COLORS, Particles } from "./game/particles";
@@ -172,6 +173,22 @@ function closeDialogue(): void {
   input.requestLock();
 }
 dialogue.onClose = closeDialogue;
+// Loja: aberta pelo "Negociar" da conversa; o mundo continua pausado e sem pointer lock.
+const shopUI = new ShopUI(world, player);
+shopUI.onAction = () => handleEvents(world.drainEvents());
+shopUI.onMessage = (text) => toast(text);
+function openShop(npc: Entity): void {
+  dialogue.close();
+  shopUI.open(npc.name);
+  paused = true;
+}
+function closeShop(): void {
+  shopUI.close();
+  paused = false;
+  input.requestLock();
+}
+shopUI.onClose = closeShop;
+dialogue.onShop = openShop;
 dialogue.onAction = () => handleEvents(world.drainEvents());
 let started = false;
 let paused = false;
@@ -218,6 +235,10 @@ input.onPointerLockChange = (locked) => {
   }
   if (dialogue.isOpen) {
     if (locked) closeDialogue();
+    return;
+  }
+  if (shopUI.isOpen) {
+    if (locked) closeShop();
     return;
   }
   paused = !locked;
@@ -333,6 +354,7 @@ input.onEscape = () => {
   }
   if (!started) return;
   if (inventoryUI.isOpen) closeInventory();
+  else if (shopUI.isOpen) closeShop();
   else if (dialogue.isOpen) closeDialogue();
   else if (menu.isOpen) resume();
 };
@@ -446,7 +468,7 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         const tview = views.get(ev.target);
         tview?.flash();
         const tp = target.transform.position;
-        const heavy = ev.amount >= target.health.max * 0.2;
+        const heavy = ev.amount >= target.health.max * 0.2 || !!ev.crit;
         particles.hit({ x: tp.x, y: tp.y + (tview?.model.height ?? 1.6) * 0.55, z: tp.z }, HIT_COLORS[target.archetype] ?? ["#cccccc"], heavy);
         if (toPlayer) shake.add(traumaFromDamage(ev.amount, player.health.max));
         else if (ev.source === player.id) {
@@ -455,7 +477,8 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
           if (melee) hitStop = Math.max(hitStop, heavy ? 0.075 : 0.045);
         }
         audio.play(toPlayer ? "hurt" : "hit", { ...spatial(target.transform.position), pitch: target.boss ? 0.7 : 1 });
-        floats.spawn(target.transform.position, `${ev.amount}`, toPlayer ? "#ff7b7b" : "#ffd37a", toPlayer ? 1 : 0.9);
+        if (ev.crit) floats.spawn(target.transform.position, `${ev.amount}!`, "#ffb02e", 1.35);
+        else floats.spawn(target.transform.position, `${ev.amount}`, toPlayer ? "#ff7b7b" : "#ffd37a", toPlayer ? 1 : 0.9);
         hud.pushLog(toPlayer ? `${source.name} te acertou por ${ev.amount}` : `Você acertou ${target.name} por ${ev.amount}`, toPlayer ? "dmg-in" : "dmg-out");
         break;
       }
@@ -632,6 +655,14 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         }
         break;
       }
+      case "sell":
+        audio.play("coin");
+        hud.pushLog(`Vendido: ${ev.itemName} (+${ev.gold} ouro)`, "gain");
+        break;
+      case "buy":
+        audio.play("coin", { pitch: 0.85 });
+        hud.pushLog(`Comprado: ${ev.itemName} (-${ev.gold} ouro)`, "level");
+        break;
       case "buffEnd":
         hud.pushLog("Grito de Guerra acabou.", "dmg-out");
         break;
@@ -652,12 +683,13 @@ function frame(): void {
 
   // Input → intenções no domínio.
   const { lookX, lookY, zoom, attack, inventory, potion, roll, skill, interact } = input.flush();
-  if (inventory && started && !menu.isOpen && !dialogue.isOpen) {
+  if (inventory && started && !menu.isOpen && !dialogue.isOpen && !shopUI.isOpen) {
     if (inventoryUI.isOpen) closeInventory();
     else openInventory();
   }
   if (interact && started && !menu.isOpen && !inventoryUI.isOpen) {
-    if (dialogue.isOpen) closeDialogue();
+    if (shopUI.isOpen) closeShop();
+    else if (dialogue.isOpen) closeDialogue();
     else {
       const npc = nearestNpc();
       if (npc && isAlive(player)) openDialogue(npc);
@@ -735,7 +767,7 @@ function frame(): void {
   hud.setClock(formatClock(clockAt(world.time)), sky.night > 0.5);
   views.update(simDt, cam.camera, target?.id, world.time, player);
   const npcNear = nearestNpc();
-  interactEl.classList.toggle("hidden", !npcNear || dialogue.isOpen);
+  interactEl.classList.toggle("hidden", !npcNear || dialogue.isOpen || shopUI.isOpen);
   if (npcNear) interactText.textContent = `Falar com ${npcNear.name}`;
   questTracker.update(player);
   dropViews.update(world, world.time);

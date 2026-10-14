@@ -283,7 +283,7 @@ export function buildCatalog(): Exhibit[] {
       group: "Cenário",
       label,
       description: "Adereço instanciado pelo cenário, em voxels de 25 cm.",
-      size: label.startsWith("Árvore") ? 3.4 : 1.8,
+      size: label.startsWith("Barraca") ? 5 : label.startsWith("Árvore") || label.startsWith("Obelisco") ? 3.4 : 1.8,
       build: () => {
         const m = new THREE.Mesh(build(), voxelMaterial());
         m.castShadow = m.receiveShadow = true;

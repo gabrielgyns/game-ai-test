@@ -1,8 +1,9 @@
 import type { Entity } from "../domain/components";
 import { equipFromInventory, removeAt, unequip, useItem } from "../domain/inventory";
-import { describeStats, RARITY_LABEL, SLOT_LABEL, type EquipSlot, type Item } from "../domain/items";
+import type { EquipSlot, Item } from "../domain/items";
 import type { World } from "../domain/world";
 import { iconCanvas } from "./itemIcons";
+import { itemTooltipHTML } from "./itemTooltip";
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -115,33 +116,11 @@ export class InventoryUI {
 
   private showTooltip(item: Item | null, equipped: boolean): void {
     if (!item) return this.hideTooltip();
-    const lines = [`<div class="name">${item.name}${item.quantity > 1 ? ` <span class="qty-inline">×${item.quantity}</span>` : ""}</div>`];
-    const kind = item.kind === "equipment" && item.slot ? SLOT_LABEL[item.slot] : "Consumível";
-    lines.push(`<div class="rarity">${RARITY_LABEL[item.rarity]} · ${kind}</div>`);
-    if (item.kind === "equipment") {
-      lines.push(`<div class="stat">${describeStats(item.stats)}</div>`);
-      const current = item.slot ? this.player.equipment?.[item.slot] : null;
-      if (!equipped && current && current !== item) {
-        const diff = (a?: number, b?: number) => (a ?? 0) - (b ?? 0);
-        const parts = [
-          ["dano", diff(item.stats.damage, current.stats.damage)],
-          ["vida", diff(item.stats.maxHealth, current.stats.maxHealth)],
-          ["velocidade %", diff(item.stats.speedPercent, current.stats.speedPercent)],
-        ].filter(([, d]) => d !== 0) as [string, number][];
-        if (parts.length) {
-          lines.push(
-            `<div class="cmp">vs. ${current.name}: ` +
-              parts.map(([n, d]) => `<span class="${d > 0 ? "better" : "worse"}">${d > 0 ? "+" : ""}${d} ${n}</span>`).join(", ") +
-              "</div>",
-          );
-        }
-      }
-      lines.push(`<div class="cmp">${equipped ? "Clique para guardar na mochila" : "Clique para equipar"}</div>`);
-    } else if (item.healFraction) {
-      lines.push(`<div class="stat">Cura ${Math.round(item.healFraction * 100)}% da vida máxima</div>`);
-      lines.push(`<div class="cmp">Clique para beber uma (ou Q no jogo) · Botão direito larga a pilha</div>`);
-    }
-    this.tooltip.innerHTML = lines.join("");
+    const compare = !equipped && item.slot ? this.player.equipment?.[item.slot] ?? null : null;
+    const hint = item.kind === "equipment"
+      ? equipped ? "Clique para guardar na mochila" : "Clique para equipar · Botão direito larga no chão"
+      : "Clique para beber uma (ou Q no jogo) · Botão direito larga a pilha";
+    this.tooltip.innerHTML = itemTooltipHTML(item, { compare, hint });
     this.tooltip.dataset.rarity = item.rarity;
     this.tooltip.classList.remove("hidden");
   }

@@ -107,3 +107,14 @@ que precisaria ser lembrada a cada habilidade nova.
 ## D23. Tiros de inimigo sem ajuda de mira
 A ajuda de mira (cone de 22°) é só do jogador. Se o tiro do inimigo se corrigisse no disparo, a linha
 avisada mentiria e sair dela de lado não adiantaria.
+
+## D24. Afixos separados dos atributos base
+O item guarda `stats` (do modelo) e `affixes` (sorteados) separados; `itemBonus` soma os dois. Assim
+o tooltip mostra o que é "do modelo" e o que é "sorte", a comparação cobre todos os bônus, e um afixo
+novo é só uma entrada em `AFFIXES` com o atributo que ele alimenta. Bônus que não são vida/dano/
+velocidade vivem em `entity.bonuses`, recalculado junto com o resto em `recomputeStats`.
+
+## D25. Estoque da loja amarrado ao relógio
+O estoque muda à meia-noite do relógio do mundo (dia do `dayCycle`) e é semeado por dia e nível, então
+é o mesmo se você recarregar no mesmo dia. Ele é salvo (com o que já foi comprado) para não dar para
+comprar o mesmo item duas vezes recarregando.

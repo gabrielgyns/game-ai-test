@@ -62,6 +62,23 @@ export interface Combat {
   basicPattern?: AttackPattern;
 }
 
+/**
+ * Bônus derivados do equipamento (afixos e atributos especiais), recalculados por recomputeStats.
+ * Os sistemas leem daqui: crítico e roubo de vida no dano, recarga nas habilidades, ouro na morte.
+ */
+export interface Bonuses {
+  /** Chance de crítico, em pontos percentuais. */
+  critChance: number;
+  /** Porcentagem do dano causado que volta como vida. */
+  lifesteal: number;
+  /** Redução de recarga das habilidades, em porcentagem (limitada a 40%). */
+  cooldownPercent: number;
+  /** Ouro extra dos inimigos, em porcentagem. */
+  goldPercent: number;
+  /** Vida por segundo que regenera sempre, mesmo em combate. */
+  regen: number;
+}
+
 export interface Progression {
   level: number;
   xp: number;
@@ -117,6 +134,8 @@ export interface Entity {
   quests?: QuestLog;
   /** Contadores de progresso (abates etc.). */
   stats?: { kills: number };
+  /** Bônus especiais do equipamento (só o jogador tem). */
+  bonuses?: Bonuses;
   /** Classe do herói (define ataque básico e barra de habilidades). */
   classId?: ClassId;
 }

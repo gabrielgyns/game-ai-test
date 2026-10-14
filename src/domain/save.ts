@@ -6,6 +6,7 @@ import type { QuestLog } from "./quests";
 import { generateWorld } from "./worldgen";
 import { isClassId, type ClassId } from "./classes";
 import type { World } from "./world";
+import type { ShopState } from "./shop";
 
 export const SAVE_VERSION = 1;
 
@@ -34,6 +35,8 @@ export interface SaveData {
     quests: QuestLog;
   };
   drops: { item: Item; position: Vec3; age: number; requireLeave?: boolean }[];
+  /** Estoque do dia e recompra da Mercadora (opcional: saves antigos não têm). */
+  shop?: ShopState;
 }
 
 export function serializeGame(world: World, seed: number): SaveData {
@@ -62,6 +65,7 @@ export function serializeGame(world: World, seed: number): SaveData {
       quests: structuredClone(p.quests ?? {}),
     },
     drops: [...world.drops.values()].map((d) => ({ item: structuredClone(d.item), position: { ...d.position }, age: d.age, requireLeave: d.requireLeave })),
+    shop: world.shop ? structuredClone(world.shop) : undefined,
   };
 }
 
@@ -110,6 +114,11 @@ export function restoreGame(save: SaveData): World {
     const drop = world.addDrop(structuredClone(d.item), d.position);
     drop.age = d.age;
     drop.requireLeave = d.requireLeave ?? false;
+  }
+  if (save.shop) {
+    world.shop = structuredClone(save.shop);
+    world.shop.offers.forEach((o) => track(o.item));
+    world.shop.buyback.forEach((b) => track(b.item));
   }
   world.drainEvents(); // os addDrop acima não são "eventos" novos para a apresentação
   resetItemIds(maxItemId + 1);

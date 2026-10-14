@@ -80,3 +80,6 @@
   (960×600) para testes de luta. Não é sinal de problema no jogo.
 - Para depurar a ordem de golpes de um chefe, simule só o domínio num teste de rascunho e registre os
   `windup`: em segundos se vê a rotação inteira, sem navegador.
+- Itens de vitrine (ex.: a poção desenhada na loja) consomem ids se criados a cada render; crie uma
+  vez no construtor do painel.
+- Heurística de gênero do nome do item precisa de número também: "Botas" pede "Reforçadas".

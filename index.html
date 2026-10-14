@@ -69,7 +69,28 @@
             <div class="grid" id="inv-grid"></div>
           </div>
         </div>
-        <div id="tooltip" class="hidden"></div>
+        <div id="tooltip" class="item-tip hidden"></div>
+      </div>
+
+      <div id="shop" class="hidden">
+        <div class="panel">
+          <div class="inv-header"><h2 id="shop-title">Mercadora</h2><span class="shop-gold" id="shop-gold"></span></div>
+          <div class="shop-body">
+            <div class="shop-col">
+              <h3>À venda <span class="hint" id="shop-day"></span></h3>
+              <div id="shop-offers"></div>
+              <h3 id="shop-buyback-title">Recomprar <span class="hint">o que você vendeu, pelo mesmo preço</span></h3>
+              <div id="shop-buyback"></div>
+            </div>
+            <div class="shop-col">
+              <h3>Sua mochila <span class="hint">clique vende</span></h3>
+              <div class="grid" id="shop-grid"></div>
+              <button id="shop-sell-common" type="button">Vender todos os equipamentos comuns</button>
+            </div>
+          </div>
+          <div class="shop-footer"><span class="hint">ESC ou F: fechar</span><button id="shop-close" type="button">Fechar</button></div>
+        </div>
+        <div id="shop-tooltip" class="item-tip hidden"></div>
       </div>
 
       <div id="controls">

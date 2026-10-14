@@ -188,7 +188,8 @@ function useSkill(world: World, e: Entity, id: SkillId): boolean {
       world.emit({ type: "skill", entity: e.id, skill: id, hits: 0 });
       break;
   }
-  state.cooldownLeft = SKILLS[id].cooldown;
+  // Afixo do Sábio: recarga menor (já limitada a 40% em recomputeStats).
+  state.cooldownLeft = SKILLS[id].cooldown * (1 - (e.bonuses?.cooldownPercent ?? 0) / 100);
   return true;
 }
 

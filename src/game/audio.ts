@@ -7,7 +7,7 @@ type SfxName =
   | "swing" | "hit" | "hurt" | "enemyDeath" | "playerDeath" | "step" | "roll" | "dodge"
   | "pickupCommon" | "pickupRare" | "potion" | "levelUp" | "questAccept" | "questComplete"
   | "whirlwind" | "charge" | "warcry" | "secondWind" | "windup" | "bossRoar" | "bossPhase" | "drop" | "ui"
-  | "shoot" | "explode";
+  | "shoot" | "explode" | "coin";
 
 const VOL_KEY = "vale.audio";
 
@@ -216,6 +216,12 @@ export class GameAudio {
         break;
       case "ui":
         this.tone(out, t, "sine", 700, 700, 0.05, 0.15);
+        break;
+      case "coin":
+        // Duas moedinhas batendo: tons metálicos curtos, o segundo mais agudo.
+        this.tone(out, t, "square", 1560 * p, 1560 * p, 0.05, 0.08);
+        this.tone(out, t + 0.06, "square", 2090 * p, 2090 * p, 0.09, 0.08);
+        this.tone(out, t + 0.06, "triangle", 4180 * p, 4180 * p, 0.12, 0.05);
         break;
       case "shoot":
         this.noise(out, t, 0.08, { from: 2500 * p, to: 800, type: "bandpass", q: 1.5, gain: 0.3 });

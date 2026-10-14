@@ -45,6 +45,7 @@ export function generateWorld(options: WorldGenOptions = {}): World {
     { id: "elder", x: -4.5, z: -5.5 },
     { id: "smith", x: 5, z: -5 },
     { id: "guard", x: 0.5, z: 7.5 },
+    { id: "merchant", x: 6, z: 3.5 },
   ];
   for (const spot of npcSpots) {
     const def = npcById(spot.id)!;

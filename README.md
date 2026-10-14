@@ -34,6 +34,14 @@ sua barra de quatro habilidades e sua arma inicial; arcos e cajados também caem
 Derrote inimigos para ganhar XP, ouro e loot: equipamentos de três slots (arma, armadura,
 acessório) em quatro raridades (comum, incomum, raro, épico) e poções pequenas e grandes,
 que se empilham na mochila. Itens caem no chão e são coletados ao passar por cima.
+Equipamentos incomuns ou melhores trazem **afixos** que dão sobrenome ao item ("Espada Longa
+Encantada da Serpente"): **da Serpente** regenera vida mesmo em combate, **da Águia** dá chance de
+crítico (75% a mais), **do Vampiro** devolve parte do dano como vida, **do Sábio** reduz a recarga das
+habilidades, **da Fortuna** aumenta o ouro dos inimigos, e **da Fúria**, **do Urso** e **do Vento** somam
+dano, vida e velocidade. Raros têm um ou dois afixos; épicos, dois.
+No santuário, a **Mercadora Zuri** (F → Negociar) compra seu loot por 35% do valor, vende poções a
+qualquer hora e quatro equipamentos com afixos que mudam a cada dia do relógio do jogo, e guarda os
+últimos itens vendidos para recompra pelo mesmo preço.
 Inimigos avisam o golpe com uma área vermelha que se preenche: saia dela ou role (Espaço) para evitar.
 No santuário vivem três NPCs: a **Anciã Mira** dá a cadeia principal (gosmas, goblins e o Rei Goblin),
 o **Ferreiro Brom** pede ferro dos orcs e forja uma arma rara, e o **Guarda Tiago** ensina a lutar.
@@ -123,6 +131,8 @@ src/
     boss.ts        chefes: padrões de golpe (melee, área, investida), formas de telegraph e fases
     npc.ts         NPCs do santuário e suas falas
     quests.ts      definições de quests, diário do jogador, aceitar/avançar/entregar
+    affixes.ts     afixos sorteados nos equipamentos (Serpente, Águia, Vampiro, Sábio...)
+    shop.ts        loja: preços, estoque do dia, compra, venda e recompra
     hazards.ts     poças no chão (receita e estado); o sistema em systems/hazards.ts pulsa o dano
     dayCycle.ts    relógio do mundo: hora, dia, altura do sol, luz do dia e crepúsculo
     save.ts        snapshot serializável do progresso e reconstrução do mundo a partir dele
@@ -143,6 +153,8 @@ src/
     dialogueUI.ts  painel de conversa com NPCs
     questTracker.ts lista de quests ativas
     storage.ts     localStorage como porta dos slots, pedido de novo jogo, exportar e importar arquivo
+    shopUI.ts      painel da Mercadora (à venda, recompra, mochila que vende no clique)
+    itemTooltip.ts tooltip de item compartilhado (afixos e comparação com o equipado)
     slotsUI.ts     tela de saves (lista, criar herói, apagar, exportar, importar)
     audio.ts       sintetizador de efeitos e música generativa (Web Audio)
     itemIcons.ts   ícones de itens em pixel art (usados na UI e nos drops 3D)

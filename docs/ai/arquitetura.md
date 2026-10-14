@@ -46,6 +46,10 @@ o servidor roda `stepWorld` e o cliente roda só `src/game`.
   Projéteis vivem em `world.projectiles` e são resolvidos por `projectileSystem` (após o combate).
 - **Dano tem tipo** (`basic`, `skill`, `hazard`): habilidades passam `"skill"` (e projéteis de
   habilidade levam `fromSkill`), poças passam `"hazard"`. A Carapaça de Areia depende disso.
+- **Bônus de equipamento**: `recomputeStats` é a única fonte de `combat.damage`, `health.max`,
+  `movement.speedMultiplier` e `entity.bonuses` (crítico, roubo de vida, recarga, ouro, regeneração).
+  Item novo com atributo novo: some em `itemBonus` e leia de `bonuses` no sistema certo.
+- **Loja**: `world.shop` (estoque do dia e recompra) é salvo; regras só em `domain/shop.ts`.
 - **Poças** vivem em `world.hazards` e não são salvas (somem em segundos).
 - **Direção de mira do jogador** é `abilities.aimDirection` (câmera), escrita por `main.ts` a cada
   frame; ataques, projéteis e dashes do jogador usam ela, não o yaw suavizado do corpo.

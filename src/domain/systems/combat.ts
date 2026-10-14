@@ -206,6 +206,13 @@ export function applyDamage(world: World, source: Entity, target: Entity, amount
     if (kind !== "hazard") world.emit({ type: "dodge", entity: target.id, source: source.id });
     return;
   }
+  // Crítico (afixo da Águia): sorteado antes de escudos, para o número grande valer o golpe inteiro.
+  let crit = false;
+  const critChance = kind === "hazard" ? 0 : (source.bonuses?.critChance ?? 0);
+  if (critChance > 0 && world.random() * 100 < critChance) {
+    crit = true;
+    amount = Math.round(amount * CRIT_MULTIPLIER);
+  }
   // Carapaça de Areia: só habilidades a quebram; partida, o chefe fica vulnerável.
   const shell = target.boss?.carapace;
   if (shell?.active) {
@@ -241,9 +248,16 @@ export function applyDamage(world: World, source: Entity, target: Entity, amount
     }
     if (amount <= 0) return;
   }
+  const dealt = Math.min(target.health.current, amount);
   target.health.current = Math.max(0, target.health.current - amount);
   target.health.lastDamagedAt = world.time;
-  world.emit({ type: "damage", source: source.id, target: target.id, amount });
+  world.emit({ type: "damage", source: source.id, target: target.id, amount, crit: crit || undefined });
+
+  // Roubo de vida (afixo do Vampiro): parte do dano causado volta para quem bateu.
+  const lifesteal = kind === "hazard" ? 0 : (source.bonuses?.lifesteal ?? 0);
+  if (lifesteal > 0 && isAlive(source)) {
+    source.health.current = Math.min(source.health.max, source.health.current + (dealt * lifesteal) / 100);
+  }
 
   // Ser atacado acorda o inimigo mesmo fora do aggro.
   if (target.ai && target.ai.state === "idle") target.ai.state = "chase";
@@ -267,8 +281,10 @@ function kill(world: World, victim: Entity, killer: Entity): void {
       advanceKillQuests(world, killer, victim.archetype);
       grantXp(world, killer, victim.ai.xpReward);
       if (killer.wallet) {
-        killer.wallet.gold += victim.ai.goldReward;
-        world.emit({ type: "loot", entity: killer.id, gold: victim.ai.goldReward });
+        // Afixo da Fortuna: ouro extra por inimigo.
+        const gold = Math.round(victim.ai.goldReward * (1 + (killer.bonuses?.goldPercent ?? 0) / 100));
+        killer.wallet.gold += gold;
+        world.emit({ type: "loot", entity: killer.id, gold });
       }
     }
   } else {
@@ -278,11 +294,15 @@ function kill(world: World, victim: Entity, killer: Entity): void {
 }
 
 const REGEN_DELAY_SECONDS = 5;
+export const CRIT_MULTIPLIER = 1.75;
 
 function regenerate(world: World, dt: number): void {
   for (const e of world.alive()) {
     const h = e.health;
     if (h.current >= h.max) continue;
+    // Afixo da Serpente: regenera sempre, mesmo em combate.
+    const always = e.bonuses?.regen ?? 0;
+    if (always > 0) h.current = Math.min(h.max, h.current + always * dt);
     if (world.time - h.lastDamagedAt < REGEN_DELAY_SECONDS) continue;
     h.current = Math.min(h.max, h.current + h.regenPerSecond * dt);
   }

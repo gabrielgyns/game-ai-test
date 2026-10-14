@@ -7,6 +7,8 @@ export interface NpcDefinition {
   archetype: string;
   /** Fala quando não há quest para oferecer nem entregar. */
   idle: string[];
+  /** Tem loja (abre o painel de compra e venda). */
+  shop?: boolean;
 }
 
 export const NPC_DEFS: NpcDefinition[] = [
@@ -36,6 +38,17 @@ export const NPC_DEFS: NpcDefinition[] = [
       "Quando a área vermelha aparecer no chão, sai dela ou rola com Espaço. Dentro dela, o golpe acerta.",
       "Gosmas perto, goblins no meio, orcs na borda. O norte é coisa de gente preparada.",
       "Shift corre. Andar de ré com S é mais lento, mas mantém o inimigo na sua frente.",
+    ],
+  },
+  {
+    id: "merchant",
+    name: "Mercadora Zuri",
+    archetype: "merchant",
+    shop: true,
+    idle: [
+      "Ouro parado não mata gosma. Vendo poções a qualquer hora, e o que chega nas caravanas muda todo dia.",
+      "Repare nos nomes: \"da Serpente\" cura sempre, \"da Águia\" acerta crítico, \"do Vampiro\" bebe a vida de quem apanha.",
+      "Vendeu sem querer? Eu guardo os últimos itens. Recompra pelo mesmo preço, sem choro.",
     ],
   },
 ];

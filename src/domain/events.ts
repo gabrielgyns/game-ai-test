@@ -4,7 +4,7 @@ import type { SkillId } from "./skills";
 import type { TelegraphShape } from "./boss";
 
 export type GameEvent =
-  | { type: "damage"; source: EntityId; target: EntityId; amount: number }
+  | { type: "damage"; source: EntityId; target: EntityId; amount: number; crit?: boolean }
   | { type: "death"; entity: EntityId; killer?: EntityId }
   | { type: "xp"; entity: EntityId; amount: number }
   | { type: "levelUp"; entity: EntityId; level: number }
@@ -39,6 +39,8 @@ export type GameEvent =
   | { type: "carapaceHit"; entity: EntityId; layersLeft: number }
   | { type: "carapaceBreak"; entity: EntityId; stun: number }
   | { type: "carapaceUp"; entity: EntityId; layers: number }
+  | { type: "sell"; entity: EntityId; itemName: string; gold: number }
+  | { type: "buy"; entity: EntityId; itemName: string; gold: number }
   | { type: "hazardSpawn"; hazardId: number }
   | { type: "hazardEnd"; hazardId: number }
   /** Aviso extra no chão (ex.: onde cada globo ácido vai cair). */

@@ -83,10 +83,10 @@ describe("quests", () => {
     expect(questState(player.quests!, "king")).toBe("available");
   });
 
-  it("mundo gerado tem os três NPCs no santuário e eles não são alvo de golpes", () => {
+  it("mundo gerado tem os quatro NPCs no santuário e eles não são alvo de golpes", () => {
     const world = generateWorld();
     const npcs = [...world.npcs()];
-    expect(npcs.map((n) => n.npc!.id).sort()).toEqual(["elder", "guard", "smith"]);
+    expect(npcs.map((n) => n.npc!.id).sort()).toEqual(["elder", "guard", "merchant", "smith"]);
     for (const n of npcs) expect(Math.hypot(n.transform.position.x, n.transform.position.z)).toBeLessThan(10);
     const player = world.player!;
     player.combat.wantsAttack = true;

@@ -87,6 +87,7 @@ export const PROP_BUILDERS: Record<string, () => THREE.BufferGeometry> = {
   "Pilar do santuário": () => pillarGeometry(),
   "Totem goblin": () => totemGeometry(),
   "Casulo de teia": () => cocoonGeometry(),
+  "Barraca da Mercadora": () => stallGeometry(),
   "Obelisco do deserto": () => obeliskGeometry(),
   "Obelisco quebrado": () => obeliskGeometry(true),
 };
@@ -102,6 +103,37 @@ function totemGeometry(): THREE.BufferGeometry {
     .set(-1, 8, -3, "#1b1b1b").set(0, 8, -3, "#1b1b1b")
     .box(-3, 4, -1, 3, 5, 1, "#7a1f2b")
     .build(V, 0.08);
+}
+
+/**
+ * Barraca da Mercadora, em voxels de 1/8 m: balcão de madeira com potes e moedas, toldo listrado
+ * em turquesa e creme, caixotes ao lado. A frente (balcão) fica para -Z.
+ */
+function stallGeometry(): THREE.BufferGeometry {
+  const b = new VoxelBuilder();
+  const wood = "#7a5230", woodDark = "#5a3a20", woodLight = "#9a6a40";
+  // Balcão.
+  b.box(-12, 0, -4, 12, 8, 2, wood).box(-12, 8, -5, 12, 9, 3, woodLight);
+  for (const x of [-12, -4, 4, 11]) b.box(x, 0, -5, x + 1, 8, -4, woodDark);
+  // Postes e toldo listrado inclinado.
+  for (const x of [-12, 11]) {
+    b.box(x, 0, -6, x + 1, 22, -5, woodDark);
+    b.box(x, 0, 6, x + 1, 25, 7, woodDark);
+  }
+  for (let z = -8; z <= 8; z++) {
+    const y = 23 + Math.round((z + 8) / 6);
+    for (let x = -13; x <= 13; x++) b.set(x, y, z, Math.floor((x + 13) / 3) % 2 ? "#2f8a7a" : "#ece2c8");
+  }
+  for (let x = -13; x <= 13; x++) if (x % 2 === 0) b.set(x, 22, -8, Math.floor((x + 13) / 3) % 2 ? "#2f8a7a" : "#ece2c8"); // franja
+  // Mercadorias no balcão: potes vermelhos e verdes, pilha de moedas, um tecido dobrado.
+  b.box(-10, 9, -3, -7, 13, 0, "#b8322f").box(-10, 13, -3, -7, 14, 0, "#d84a3f").box(-9, 14, -2, -8, 15, -1, woodDark);
+  b.box(-5, 9, -3, -3, 12, -1, "#4f9a3a").box(-5, 12, -3, -3, 13, -1, "#6fc04a");
+  b.box(0, 9, -3, 3, 10, 0, "#d4a92a").box(1, 10, -2, 3, 11, 0, "#f0d070").set(2, 11, -1, "#f0d070");
+  b.box(5, 9, -3, 10, 11, 1, "#7d5cc0").box(5, 11, -3, 10, 12, 1, "#9a7ad8");
+  // Caixotes ao lado.
+  b.box(13, 0, -2, 19, 6, 4, wood).box(13, 5, -2, 19, 6, 4, woodLight).box(15, 6, -1, 19, 10, 3, woodDark);
+  for (const z of [-2, 3]) b.box(13, 0, z, 19, 6, z + 1, woodDark);
+  return b.build(1 / 8, { grain: 0.05, grainScale: 2 });
 }
 
 /** Obelisco de arenito com ponta de ouro e hieróglifos escuros (arena do deserto). */
@@ -230,6 +262,15 @@ export function createEnvironment(seed = 4242): THREE.Group {
     cocoons.setMatrixAt(i, dummy.matrix);
   }
   group.add(cocoons);
+
+  // Barraca da Mercadora, atrás dela, com o balcão virado para o centro do santuário.
+  const merchantSpot = { x: 6, z: 3.5 };
+  const outward = Math.atan2(merchantSpot.x, merchantSpot.z);
+  const stall = new THREE.Mesh(stallGeometry(), voxelMaterial());
+  stall.castShadow = stall.receiveShadow = true;
+  stall.position.set(merchantSpot.x + Math.sin(outward) * 1.6, terrainHeight(merchantSpot.x, merchantSpot.z), merchantSpot.z + Math.cos(outward) * 1.6);
+  stall.rotation.y = outward; // o -Z local (frente do balcão) aponta para o centro
+  group.add(stall);
 
   // Arena do Imperador Escorpião: anel de obeliscos de arenito, alguns quebrados.
   for (const broken of [false, true]) {

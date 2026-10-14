@@ -80,6 +80,15 @@ com screenshots antes de serem considerados prontos.
     mira, para a linha avisada ser honesta. Apresentação: aviso em cone, poças em voxel que borbulham,
     casca dourada translúcida, estrelas de atordoamento, linha da carapaça na barra do chefe, modelos
     do Imperador e dos arqueiros. 14 testes novos.
+20. **Mercador e afixos** (pedido do dono: "dá uso ao ouro"). Domínio: `affixes.ts` (8 afixos com
+    slots permitidos e valores por tier; quantidade por raridade; o primeiro vira sobrenome),
+    `Bonuses` derivados em `recomputeStats` (crítico, roubo de vida, recarga limitada a 40%, ouro,
+    regeneração sempre ativa), aplicados em `applyDamage`, `regenerate`, `kill` e `useSkill`;
+    `shop.ts` (venda a 35%, compra a 3× o valor, poções a preço fixo, estoque de 4 itens por dia do
+    relógio e por nível, recompra dos 6 últimos), salvo no `SaveData.shop`; Mercadora Zuri no
+    santuário. Apresentação: modelo da Mercadora com balança e bolsa de moedas, barraca com toldo
+    listrado, painel da loja, tooltip compartilhado com afixos e comparação de todos os bônus,
+    número de crítico laranja com "!", som de moedas. Concordância de "Reforçad@" no plural.
 
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).
