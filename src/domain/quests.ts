@@ -221,6 +221,20 @@ export const QUESTS: QuestDefinition[] = [
     },
   },
   {
+    id: "sanctum",
+    title: "O Santuário de Elar",
+    giver: "ranger",
+    description: "Sob as ruínas de Elar, no Santuário Élfico, o Oráculo enlouqueceu e chama os ecos. Derrote-o.",
+    objective: { kind: "kill", archetype: "elvenOracle", count: 1, label: "Oráculo de Elar derrotado" },
+    reward: { xp: 12000, gold: 1600, item: { kind: "equipment", tier: 3, rarity: "epic" } },
+    requires: ["spirits"],
+    dialogue: {
+      offer: "Os ecos das ruínas não vêm do nada. No pátio de Elar há uma porta para o Santuário, onde o Oráculo guardava a cidade. Dizem que ele ainda está lá, e que não reconhece mais amigo de inimigo. Desça os dois andares e dê descanso a ele.",
+      progress: "A porta fica no pátio das ruínas, a leste. Lá dentro você tem três vidas; use os santuários.",
+      complete: "Os ecos pararam de vez. Você libertou o Oráculo. Isto estava no altar dele; agora é seu.",
+    },
+  },
+  {
     id: "heartwood",
     title: "Madeira Viva",
     giver: "armorer",

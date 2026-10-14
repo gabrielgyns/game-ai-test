@@ -234,6 +234,17 @@ com screenshots antes de serem considerados prontos.
     dungeon passa pela tela de carregamento; minimapa e lab com tudo. Medido no Chromium headless:
     ~0,6–0,66M triângulos no quadro dos Picos (vila, lago, centro), contra ~1,1M da floresta. 11 testes
     novos (`peaks.test.ts`).
+32. **Santuário Élfico** (o dono não achava a dungeon da floresta: ela não existia, tinha ficado só no
+    ROADMAP). Tema `elvenSanctum` em `DUNGEON_THEMES`: portal no pátio das ruínas de Elar
+    (`FOREST_SANCTUM`, fora do rio), nível mínimo 12, espíritos, lobos e entes, Sentinela de Elar (ente)
+    na escada e o Oráculo de Elar no fundo (escala com o nível: Golpe de Cajado, Raios Lunares, Círculo
+    Estelar, Chuva de Estrelas, Passo Etéreo, espíritos na fúria) com o Véu de Elar (2: −8% de recarga;
+    3: Passo Etéreo, 15% de esquiva). Quest "O Santuário de Elar" da Guardiã Lyra, depois dos espíritos.
+    Temas ganham gênero (`dungeonPhrase`: "no Santuário", "na Cripta"). Apresentação: estilo do
+    santuário (pedra clara com trepadeiras, tapetes verdes e dourados, luz verde-azulada), adereços
+    novos (trepadeiras, cogumelos que brilham, estandarte élfico, braseiro lunar, espinhos de raiz,
+    floreira), portal de véu verde, modelo do Oráculo (translúcido, manto branco e dourado). 4 testes
+    novos (`sanctum.test.ts`).
 
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).

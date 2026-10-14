@@ -10,10 +10,10 @@ import { itemPower, newItemId, scaleStats, type EquipSlot, type Item, type ItemS
  *
  * Analogia: as peças avulsas são boas cartas; o conjunto é a combinação que vira a mão.
  */
-export type SetId = "goblinKing" | "spiderQueen" | "scorpionEmperor" | "skeletonLord" | "ancientTreant" | "frostGiant" | "iceQueen";
+export type SetId = "goblinKing" | "spiderQueen" | "scorpionEmperor" | "skeletonLord" | "ancientTreant" | "elvenOracle" | "frostGiant" | "iceQueen";
 
 /** Poderes de 3 peças. Cada um é lido num ponto do combate (ver `combat.ts`). */
-export type SetPower = "royalFury" | "venom" | "sandShell" | "soulHarvest" | "thorns" | "glacier" | "shatter";
+export type SetPower = "royalFury" | "venom" | "sandShell" | "soulHarvest" | "thorns" | "glacier" | "shatter" | "evasion";
 
 interface PieceTemplate {
   name: string;
@@ -105,6 +105,20 @@ export const SETS: Record<SetId, SetDefinition> = {
     accessory: { name: "Amuleto de Seiva", icon: "amulet", stats: { damage: 9, maxHealth: 30 } },
     two: { stat: "regen", value: 6, text: "+6 vida/s, mesmo em combate" },
     three: { power: "thorns", text: "Casca de Espinhos: quem te fere leva 30% do dano de volta" },
+  },
+  elvenOracle: {
+    id: "elvenOracle",
+    name: "Véu de Elar",
+    boss: "elvenOracle",
+    weapon: {
+      warrior: { name: "Lâmina Lunar", icon: "sword", stats: { damage: 33 } },
+      archer: { name: "Arco de Elar", icon: "bow", stats: { damage: 32 } },
+      mage: { name: "Cajado do Oráculo", icon: "staff", stats: { damage: 34 } },
+    },
+    armor: { name: "Manto do Oráculo", icon: "armor", visual: "tunic", stats: { maxHealth: 130, speedPercent: 5 } },
+    accessory: { name: "Anel da Lua Nova", icon: "ring", stats: { damage: 11 } },
+    two: { stat: "cooldownPercent", value: 8, text: "-8% de recarga das habilidades" },
+    three: { power: "evasion", text: "Passo Etéreo: 15% de chance de esquivar qualquer golpe" },
   },
   frostGiant: {
     id: "frostGiant",

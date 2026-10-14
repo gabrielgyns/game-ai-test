@@ -39,7 +39,7 @@ import { DungeonView } from "./game/dungeonView";
 import { createPortal } from "./game/portal";
 import { terrainHeight } from "./domain/terrain";
 import {
-  descend, DUNGEON_LIVES, DUNGEON_ORIGIN, DUNGEON_THEMES, dungeonInteraction, dungeonNear, enterDungeon, exitDungeon, inDungeonSpace, openChest,
+  type DungeonThemeId, descend, dungeonPhrase, DUNGEON_LIVES, DUNGEON_ORIGIN, DUNGEON_THEMES, dungeonInteraction, dungeonNear, enterDungeon, exitDungeon, inDungeonSpace, openChest,
   openSideChest, useShrine,
 } from "./domain/dungeon";
 import { roomAt } from "./domain/dungeonLayout";
@@ -129,6 +129,9 @@ const VILLAGE_FIRE: Partial<Record<ZoneId, { x: number; z: number }>> = {
 const campfireLight = new THREE.PointLight("#ff9a4a", 0, 18, 1.4);
 scene.add(campfireLight);
 
+/** Cor do véu do portal de cada dungeon. */
+const PORTAL_COLOR: Record<DungeonThemeId, string> = { crypt: "#9a5aff", elvenSanctum: "#5ad88a", iceCave: "#5ad0ff" };
+
 /** Passagens e pedras de teleporte de uma zona. */
 function zoneMarkers(zone: ZoneId, group: THREE.Group): Pick<ZoneVisuals, "passages" | "stones" | "portals"> {
   const passages = ZONE_PASSAGES.filter((g) => g.from === zone).map((g) => {
@@ -144,7 +147,7 @@ function zoneMarkers(zone: ZoneId, group: THREE.Group): Pick<ZoneVisuals, "passa
   const portals = Object.values(DUNGEON_THEMES)
     .filter((t) => zoneAt(t.entrance.x, t.entrance.z).id === zone)
     .map((t) => {
-      const portal = createPortal(t.id === "iceCave" ? "#5ad0ff" : "#9a5aff");
+      const portal = createPortal(PORTAL_COLOR[t.id]);
       const c = ZONES[zone].center;
       portal.group.position.set(t.entrance.x, terrainHeight(t.entrance.x, t.entrance.z), t.entrance.z);
       if (t.id !== "crypt") portal.group.rotation.y = Math.atan2(t.entrance.x - c.x, t.entrance.z - c.z);
@@ -279,7 +282,7 @@ function currentInteraction(): { label: string; act: () => void } | null {
     const theme = dungeonNear(player.transform.position)!;
     const lv = Math.max(theme.minLevel, level);
     return {
-      label: `Entrar na ${theme.name} (nível ${lv})`,
+      label: `Entrar ${dungeonPhrase(theme, "em")} (nível ${lv})`,
       act: () =>
         void loadArea({ title: theme.name, subtitle: `Dois andares, o ${theme.bossName} no fundo e três vidas.`, detail: `Inimigos nível ${lv}` }, null, () => enterDungeon(world, player, undefined, theme.id)),
     };
@@ -294,9 +297,9 @@ function currentInteraction(): { label: string; act: () => void } | null {
   if (d === "exit") return { label: "Sair (vitória)", act: () => afterDungeonChange(() => exitDungeon(world, player, "complete")) };
   if (d === "leave") {
     return {
-      label: `Sair da ${theme!.name} (desistir)`,
+      label: `Sair ${dungeonPhrase(theme!, "de")} (desistir)`,
       act: () => {
-        if (confirm(`Sair agora fecha a ${theme!.name}. Na próxima entrada ela será outra. Sair?`)) afterDungeonChange(() => exitDungeon(world, player, "leave"));
+        if (confirm(`Sair agora fecha ${dungeonPhrase(theme!, "")}. Na próxima entrada será outra planta. Sair?`)) afterDungeonChange(() => exitDungeon(world, player, "leave"));
       },
     };
   }
@@ -935,8 +938,8 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
       }
       case "dungeonEnter":
         audio.play("bossPhase");
-        const dname = world.dungeon ? DUNGEON_THEMES[world.dungeon.theme].name : "dungeon";
-        hud.pushLog(`Você entrou na ${dname} (nível ${ev.level}): ${ev.rooms} salas e um chefe. Três vidas.`, "level");
+        const dname = world.dungeon ? dungeonPhrase(DUNGEON_THEMES[world.dungeon.theme], "em") : "na dungeon";
+        hud.pushLog(`Você entrou ${dname} (nível ${ev.level}): ${ev.rooms} salas e um chefe. Três vidas.`, "level");
         break;
       case "zoneTravel": {
         const to = ZONES[ev.to as ZoneId];

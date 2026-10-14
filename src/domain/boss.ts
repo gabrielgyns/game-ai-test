@@ -281,7 +281,7 @@ export function createSkeletonLord(id: EntityId, position: Vec3, level = 5): Ent
 }
 
 /** Que lacaio cada chefe convoca na fase final. */
-export const BOSS_MINION: Record<string, string> = { goblinKing: "goblin", spiderQueen: "spider", scorpionEmperor: "banditArcher", skeletonLord: "skeleton", ancientTreant: "wolf", frostGiant: "snowWolf", iceQueen: "iceWraith" };
+export const BOSS_MINION: Record<string, string> = { goblinKing: "goblin", spiderQueen: "spider", scorpionEmperor: "banditArcher", skeletonLord: "skeleton", ancientTreant: "wolf", frostGiant: "snowWolf", iceQueen: "iceWraith", elvenOracle: "elvenSpirit" };
 
 export const ANCIENT_TREANT_PATTERNS: AttackPattern[] = [
   { id: "vineLash", name: "Chicote de Vinhas", kind: "melee", range: 4.4, windup: 0.9, damageMultiplier: 1, cooldown: 2.3, minPhase: 1 },
@@ -373,6 +373,37 @@ export function createIceQueen(id: EntityId, position: Vec3, level = 22): Entity
     combat: { damage, baseDamage: damage, range: 3.4, cooldown: 2, cooldownLeft: 0, wantsAttack: false, windupTime: 0.8, windupLeft: 0 },
     ai: { state: "idle", home: { ...position }, aggroRange: 13, leashRange: 30, xpReward: Math.round(18000 * k), goldReward: Math.round(1400 * k), respawnSeconds: Infinity, needsSight: true },
     boss: { title: "Rainha Gélida", patterns: ICE_QUEEN_PATTERNS, cooldowns: {}, phase: 1, phaseThresholds: [0.6, 0.3], windupScale: 1, summoned: false, engaged: false },
+    abilities: { ...createAbilities(), skills: [] },
+    inventory: createInventory(0),
+    equipment: createEquipmentSlots(),
+  };
+}
+
+export const ELVEN_ORACLE_PATTERNS: AttackPattern[] = [
+  { id: "staffStrike", name: "Golpe de Cajado", kind: "melee", range: 3.2, windup: 0.8, damageMultiplier: 1, cooldown: 2, minPhase: 1 },
+  { id: "moonbeams", name: "Raios Lunares", kind: "fan", range: 16, projectile: "bolt", count: 7, spreadDeg: 100, windup: 0.95, damageMultiplier: 0.6, cooldown: 5.5, minPhase: 1 },
+  { id: "starCircle", name: "Círculo Estelar", kind: "aoe", range: 3.4, castRange: 16, windup: 1.2, damageMultiplier: 1.6, cooldown: 6.5, minPhase: 1 },
+  { id: "starfall", name: "Chuva de Estrelas", kind: "lob", range: 16, projectile: "bolt", count: 5, impactRadius: 2.2, windup: 1.1, damageMultiplier: 0.75, cooldown: 7.5, minPhase: 2 },
+  { id: "etherealStep", name: "Passo Etéreo", kind: "charge", range: 12, windup: 0.7, damageMultiplier: 1.3, cooldown: 7, minPhase: 2 },
+];
+
+/** Oráculo de Elar, chefe do Santuário Élfico: escala com o nível do santuário, como o Lorde na cripta. */
+export function createElvenOracle(id: EntityId, position: Vec3, level = 15): Entity {
+  const k = (0.7 + 0.1 * Math.max(1, level)) / (0.7 + 0.1 * 15);
+  const maxHealth = Math.round(3400 * k);
+  const damage = Math.round(56 * k);
+  return {
+    id,
+    kind: "enemy",
+    name: "Oráculo de Elar",
+    archetype: "elvenOracle",
+    level: level + 2,
+    transform: { position: { ...position }, yaw: Math.PI / 2 },
+    movement: { speed: 4.8, speedMultiplier: 1, intent: { x: 0, z: 0 } },
+    health: { current: maxHealth, max: maxHealth, baseMax: maxHealth, regenPerSecond: 0, lastDamagedAt: -Infinity },
+    combat: { damage, baseDamage: damage, range: 3.2, cooldown: 2, cooldownLeft: 0, wantsAttack: false, windupTime: 0.8, windupLeft: 0 },
+    ai: { state: "idle", home: { ...position }, aggroRange: 13, leashRange: 30, xpReward: Math.round(6000 * k), goldReward: Math.round(900 * k), respawnSeconds: Infinity, needsSight: true },
+    boss: { title: "Oráculo de Elar", patterns: ELVEN_ORACLE_PATTERNS, cooldowns: {}, phase: 1, phaseThresholds: [0.6, 0.3], windupScale: 1, summoned: false, engaged: false },
     abilities: { ...createAbilities(), skills: [] },
     inventory: createInventory(0),
     equipment: createEquipmentSlots(),

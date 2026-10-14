@@ -11,7 +11,9 @@ export const DECOR_VOXEL = 1 / 12;
 export type DecorKind =
   | "coffin" | "barrel" | "bones" | "candles" | "banner" | "cobweb" | "rubble" | "urn" | "spikes" | "shrine" | "brazier"
   // Caverna de Gelo.
-  | "iceCluster" | "snowdrift" | "icicles" | "iceLamp" | "frozenBones" | "iceSpikes" | "iceBrazier";
+  | "iceCluster" | "snowdrift" | "icicles" | "iceLamp" | "frozenBones" | "iceSpikes" | "iceBrazier"
+  // Santuário Élfico.
+  | "vines" | "glowShrooms" | "elvenBanner" | "moonBrazier" | "thornSpikes" | "planter";
 
 const stone: (seed: number) => Paint = (seed) => (x, y, z) => pickTone(["#5e5a64", "#6a6670", "#76727c", "#827e88"], Math.min(0.999, noise3(x / 3, y / 3, z / 3, seed) * 0.7 + hash3(x, y, z, seed) * 0.3));
 
@@ -243,7 +245,83 @@ function iceBrazier(): VoxelBuilder {
   return b;
 }
 
+const LEAF = ["#2f5a2c", "#3d6e34", "#4d823c", "#5e9646"];
+
+/** Trepadeiras num canto do teto, caindo pelas paredes (x+ e z+ são as paredes). */
+function vines(): VoxelBuilder {
+  const b = new VoxelBuilder();
+  for (let k = 0; k < 14; k++) {
+    const x = -1 - Math.floor(hash3(k, 0, 0, 5) * 12), z = -1 - Math.floor(hash3(k, 1, 0, 5) * 12);
+    if (x > -2 === z > -2) continue; // só rente a uma das paredes
+    const len = 8 + Math.floor(hash3(k, 2, 0, 5) * 18);
+    for (let d = 0; d < len; d++) b.set(x + (d % 5 === 2 ? 1 : 0), -d, z, pickTone(LEAF, hash3(k, d, 0)));
+    if (hash3(k, 3, 0, 5) < 0.4) b.set(x, -len, z, "#e8d8ff"); // florzinha
+  }
+  return b;
+}
+
+/** Cogumelos que brilham em verde-azulado: a luz das salas do santuário. */
+function glowShrooms(): VoxelBuilder {
+  const b = new VoxelBuilder();
+  for (const [x, z, h, r] of [[0, 0, 7, 3], [4, 2, 4, 2], [-3, 3, 5, 2], [2, -3, 3, 1.6]] as const) {
+    b.box(x, 0, z, x + 1, h, z + 1, "#d8e8d0");
+    for (let dx = -Math.ceil(r); dx <= r; dx++) for (let dz = -Math.ceil(r); dz <= r; dz++) if (Math.hypot(dx, dz) <= r) b.set(x + dx, h, z + dz, Math.hypot(dx, dz) < r - 0.8 ? "#9affd8" : "#3ad8b0");
+  }
+  blob(b, [0, 0, 1], [5, 0.6, 4], (x, y, z) => pickTone(["#2f5a2c", "#3d6e34"], hash3(x, y, z)), { rough: 0.3, seed: 3, floor: 0 });
+  return b;
+}
+
+/** Estandarte élfico: pano verde com folha dourada, ponta em V. */
+function elvenBanner(): VoxelBuilder {
+  const b = new VoxelBuilder();
+  b.box(-8, -1, 0, 8, 0, 2, "#c9b27a");
+  for (let y = -20; y < -1; y++)
+    for (let x = -6; x < 6; x++) {
+      if (y < -16 && Math.abs(x + 0.5) > (y + 20) * 1.5) continue;
+      b.set(x, y, 1, x === -6 || x === 5 ? "#d8c070" : pickTone(["#1f5a3a", "#256a44", "#2c7a4e"], hash3(x, y, 1, 7)));
+    }
+  for (const [x, y] of [[0, -6], [-1, -7], [0, -7], [1, -7], [-1, -8], [0, -8], [1, -8], [-2, -9], [0, -9], [2, -9], [0, -10], [0, -11]] as const) b.set(x, y, 0, "#e8c860");
+  return b;
+}
+
+/** Braseiro lunar: taça de pedra clara com chama branco-azulada. */
+function moonBrazier(): VoxelBuilder {
+  const b = new VoxelBuilder();
+  for (let y = 0; y < 8; y++) {
+    const r = y < 2 ? 4 : y < 6 ? 1.6 : 4.5;
+    for (let x = -5; x <= 5; x++) for (let z = -5; z <= 5; z++) if (Math.hypot(x + 0.5, z + 0.5) < r) b.set(x, y, z, pickTone(["#c8c4b4", "#d8d4c4", "#e4e0d0"], hash3(x, y, z)));
+  }
+  for (let x = -4; x < 4; x++) for (let z = -4; z < 4; z++) if (Math.hypot(x + 0.5, z + 0.5) < 4) b.set(x, 8, z, hash3(x, 8, z) < 0.5 ? "#7ad8ff" : "#d8f4ff");
+  bough(b, [[0, 8, 0], [1, 11, 0], [0, 14, 1]], 1.6, 0.4, () => "#f0faff");
+  return b;
+}
+
+/** Espinhos de raiz da armadilha: galhos pontudos que saem do chão. */
+function thornSpikes(): VoxelBuilder {
+  const b = new VoxelBuilder();
+  for (let x = -5; x < 6; x += 3)
+    for (let z = -5; z < 6; z += 3) {
+      const h = 6 + ((x * 7 + z * 13 + 100) % 3);
+      b.box(x, 0, z, x + 2, h - 2, z + 2, "#4e3522").box(x, h - 2, z, x + 2, h - 1, z + 2, "#6e4f33").set(x, h - 1, z, "#3d6e34");
+    }
+  return b;
+}
+
+/** Floreira de pedra com samambaias, no lugar dos sarcófagos. */
+function planter(): VoxelBuilder {
+  const b = new VoxelBuilder();
+  const s = stone(14);
+  for (let x = -7; x < 7; x++) for (let z = -5; z < 5; z++) for (let y = 0; y < 5; y++) if (Math.abs(x + 0.5) > 5.5 || Math.abs(z + 0.5) > 3.5 || y === 0) b.set(x, y, z, s(x, y, z));
+  for (let x = -6; x < 6; x++) for (let z = -4; z < 4; z++) b.set(x, 4, z, "#3a2a1a");
+  for (let k = 0; k < 9; k++) {
+    const x = -5 + Math.floor(hash3(k, 0, 0, 2) * 10), z = -3 + Math.floor(hash3(k, 1, 0, 2) * 6);
+    limb(b, [x, 5, z], [x + (hash3(k, 2, 0) - 0.5) * 6, 11 + hash3(k, 3, 0) * 4, z + (hash3(k, 4, 0) - 0.5) * 4], 0.9, 0.5, (px, py, pz) => pickTone(LEAF, hash3(px, py, pz)));
+  }
+  return b;
+}
+
 export const DECOR_BUILDERS: Record<DecorKind, () => VoxelBuilder> = {
+  vines, glowShrooms, elvenBanner, moonBrazier, thornSpikes, planter,
   coffin, barrel, bones, candles, banner, cobweb, rubble, urn, spikes, shrine, brazier,
   iceCluster, snowdrift, icicles, iceLamp, frozenBones, iceSpikes, iceBrazier,
 };

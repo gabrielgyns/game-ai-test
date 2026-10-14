@@ -4,7 +4,7 @@ import type { Item, Rarity } from "../domain/items";
 import type { ClassId } from "../domain/classes";
 import { CLASSES, CLASS_ORDER } from "../domain/classes";
 import { ENEMY_TEMPLATES, createEnemy, createPlayer, type EnemyKind } from "../domain/factories";
-import { createAncientTreant, createFrostGiant, createGoblinKing, createIceQueen, createScorpionEmperor, createSkeletonLord, createSpiderQueen } from "../domain/boss";
+import { createAncientTreant, createElvenOracle, createFrostGiant, createGoblinKing, createIceQueen, createScorpionEmperor, createSkeletonLord, createSpiderQueen } from "../domain/boss";
 import { NPC_DEFS, createNpc } from "../domain/npc";
 import { SKILLS, type SkillId } from "../domain/skills";
 import { RARITY_LABEL } from "../domain/items";
@@ -230,6 +230,15 @@ export function buildCatalog(): Exhibit[] {
     },
     {
       kind: "character",
+      id: "boss.elvenOracle",
+      group: "Chefes",
+      label: "Oráculo de Elar",
+      description: "Chefe do Santuário Élfico. Elfo alto e translúcido, de manto branco e dourado, diadema e cajado com lua de cristal. Golpe de Cajado, Raios Lunares em leque, Círculo Estelar, Chuva de Estrelas, Passo Etéreo e espíritos na fúria. Escala com o nível do santuário.",
+      size: 4,
+      spawn: (id) => createElvenOracle(id, { x: 0, y: 0, z: 0 }),
+    },
+    {
+      kind: "character",
       id: "boss.frostGiant",
       group: "Chefes",
       label: "Gigante de Gelo",
@@ -408,6 +417,8 @@ export function buildCatalog(): Exhibit[] {
     rubble: "Entulho", urn: "Urna", spikes: "Espinhos da armadilha", shrine: "Santuário da cripta", brazier: "Braseiro da cripta",
     iceCluster: "Cristais de gelo (caverna)", snowdrift: "Monte de neve (caverna)", icicles: "Pingentes do teto (caverna)", iceLamp: "Lamparina de cristal (caverna)",
     frozenBones: "Ossada congelada (caverna)", iceSpikes: "Espinhos de gelo (caverna)", iceBrazier: "Braseiro de chama fria (caverna)",
+    vines: "Trepadeiras (santuário)", glowShrooms: "Cogumelos que brilham (santuário)", elvenBanner: "Estandarte élfico (santuário)",
+    moonBrazier: "Braseiro lunar (santuário)", thornSpikes: "Espinhos de raiz (santuário)", planter: "Floreira de pedra (santuário)",
   };
   for (const kind of Object.keys(DECOR_BUILDERS) as DecorKind[]) {
     out.push({
@@ -416,7 +427,7 @@ export function buildCatalog(): Exhibit[] {
       group: "Cripta",
       label: DECOR_LABEL[kind],
       description: "Adereço da Cripta Esquecida, esculpido em voxels de 1/12 m. Encosta nas paredes das salas, sem bloquear o caminho.",
-      size: kind === "banner" || kind === "cobweb" || kind === "icicles" ? 2 : 1.4,
+      size: kind === "banner" || kind === "cobweb" || kind === "icicles" || kind === "vines" || kind === "elvenBanner" ? 2 : 1.4,
       voxels: () => DECOR_BUILDERS[kind](),
       voxel: DECOR_VOXEL,
       build: () => {

@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { terrainHeight, SPAWN_FLAT_RADIUS, WORLD_HALF } from "../domain/terrain";
 import { BOSS_HOME, seededRandom } from "../domain/worldgen";
 import { biomeAt, DESERT_BOSS_HOME, SWAMP_BOSS_HOME } from "../domain/biomes";
-import { FOREST_BOSS_HOME, FOREST_CAMP, FOREST_RUINS, forestRiverZ, isIce, isWater, PEAKS_BOSS_HOME, PEAKS_CAVE, PEAKS_LAKE, PEAKS_LAKE_RADIUS, PEAKS_VILLAGE } from "../domain/terrain";
+import { FOREST_BOSS_HOME, FOREST_CAMP, FOREST_RUINS, FOREST_SANCTUM, forestRiverZ, isIce, isWater, PEAKS_BOSS_HOME, PEAKS_CAVE, PEAKS_LAKE, PEAKS_LAKE_RADIUS, PEAKS_VILLAGE } from "../domain/terrain";
 import { ZONE_PASSAGES, ZONES, type ZoneDefinition } from "../domain/zones";
 import { DUNGEON_ENTRANCE } from "../domain/dungeon";
 import { VILLAGES } from "../domain/villages";
@@ -143,6 +143,7 @@ export function placeForestProps(seed = 5151): PropPlacement[] {
     if (isWater(p.x, p.z) || Math.abs(lz - forestRiverZ(lx)) < 6) return false;
     if (Math.hypot(lx - FOREST_CAMP.x, lz - FOREST_CAMP.z) < 15) return false;
     if (Math.hypot(lx - FOREST_BOSS_HOME.x, lz - FOREST_BOSS_HOME.z) < 20) return false;
+    if (Math.hypot(lx - FOREST_SANCTUM.x, lz - FOREST_SANCTUM.z) < 6) return false; // portal do Santuário
     if (onTrail(p.x, p.z)) return false;
     return Math.max(Math.abs(lx), Math.abs(lz)) < zone.half - 6;
   };

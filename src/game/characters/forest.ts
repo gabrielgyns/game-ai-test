@@ -288,3 +288,61 @@ export function createArmorer(): CharacterModel {
     },
   });
 }
+
+/**
+ * Oráculo de Elar: um elfo alto e translúcido, de manto branco e dourado, capuz com diadema e um cajado
+ * com uma lua de cristal. Montado maior (grupo interno escalado), como os outros chefes de dungeon.
+ */
+export function createElvenOracle(): CharacterModel {
+  const robe = shades("#e8e4d4", 0.1);
+  const model = buildHumanoid({
+    skin: shades("#c8f0e8", 0.08),
+    legs: { hw: 2, hd: 2, length: 14 },
+    arms: { hw: 2, hd: 2, length: 13 },
+    head: { hw: 5, h: 11, hd: 5 },
+    torso: { hw: 6, h: 15, hd: 3 },
+    legX: 3,
+    armX: 8,
+    pants: robe,
+    boots: shades("#c9b27a", 0.1),
+    bootH: 2,
+    sleeve: robe,
+    sleeveLen: 13,
+    face: { eye: "#9affd8", mouth: "flat" },
+    mouthY: 2,
+    neck: 1,
+    topExtra: 6,
+    torsoPaint: (b, y) => {
+      for (let yy = y - 14; yy < y + 2; yy++) {
+        const r = 6 + Math.floor((y + 2 - yy) / 4);
+        for (let x = -r; x <= r; x++) for (const z of [-4, 3]) b.set(x, yy, z, yy % 5 ? robe.base : "#d8c070");
+        for (let z = -4; z <= 3; z++) for (const x of [-r, r]) b.set(x, yy, z, robe.dark);
+      }
+      b.box(-1, y + 2, -4, 1, y + 15, -3, "#d8c070"); // faixa dourada
+      b.box(-7, y + 13, -4, 7, y + 15, 4, "#d8c070");
+    },
+    headPaint: (b) => {
+      b.box(-6, 5, -6, 6, 12, 6, robe.base).box(-5, 0, 5, 5, 9, 6, robe.dark); // capuz
+      for (const s of [-1, 1]) b.box(s < 0 ? -8 : 5, 5, -1, s < 0 ? -5 : 8, 7, 1, "#c8f0e8"); // orelhas
+      for (const [x, h] of [[-3, 2], [-1, 4], [0, 5], [1, 4], [3, 2]] as const) b.box(x, 12, -6, x + 1, 12 + h, -5, "#e8c860"); // diadema
+      b.set(0, 14, -7, "#9affd8");
+    },
+    weaponPaint: (b) => {
+      b.box(0, -30, -1, 1, 8, 0, "#c9b27a");
+      for (let a = 0; a < 14; a++) {
+        const t = (a / 13) * Math.PI * 1.3 + 0.4;
+        b.set(Math.round(Math.cos(t) * 4), 12 + Math.round(Math.sin(t) * 4), -1, "#bff8ff");
+      }
+      b.box(-1, 11, -2, 2, 14, 1, "#9affd8");
+    },
+  });
+  const ghost = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5, transparent: true, opacity: 0.85, emissive: new THREE.Color("#3ad8a0"), emissiveIntensity: 0.3, depthWrite: false });
+  model.root.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (m.isMesh) m.material = ghost;
+  });
+  const root = new THREE.Group();
+  model.root.scale.setScalar(1.3);
+  root.add(model.root);
+  return { ...model, root, height: model.height * 1.3 };
+}

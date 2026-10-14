@@ -84,6 +84,34 @@ const STYLES: Record<DungeonThemeId, DungeonStyle> = {
     snow: false,
     portal: "#9a5aff",
   },
+  elvenSanctum: {
+    wall: ["#8a8a7a", "#96968a", "#a29f92", "#aeab9c", "#7e8070"],
+    wallBase: ["#3e6a32", "#4a7a3a", "#5a8a44"],
+    crack: "#5a5a4e",
+    plinth: ["#6a6a5e", "#5e5e52"],
+    mortar: "#4e4e44",
+    top: ["#c8c4b0", "#6a6a5e", "#d8d4c0", "#7a7a6c"],
+    arch: ["#6a6a5e", "#d8d4c0", "#b8b4a2", "#c4c0ae"],
+    pillar: ["#c8c4b4", "#d4d0c0", "#e0dccc"],
+    pillarCap: "#d8c070",
+    stairRim: ["#7a7a6c", "#a8a698"],
+    steps: ["#6a6a5e", "#7a7a6c"],
+    pit: ["#060a08", "#1e2a22"],
+    floor: ["#7a7c6c", "#848676", "#8e9080", "#98988a"],
+    joint: "#4e5046",
+    floorAccent: ["#3e6a32", "#4a7a3a"],
+    trap: ["#1e1a14", "#4e3a28"],
+    rug: ["#d8c070", "#1f5a3a", "#256a44"],
+    speck: "#e8d8ff",
+    decor: { coffin: "planter", barrel: "rubble", bones: "planter", candles: "glowShrooms", banner: "elvenBanner", cobweb: "vines", rubble: "rubble", urn: "urn", spikes: "thornSpikes", brazier: "moonBrazier" },
+    flame: ["#5ad8b0", "#9affd8", "#e8fff4"],
+    torchLight: "#8affc8",
+    brazierLight: "#9ad8ff",
+    candleLight: "#5affc0",
+    dust: "#c8ffd8",
+    snow: false,
+    portal: "#5ad88a",
+  },
   iceCave: {
     wall: ["#6a98ba", "#7aa8c8", "#8ab8d6", "#9ac6e0", "#aed4ea"],
     wallBase: ["#dceef8", "#e8f4fa", "#f4fafd"],
@@ -589,7 +617,7 @@ export class DungeonView {
         if (kind === st.decor.brazier) this.lightSpots.push({ pos: new THREE.Vector3(d.x, 1.3, d.z), color: new THREE.Color(st.brazierLight), power: 11 });
         if (kind === st.decor.candles) this.lightSpots.push({ pos: new THREE.Vector3(d.x, 0.7, d.z), color: new THREE.Color(st.candleLight), power: 4 });
       });
-      mesh.castShadow = kind !== "cobweb" && kind !== "banner" && kind !== "icicles";
+      mesh.castShadow = kind !== "cobweb" && kind !== "banner" && kind !== "icicles" && kind !== "vines" && kind !== "elvenBanner";
       mesh.receiveShadow = true;
       mesh.computeBoundingSphere();
       this.group.add(mesh);

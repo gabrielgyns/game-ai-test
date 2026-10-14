@@ -5,7 +5,7 @@ import { createHero } from "./characters/hero";
 import { createBandit, createBogZombie, createGoblin, createOrc, createScorpion, createSkeleton, createSlime, createSpider } from "./characters/mobs";
 import { createGoblinKing, createScorpionEmperor, createSkeletonLord, createSpiderQueen } from "./characters/bosses";
 import { createVillager } from "./characters/npcs";
-import { createAncientTreant, createArmorer, createElvenSpirit, createEnt, createPeddler, createRanger, createWolf } from "./characters/forest";
+import { createAncientTreant, createArmorer, createElvenOracle, createElvenSpirit, createEnt, createPeddler, createRanger, createWolf } from "./characters/forest";
 import { createFrostGiant, createFurTrader, createHunter, createIceQueen, createIceWraith, createJarl, createSnowWolf, createYeti } from "./characters/peaks";
 
 export type { CharacterModel } from "./characters/common";
@@ -17,7 +17,7 @@ export { createVillager } from "./characters/npcs";
 /** Todos os arquétipos conhecidos, na ordem em que aparecem no jogo. */
 export const ARCHETYPES = [
   "hero", "slime", "goblin", "goblinArcher", "orc", "spider", "bogZombie", "scorpion", "bandit", "banditArcher",
-  "goblinKing", "spiderQueen", "scorpionEmperor", "skeleton", "skeletonArcher", "skeletonLord", "wolf", "ent", "elvenSpirit", "ancientTreant", "snowWolf", "iceWraith", "yeti", "frostGiant", "iceQueen",
+  "goblinKing", "spiderQueen", "scorpionEmperor", "skeleton", "skeletonArcher", "skeletonLord", "wolf", "ent", "elvenSpirit", "ancientTreant", "elvenOracle", "snowWolf", "iceWraith", "yeti", "frostGiant", "iceQueen",
   "elder", "smith", "guard", "merchant", "ranger", "peddler", "armorer", "jarl", "furTrader", "hunter",
 ] as const;
 
@@ -44,6 +44,7 @@ export function createModel(archetype: string, equipment?: Equipment, classId?: 
     case "elvenSpirit": return createElvenSpirit();
     case "ancientTreant": return createAncientTreant();
     case "ranger": return createRanger();
+    case "elvenOracle": return createElvenOracle();
     case "snowWolf": return createSnowWolf();
     case "iceWraith": return createIceWraith();
     case "yeti": return createYeti();

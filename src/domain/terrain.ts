@@ -35,6 +35,8 @@ export const FOREST_WATER = -2;
 export const FOREST_CAMP = { x: 0, z: 84 };
 export const FOREST_BOSS_HOME = { x: 0, z: -78 };
 export const FOREST_RUINS = { x: 70, z: 6 };
+/** Portal do Santuário Élfico, no pátio das ruínas. */
+export const FOREST_SANCTUM = { x: 72, z: 14 };
 
 /** Centro do rio (em z local) para cada x local: serpenteia de oeste a leste pelo meio da floresta. */
 export const forestRiverZ = (lx: number): number => 10 * Math.sin(lx * 0.032 + 1) - 4 + 4 * Math.sin(lx * 0.09);

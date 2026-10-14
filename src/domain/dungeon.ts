@@ -1,4 +1,4 @@
-import { createIceQueen, createSkeletonLord } from "./boss";
+import { createElvenOracle, createIceQueen, createSkeletonLord } from "./boss";
 import type { Entity, EntityId } from "./components";
 import { generateLayout, isFloorTile, roomCenter, Tile, tileOf, DUNGEON_FLOORS, type DungeonLayout, type DungeonRoom } from "./dungeonLayout";
 import { createEnemy, type EnemyKind } from "./factories";
@@ -11,7 +11,7 @@ import { seededRandom } from "./worldgen";
 import { applyDamage } from "./systems/combat";
 import type { World } from "./world";
 import { ZONES, zoneAt } from "./zones";
-import { PEAKS_CAVE } from "./terrain";
+import { FOREST_SANCTUM, PEAKS_CAVE } from "./terrain";
 
 /**
  * Dungeons instanciadas, no estilo Minecraft Dungeons: um portal no mapa leva a uma cripta gerada na
@@ -31,11 +31,13 @@ export const DUNGEON_ORIGIN = { x: 1000, z: -64 };
  * apresentação escolhe pelo id). Como um jogo de tabuleiro com cenários: as regras são as mesmas, o
  * mapa e as peças mudam.
  */
-export type DungeonThemeId = "crypt" | "iceCave";
+export type DungeonThemeId = "crypt" | "elvenSanctum" | "iceCave";
 
 export interface DungeonTheme {
   id: DungeonThemeId;
   name: string;
+  /** Gênero do nome, para "na Cripta" / "no Santuário". */
+  feminine: boolean;
   /** Portal de entrada, no mapa de alguma zona. */
   entrance: { x: number; z: number };
   /** Nível mínimo (a dungeon acompanha o herói, mas não desce abaixo disso). */
@@ -51,11 +53,13 @@ export interface DungeonTheme {
 }
 
 const peaks = (p: { x: number; z: number }) => ({ x: ZONES.picos.center.x + p.x, z: ZONES.picos.center.z + p.z });
+const forest = (p: { x: number; z: number }) => ({ x: ZONES.floresta.center.x + p.x, z: ZONES.floresta.center.z + p.z });
 
 export const DUNGEON_THEMES: Record<DungeonThemeId, DungeonTheme> = {
   crypt: {
     id: "crypt",
     name: "Cripta Esquecida",
+    feminine: true,
     // Campina a nordeste do santuário.
     entrance: { x: 24, z: -30 },
     minLevel: 1,
@@ -71,9 +75,28 @@ export const DUNGEON_THEMES: Record<DungeonThemeId, DungeonTheme> = {
     bossName: "Lorde Esqueleto",
     createBoss: (id, at, level) => createSkeletonLord(id, at, level),
   },
+  elvenSanctum: {
+    id: "elvenSanctum",
+    name: "Santuário Élfico",
+    feminine: false,
+    // No pátio das ruínas de Elar, a leste da Floresta Ancestral.
+    entrance: forest(FOREST_SANCTUM),
+    minLevel: 12,
+    baseLevel: 15,
+    mix: [
+      { kind: "elvenSpirit", weight: 4 },
+      { kind: "wolf", weight: 3 },
+      { kind: "ent", weight: 1.2 },
+    ],
+    guardian: { name: "Sentinela de Elar", kind: "ent", health: 3, damage: 1.25, xp: 5 },
+    escort: 2,
+    bossName: "Oráculo de Elar",
+    createBoss: (id, at, level) => createElvenOracle(id, at, level),
+  },
   iceCave: {
     id: "iceCave",
     name: "Caverna de Gelo",
+    feminine: true,
     // Patamar na encosta leste dos Picos Gelados.
     entrance: peaks(PEAKS_CAVE),
     minLevel: 20,
@@ -89,6 +112,12 @@ export const DUNGEON_THEMES: Record<DungeonThemeId, DungeonTheme> = {
     createBoss: (id, at, level) => createIceQueen(id, at, level),
   },
 };
+
+/** "na Cripta Esquecida", "do Santuário Élfico", "a Caverna de Gelo": preposição + artigo + nome. */
+export function dungeonPhrase(theme: DungeonTheme, prep: "em" | "de" | ""): string {
+  const art = theme.feminine ? "a" : "o";
+  return `${prep === "em" ? "n" + art : prep === "de" ? "d" + art : art} ${theme.name}`;
+}
 
 /** Nome e entrada da primeira dungeon (a cripta do vale). */
 export const DUNGEON_NAME = DUNGEON_THEMES.crypt.name;

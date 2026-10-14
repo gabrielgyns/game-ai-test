@@ -91,7 +91,12 @@ atiram das ruínas. A vila do acampamento, ao sul, tem a **Guardiã Lyra** (ques
 Faelan** (loja própria, com estoque da região: mais itens, mais raros, nunca abaixo do nível 12) e a
 **Armeira Kaia** (quests de cerne de ente, inclusive uma depois do chefe). O Ente Ancião guarda o
 conjunto **Coração da Floresta** (3 peças: quem te fere leva 30% do dano de volta). Cair na floresta
-leva ao acampamento, não ao santuário.
+leva ao acampamento, não ao santuário. No pátio das ruínas de Elar, um portal de véu verde leva ao
+**Santuário Élfico**, a dungeon da floresta (nunca abaixo do nível 12): paredes de pedra clara com
+trepadeiras, tapetes verdes e dourados, cogumelos que brilham e braseiros de chama lunar. Espíritos,
+lobos e entes enchem as salas, a **Sentinela de Elar** (um ente enorme) guarda a escada e o **Oráculo
+de Elar** espera no fundo (Raios Lunares, Círculo Estelar, Chuva de Estrelas, Passo Etéreo), com o
+**Véu de Elar** (3 peças: 15% de chance de esquivar qualquer golpe). A Guardiã Lyra tem a quest.
 
 Ao norte da floresta, depois da clareira do Ancião e um pouco a leste, a trilha sobe para os **Picos
 Gelados** (inimigos do nível 20 ao 28): cristas nevadas, neve caindo, pinheiros brancos e um **lago

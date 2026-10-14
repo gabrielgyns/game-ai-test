@@ -214,6 +214,11 @@ export function applyDamage(world: World, source: Entity, target: Entity, amount
   if (kind !== "hazard" && hasSetPower(source, "royalFury") && source.health.current < source.health.max * 0.5) {
     amount = Math.round(amount * (1 + SET_POWERS.royalFuryBonus));
   }
+  // Passo Etéreo (Oráculo de Elar, 3 peças): às vezes o golpe passa direto.
+  if (kind !== "hazard" && hasSetPower(target, "evasion") && world.random() < SET_POWERS.evasionChance) {
+    world.emit({ type: "dodge", entity: target.id, source: source.id });
+    return;
+  }
   // Estilhaçar (Rainha Gélida, 3 peças): alvo lento ou atordoado apanha mais.
   if (kind !== "hazard" && hasSetPower(source, "shatter") && (isStunned(target) || speedFactor(target) < 1)) {
     amount = Math.round(amount * (1 + SET_POWERS.shatterBonus));
@@ -348,6 +353,7 @@ export const SET_POWERS = {
   glacierThreshold: 0.15,
   glacierKeep: 0.5,
   shatterBonus: 0.4,
+  evasionChance: 0.15,
 };
 
 const REGEN_DELAY_SECONDS = 5;

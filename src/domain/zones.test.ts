@@ -107,7 +107,7 @@ describe("zonas", () => {
     expect(m.every((k) => zoneAt(k.x, k.z).id === "floresta")).toBe(true);
     expect(m.filter((k) => k.kind === "gate").map((k) => k.label).sort()).toEqual(["Picos Gelados", "Vale das Gosmas"]);
     expect(m.filter((k) => k.kind === "boss").map((k) => k.label)).toEqual(["Ente Ancião"]);
-    expect(m.some((k) => k.kind === "portal")).toBe(false);
+    expect(m.filter((k) => k.kind === "portal").map((k) => k.label)).toEqual(["Santuário Élfico"]);
     expect(m.filter((k) => k.kind === "stash" || k.kind === "waystone")).toHaveLength(2);
   });
 
