@@ -3,6 +3,8 @@ import { advanceKillQuests } from "../quests";
 import type { AttackPattern, TelegraphShape } from "../boss";
 import { directionFromYaw, directionXZ, distanceXZ } from "../math";
 import { CHARGE } from "../skills";
+import { CLASSES } from "../classes";
+import { fireProjectile } from "./projectiles";
 import { grantXp } from "../progression";
 import { rollLoot } from "../loot";
 import type { World } from "../world";
@@ -32,8 +34,12 @@ export function combatSystem(world: World, dt: number): void {
   regenerate(world, dt);
 }
 
-/** Golpe básico de quem não tem padrões próprios. */
+/** Golpe básico de quem não tem padrões próprios: melee, ou projétil conforme a classe. */
 function defaultPattern(e: Entity): AttackPattern {
+  const style = e.classId ? CLASSES[e.classId].attackStyle : "melee";
+  if (style !== "melee") {
+    return { id: "basic", name: "Disparo", kind: "projectile", range: e.combat.range, windup: 0, damageMultiplier: 1, cooldown: e.combat.cooldown, minPhase: 1, projectile: style };
+  }
   return { id: "basic", name: "Golpe", kind: "melee", range: e.combat.range, windup: e.combat.windupTime, damageMultiplier: 1, cooldown: e.combat.cooldown, minPhase: 1 };
 }
 
@@ -47,7 +53,9 @@ export function telegraphShape(pattern: AttackPattern, direction: { x: number; z
 export function startAttack(world: World, e: Entity, pattern: AttackPattern, windup: number): void {
   const player = world.player;
   const direction =
-    e.kind === "enemy" && player ? directionXZ(e.transform.position, player.transform.position) : directionFromYaw(e.transform.yaw);
+    e.kind === "enemy" && player
+      ? directionXZ(e.transform.position, player.transform.position)
+      : e.abilities?.aimDirection ?? directionFromYaw(e.transform.yaw);
   // Área mirada: o ponto é a posição do alvo agora; quem sair dela até o fim do aviso escapa.
   const point = pattern.kind === "aoe" && player ? { ...player.transform.position } : undefined;
   if (windup > 0) {
@@ -84,6 +92,12 @@ function resolveAttack(world: World, e: Entity): void {
         applyDamage(world, e, other, damage);
       }
       world.emit({ type: "attack", source: e.id, target: hit?.id });
+      break;
+    }
+    case "projectile": {
+      const direction = pending?.direction ?? directionFromYaw(e.transform.yaw);
+      fireProjectile(world, e, pattern.projectile ?? "arrow", direction, damage, pattern.range);
+      world.emit({ type: "attack", source: e.id });
       break;
     }
     case "charge": {
@@ -137,6 +151,19 @@ export function applyDamage(world: World, source: Entity, target: Entity, amount
   if (target.abilities?.dash?.invulnerable) {
     world.emit({ type: "dodge", entity: target.id, source: source.id });
     return;
+  }
+  // Escudo absorve antes da vida.
+  const shield = target.abilities?.shield;
+  if (shield && shield.amount > 0) {
+    const absorbed = Math.min(shield.amount, amount);
+    shield.amount -= absorbed;
+    amount -= absorbed;
+    world.emit({ type: "shieldAbsorb", entity: target.id, amount: absorbed });
+    if (shield.amount <= 0) {
+      target.abilities!.shield = null;
+      world.emit({ type: "shieldEnd", entity: target.id });
+    }
+    if (amount <= 0) return;
   }
   target.health.current = Math.max(0, target.health.current - amount);
   target.health.lastDamagedAt = world.time;

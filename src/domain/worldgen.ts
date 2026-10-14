@@ -4,6 +4,7 @@ import { World } from "./world";
 import { createGoblinKing, createSpiderQueen } from "./boss";
 import { biomeAt, SWAMP_BOSS_HOME } from "./biomes";
 import { createNpc, npcById } from "./npc";
+import type { ClassId } from "./classes";
 
 /** Gerador pseudoaleatório determinístico (mulberry32) para o mundo ser igual a cada partida. */
 export function seededRandom(seed: number): () => number {
@@ -24,6 +25,7 @@ export const BOSS_ARENA_RADIUS = 16;
 
 export interface WorldGenOptions {
   seed?: number;
+  classId?: ClassId;
 }
 
 /**
@@ -36,7 +38,7 @@ export function generateWorld(options: WorldGenOptions = {}): World {
   const rand = seededRandom(options.seed ?? DEFAULT_SEED);
   const world = new World();
   world.random = seededRandom((options.seed ?? 1337) * 7919 + 17);
-  world.spawn((id) => createPlayer(id, { x: 0, y: terrainHeight(0, 0), z: 0 }));
+  world.spawn((id) => createPlayer(id, { x: 0, y: terrainHeight(0, 0), z: 0 }, options.classId ?? "warrior"));
 
   // NPCs do santuário, virados para o centro.
   const npcSpots: { id: string; x: number; z: number }[] = [

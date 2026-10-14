@@ -15,6 +15,10 @@
 - `pkill` no fim de uma cadeia `&&` encerra a cadeia com código 144; rode-o separado ou com `; true`.
 
 ## Sobre o navegador
+- `beforeunload` dispara o autosave: qualquer fluxo que apaga o save e recarrega precisa suprimir o
+  autosave antes (`suppressAutosave`), senão o save volta.
+- Escolha de classe antes de o mundo existir: guardar em `sessionStorage` e recarregar é mais simples
+  do que tornar a criação do mundo assíncrona em `main.ts`.
 - ESC que solta o pointer lock é consumido pelo navegador; o segundo ESC chega à página.
   O Chrome recusa recapturar o mouse por ~1 s após um ESC: `requestPointerLock` pode rejeitar.
 - Painéis modais devem soltar o pointer lock de propósito e dizer ao coordenador que não é pausa

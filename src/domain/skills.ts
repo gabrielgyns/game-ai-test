@@ -1,6 +1,9 @@
 import type { Vec2 } from "./math";
 
-export type SkillId = "whirlwind" | "charge" | "warcry" | "secondWind";
+export type SkillId =
+  | "whirlwind" | "charge" | "warcry" | "secondWind"
+  | "piercingShot" | "arrowRain" | "disengage" | "focus"
+  | "fireball" | "frostNova" | "blink" | "arcaneShield";
 
 export interface SkillDefinition {
   id: SkillId;
@@ -39,9 +42,67 @@ export const SKILLS: Record<SkillId, SkillDefinition> = {
     cooldown: 30,
     icon: "secondWind",
   },
+  // Arqueiro
+  piercingShot: {
+    id: "piercingShot",
+    name: "Tiro Perfurante",
+    description: "Flecha que atravessa todos os inimigos em linha por 200% do dano.",
+    cooldown: 7,
+    icon: "piercingShot",
+  },
+  arrowRain: {
+    id: "arrowRain",
+    name: "Chuva de Flechas",
+    description: "Flechas caem numa área de 3,5 m a 7 m à frente, causando 130% do dano a cada inimigo.",
+    cooldown: 9,
+    icon: "arrowRain",
+  },
+  disengage: {
+    id: "disengage",
+    name: "Recuo Ágil",
+    description: "Salta 5 m para trás, invulnerável durante o salto.",
+    cooldown: 6,
+    icon: "disengage",
+  },
+  focus: {
+    id: "focus",
+    name: "Foco",
+    description: "+40% de dano por 8 s.",
+    cooldown: 18,
+    icon: "focus",
+  },
+  // Mago
+  fireball: {
+    id: "fireball",
+    name: "Bola de Fogo",
+    description: "Projétil lento que explode num raio de 2,8 m por 220% do dano.",
+    cooldown: 6,
+    icon: "fireball",
+  },
+  frostNova: {
+    id: "frostNova",
+    name: "Nova Gélida",
+    description: "Explosão de gelo num raio de 4 m em volta de você por 140% do dano.",
+    cooldown: 8,
+    icon: "frostNova",
+  },
+  blink: {
+    id: "blink",
+    name: "Teleporte",
+    description: "Salta 7 m na direção da câmera num piscar de olhos.",
+    cooldown: 7,
+    icon: "blink",
+  },
+  arcaneShield: {
+    id: "arcaneShield",
+    name: "Escudo Arcano",
+    description: "Absorve até 60% da vida máxima em dano por 10 s.",
+    cooldown: 22,
+    icon: "arcaneShield",
+  },
 };
 
-/** Ordem na barra de habilidades (teclas 1 a 4). */
+/** Barra padrão (guerreiro). As classes definem a própria em classes.ts. */
 export const SKILL_BAR: SkillId[] = ["whirlwind", "charge", "warcry", "secondWind"];
 
 export interface SkillState {
@@ -74,8 +135,10 @@ export interface Abilities {
   aimDirection: Vec2;
   dash: Dash | null;
   rollCooldownLeft: number;
-  /** Buff de dano ativo (Grito de Guerra). */
+  /** Buff de dano ativo (Grito de Guerra, Foco). */
   damageBuff: { multiplier: number; timeLeft: number } | null;
+  /** Escudo que absorve dano antes da vida (Escudo Arcano). */
+  shield: { amount: number; timeLeft: number } | null;
 }
 
 export const ROLL = { duration: 0.42, distance: 4.2, cooldown: 1.0 } as const;
@@ -83,16 +146,25 @@ export const CHARGE = { duration: 0.32, distance: 7, damageMultiplier: 1.2 } as 
 export const WHIRLWIND = { radius: 3.5, damageMultiplier: 1.5 } as const;
 export const WARCRY = { multiplier: 1.5, duration: 8 } as const;
 export const SECOND_WIND = { healFraction: 0.35 } as const;
+export const PIERCING = { damageMultiplier: 2.0, range: 20 } as const;
+export const ARROW_RAIN = { distance: 7, radius: 3.5, damageMultiplier: 1.3 } as const;
+export const DISENGAGE = { duration: 0.3, distance: 5 } as const;
+export const FOCUS = { multiplier: 1.4, duration: 8 } as const;
+export const FIREBALL = { damageMultiplier: 2.2, radius: 2.8, range: 16 } as const;
+export const FROST_NOVA = { radius: 4, damageMultiplier: 1.4 } as const;
+export const BLINK = { duration: 0.12, distance: 7 } as const;
+export const ARCANE_SHIELD = { fraction: 0.6, duration: 10 } as const;
 
-export function createAbilities(): Abilities {
+export function createAbilities(skillIds: SkillId[] = SKILL_BAR): Abilities {
   return {
-    skills: SKILL_BAR.map((id) => ({ id, cooldownLeft: 0 })),
+    skills: skillIds.map((id) => ({ id, cooldownLeft: 0 })),
     queuedSkill: null,
     wantsRoll: false,
     aimDirection: { x: 0, z: -1 },
     dash: null,
     rollCooldownLeft: 0,
     damageBuff: null,
+    shield: null,
   };
 }
 

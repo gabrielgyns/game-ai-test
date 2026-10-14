@@ -26,15 +26,22 @@ class EntityView {
   private readonly telegraphLine: THREE.Mesh;
   private readonly telegraphLineFill: THREE.Mesh;
   private marker: THREE.Sprite | null = null;
+  private shieldMesh!: THREE.Mesh;
   private markerKind: "" | "!" | "?" = "";
   private readonly scene: THREE.Scene;
 
   constructor(readonly entity: Entity, scene: THREE.Scene) {
     this.scene = scene;
     this.modelSignature = equipmentSignature(entity.equipment);
-    this.model = createModel(entity.archetype, entity.equipment);
+    this.model = createModel(entity.archetype, entity.equipment, entity.classId);
     this.model.root.rotation.order = "YXZ"; // yaw primeiro, depois a cambalhota em torno do próprio eixo
     scene.add(this.model.root);
+    this.shieldMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(1.5, 12, 8),
+      new THREE.MeshBasicMaterial({ color: new THREE.Color("#8fb3ff").multiplyScalar(1.4), transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false, wireframe: true }),
+    );
+    this.shieldMesh.visible = false;
+    scene.add(this.shieldMesh);
 
     this.healthBar = new THREE.Group();
     const back = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.14), new THREE.MeshBasicMaterial({ color: "#1a1a1a", depthTest: false }));
@@ -120,7 +127,7 @@ class EntityView {
     if (sig === this.modelSignature) return;
     this.modelSignature = sig;
     this.scene.remove(this.model.root);
-    this.model = createModel(this.entity.archetype, this.entity.equipment);
+    this.model = createModel(this.entity.archetype, this.entity.equipment, this.entity.classId);
     this.model.root.rotation.order = "YXZ";
     this.scene.add(this.model.root);
   }
@@ -225,6 +232,14 @@ class EntityView {
     this.targetRing.visible = isTarget;
     if (isTarget) this.targetRing.position.set(p.x, p.y + 0.05, p.z);
 
+    // Escudo Arcano: esfera translúcida que gira.
+    const shield = e.abilities?.shield;
+    this.shieldMesh.visible = !!shield && shield.amount > 0;
+    if (this.shieldMesh.visible) {
+      this.shieldMesh.position.set(p.x, p.y + 1.1, p.z);
+      this.shieldMesh.rotation.y = time * 0.8;
+    }
+
     // Aviso de golpe: anel no alcance e preenchimento crescendo até o impacto; o corpo recua.
     const windingUp = e.combat.windupLeft > 0 && this.windupTotal > 0 && this.windupShape !== null;
     this.telegraph.visible = windingUp;
@@ -258,7 +273,7 @@ class EntityView {
   }
 
   dispose(scene: THREE.Scene): void {
-    scene.remove(this.model.root, this.healthBar, this.targetRing, this.telegraph);
+    scene.remove(this.model.root, this.healthBar, this.targetRing, this.telegraph, this.shieldMesh);
     if (this.marker) scene.remove(this.marker);
   }
 }

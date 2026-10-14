@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { VoxelBuilder, voxelMaterial } from "./voxel";
 import type { Equipment } from "../domain/inventory";
 import type { Item, Rarity } from "../domain/items";
+import type { ClassId } from "../domain/classes";
 
 /** Um modelo visual com ganchos de animação simples. */
 export interface CharacterModel {
@@ -100,6 +101,18 @@ function buildWeapon(arm: VoxelBuilder, weapon: Item | null): void {
       arm.box(-1, -17, -5, 0, -10, -1, "#aab0b8"); // lâmina para a frente
       arm.box(-1, -16, -6, 0, -11, -5, blade); // fio
       break;
+    case "bow":
+      // Arco segurado na vertical: corpo curvo em voxels e corda.
+      arm.box(-1, -14, -1, 0, -2, 0, wood);
+      arm.box(-1, -15, -2, 0, -14, -1, wood).box(-1, -2, -2, 0, -1, -1, wood);
+      arm.box(0, -14, -2, 1, -2, -1, "#e8e4da"); // corda
+      arm.box(-1, -9, -1, 0, -7, 0, blade); // empunhadura na cor da raridade
+      break;
+    case "staff":
+      arm.box(-1, -16, -1, 0, -5, 0, wood);
+      arm.box(-2, -4, -2, 1, -1, 1, blade); // orbe
+      arm.box(-1, -5, -1, 0, -4, 0, gold);
+      break;
     case "sword":
     default: {
       const long = (weapon.stats.damage ?? 0) >= 12; // montante
@@ -111,13 +124,14 @@ function buildWeapon(arm: VoxelBuilder, weapon: Item | null): void {
   }
 }
 
-export function createHero(equipment?: Equipment): CharacterModel {
+export function createHero(equipment?: Equipment, classId: ClassId = "warrior"): CharacterModel {
   const skin = "#e8b893", hair = "#4a2e1a", eye = "#1b1b1b";
   const armor = equipment?.armor ?? null;
   const accessory = equipment?.accessory ?? null;
   const weapon = equipment?.weapon ?? null;
   const visual = armor?.visual ?? "none";
-  const cloth = visual === "none" ? "#3b5aa6" : visual === "tunic" ? "#8a5a2b" : visual === "chain" ? "#8c94a3" : "#4a4f5c";
+  const classCloth = classId === "archer" ? "#3f7a3a" : classId === "mage" ? "#5a3f8f" : "#3b5aa6";
+  const cloth = visual === "none" ? classCloth : visual === "tunic" ? "#8a5a2b" : visual === "chain" ? "#8c94a3" : "#4a4f5c";
   const trim = visual === "plate" ? "#c9a227" : visual === "chain" ? "#b9c0cc" : "#6b4a2b";
   const boots = accessory?.icon === "boots" ? "#c9a227" : "#2b2b2b";
   const glows: NonNullable<CharacterModel["glowMaterials"]> = [];
@@ -140,6 +154,8 @@ export function createHero(equipment?: Equipment): CharacterModel {
     gear.box(-3, 18, -3, 3, 21, 3, "#4a4f5c"); // elmo
   }
   if (visual === "chain") gear.box(-4, 12, -2, 4, 13, 2, trim); // gola de malha
+  if (classId === "archer") gear.box(-4, 17, -4, 4, 21, 4, "#2f5a2a").box(-3, 17, -4, 3, 19, -3, skin); // capuz
+  if (classId === "mage") gear.box(-4, 19, -4, 4, 20, 4, "#3b2a66").box(-2, 20, -2, 2, 25, 2, "#3b2a66").set(0, 25, 0, "#c9a227"); // chapéu
   const armorGlow = armor ? glowMaterial(armor.rarity, 0.08) : null;
   if (armorGlow) glows.push(armorGlow);
 
@@ -393,9 +409,9 @@ export function createBandit(): CharacterModel {
   return { root, weaponArm, height: 20 * V + 0.1 };
 }
 
-export function createModel(archetype: string, equipment?: Equipment): CharacterModel {
+export function createModel(archetype: string, equipment?: Equipment, classId?: ClassId): CharacterModel {
   switch (archetype) {
-    case "hero": return createHero(equipment);
+    case "hero": return createHero(equipment, classId);
     case "slime": return createSlime();
     case "goblin": return createGoblin();
     case "orc": return createOrc();

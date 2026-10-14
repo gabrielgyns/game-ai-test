@@ -2,6 +2,7 @@ import { isAlive, type Entity, type EntityId } from "./components";
 import type { GameEvent } from "./events";
 import type { Item } from "./items";
 import type { Vec3 } from "./math";
+import type { Projectile } from "./projectiles";
 
 /**
  * Agregado raiz do jogo. Guarda o estado completo e a fila de eventos do tick.
@@ -25,6 +26,8 @@ export class World {
   private nextDropId = 1;
   readonly entities = new Map<EntityId, Entity>();
   readonly drops = new Map<number, Drop>();
+  readonly projectiles = new Map<number, Projectile>();
+  private nextProjectileId = 1;
   /** Gerador determinístico usado por loot e outras decisões aleatórias do domínio. */
   random: () => number = Math.random;
   /** Tempo de jogo acumulado em segundos. */
@@ -55,6 +58,13 @@ export class World {
 
   *enemies(): IterableIterator<Entity> {
     for (const e of this.entities.values()) if (e.kind === "enemy") yield e;
+  }
+
+  addProjectile(p: Omit<Projectile, "id" | "traveled" | "hitIds">): Projectile {
+    const projectile: Projectile = { ...p, id: this.nextProjectileId++, traveled: 0, hitIds: [] };
+    this.projectiles.set(projectile.id, projectile);
+    this.emit({ type: "projectileSpawn", projectileId: projectile.id });
+    return projectile;
   }
 
   addDrop(item: Item, position: Vec3): Drop {

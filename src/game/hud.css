@@ -261,3 +261,16 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0d12; col
 #toast.show { opacity: 1; }
 
 .menu-row.sliders .slider { flex: 1; }
+
+#class-picker { display: flex; gap: 14px; margin: 18px 0 6px; pointer-events: auto; }
+.class-card {
+  width: 210px; background: var(--panel); border: 2px solid rgba(255,255,255,0.12); border-radius: 12px;
+  padding: 14px; text-align: left; cursor: pointer; color: var(--text); font: inherit; transition: border-color 120ms, transform 120ms;
+}
+.class-card:hover { border-color: rgba(255,255,255,0.4); transform: translateY(-2px); }
+.class-card.selected { border-color: #ffd37a; box-shadow: 0 0 12px rgba(255,211,122,0.35); }
+.class-card .name { font-weight: 700; font-size: 17px; margin-bottom: 2px; }
+.class-card .tagline { color: #ffd37a; font-size: 12px; margin-bottom: 8px; }
+.class-card .desc { color: var(--muted); font-size: 12px; line-height: 1.4; }
+.class-card .stats { margin-top: 8px; font-size: 11px; color: var(--muted); display: flex; gap: 8px; }
+.class-card .stats b { color: var(--text); }

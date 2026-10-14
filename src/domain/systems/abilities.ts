@@ -1,6 +1,7 @@
 import { isAlive, isHostile, type Entity } from "../components";
 import { distanceXZ } from "../math";
-import { CHARGE, getSkill, ROLL, SECOND_WIND, SKILLS, WARCRY, WHIRLWIND, type SkillId } from "../skills";
+import { ARCANE_SHIELD, ARROW_RAIN, BLINK, CHARGE, DISENGAGE, FIREBALL, FOCUS, FROST_NOVA, getSkill, PIERCING, ROLL, SECOND_WIND, SKILLS, WARCRY, WHIRLWIND, type SkillId } from "../skills";
+import { fireProjectile } from "./projectiles";
 import type { World } from "../world";
 import { applyDamage, effectiveDamage } from "./combat";
 
@@ -20,6 +21,13 @@ export function abilitySystem(world: World, dt: number): void {
       if (ab.damageBuff.timeLeft <= 0) {
         ab.damageBuff = null;
         world.emit({ type: "buffEnd", entity: e.id });
+      }
+    }
+    if (ab.shield) {
+      ab.shield.timeLeft -= dt;
+      if (ab.shield.timeLeft <= 0) {
+        ab.shield = null;
+        world.emit({ type: "shieldEnd", entity: e.id });
       }
     }
 
@@ -107,6 +115,78 @@ function useSkill(world: World, e: Entity, id: SkillId): boolean {
       world.emit({ type: "skill", entity: e.id, skill: id, hits: 0 });
       break;
     }
+    // ---- Arqueiro ----
+    case "piercingShot":
+      fireProjectile(world, e, "piercingArrow", ab.aimDirection, Math.round(effectiveDamage(e) * PIERCING.damageMultiplier), PIERCING.range, { pierce: true });
+      world.emit({ type: "skill", entity: e.id, skill: id, hits: 0 });
+      break;
+    case "arrowRain": {
+      const center = {
+        x: e.transform.position.x + ab.aimDirection.x * ARROW_RAIN.distance,
+        y: e.transform.position.y,
+        z: e.transform.position.z + ab.aimDirection.z * ARROW_RAIN.distance,
+      };
+      let hits = 0;
+      for (const other of world.alive()) {
+        if (other.kind !== "enemy") continue;
+        if (distanceXZ(center, other.transform.position) > ARROW_RAIN.radius + (other.boss ? 1 : 0)) continue;
+        applyDamage(world, e, other, Math.round(effectiveDamage(e) * ARROW_RAIN.damageMultiplier));
+        hits++;
+      }
+      world.emit({ type: "projectileHit", projectileId: -1, position: center, explodeRadius: ARROW_RAIN.radius });
+      world.emit({ type: "skill", entity: e.id, skill: id, hits });
+      break;
+    }
+    case "disengage":
+      ab.dash = {
+        kind: "roll",
+        timeLeft: DISENGAGE.duration,
+        duration: DISENGAGE.duration,
+        direction: { x: -ab.aimDirection.x, z: -ab.aimDirection.z },
+        speed: DISENGAGE.distance / DISENGAGE.duration,
+        invulnerable: true,
+        damageMultiplier: 0,
+        hitEntityIds: [],
+      };
+      world.emit({ type: "skill", entity: e.id, skill: id, hits: 0 });
+      break;
+    case "focus":
+      ab.damageBuff = { multiplier: FOCUS.multiplier, timeLeft: FOCUS.duration };
+      world.emit({ type: "skill", entity: e.id, skill: id, hits: 0 });
+      break;
+    // ---- Mago ----
+    case "fireball":
+      fireProjectile(world, e, "fireball", ab.aimDirection, Math.round(effectiveDamage(e) * FIREBALL.damageMultiplier), FIREBALL.range, { explodeRadius: FIREBALL.radius });
+      world.emit({ type: "skill", entity: e.id, skill: id, hits: 0 });
+      break;
+    case "frostNova": {
+      let hits = 0;
+      for (const other of world.alive()) {
+        if (other.kind !== "enemy") continue;
+        if (distanceXZ(e.transform.position, other.transform.position) > FROST_NOVA.radius + (other.boss ? 1 : 0)) continue;
+        applyDamage(world, e, other, Math.round(effectiveDamage(e) * FROST_NOVA.damageMultiplier));
+        hits++;
+      }
+      world.emit({ type: "skill", entity: e.id, skill: id, hits });
+      break;
+    }
+    case "blink":
+      ab.dash = {
+        kind: "charge",
+        timeLeft: BLINK.duration,
+        duration: BLINK.duration,
+        direction: { ...ab.aimDirection },
+        speed: BLINK.distance / BLINK.duration,
+        invulnerable: true,
+        damageMultiplier: 0,
+        hitEntityIds: [],
+      };
+      world.emit({ type: "skill", entity: e.id, skill: id, hits: 0 });
+      break;
+    case "arcaneShield":
+      ab.shield = { amount: Math.round(e.health.max * ARCANE_SHIELD.fraction), timeLeft: ARCANE_SHIELD.duration };
+      world.emit({ type: "skill", entity: e.id, skill: id, hits: 0 });
+      break;
   }
   state.cooldownLeft = SKILLS[id].cooldown;
   return true;
@@ -114,6 +194,7 @@ function useSkill(world: World, e: Entity, id: SkillId): boolean {
 
 function chargeHits(world: World, e: Entity): void {
   const dash = e.abilities!.dash!;
+  if (dash.damageMultiplier <= 0) return;
   for (const other of world.alive()) {
     if (!isHostile(e, other) || dash.hitEntityIds.includes(other.id)) continue;
     if (distanceXZ(e.transform.position, other.transform.position) > (e.boss ? 2.4 : 1.6)) continue;

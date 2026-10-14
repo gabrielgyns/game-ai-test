@@ -6,7 +6,8 @@
 type SfxName =
   | "swing" | "hit" | "hurt" | "enemyDeath" | "playerDeath" | "step" | "roll" | "dodge"
   | "pickupCommon" | "pickupRare" | "potion" | "levelUp" | "questAccept" | "questComplete"
-  | "whirlwind" | "charge" | "warcry" | "secondWind" | "windup" | "bossRoar" | "bossPhase" | "drop" | "ui";
+  | "whirlwind" | "charge" | "warcry" | "secondWind" | "windup" | "bossRoar" | "bossPhase" | "drop" | "ui"
+  | "shoot" | "explode";
 
 const VOL_KEY = "vale.audio";
 
@@ -215,6 +216,14 @@ export class GameAudio {
         break;
       case "ui":
         this.tone(out, t, "sine", 700, 700, 0.05, 0.15);
+        break;
+      case "shoot":
+        this.noise(out, t, 0.08, { from: 2500 * p, to: 800, type: "bandpass", q: 1.5, gain: 0.3 });
+        this.tone(out, t, "triangle", 900 * p, 300, 0.1, 0.15);
+        break;
+      case "explode":
+        this.noise(out, t, 0.4, { from: 1500, to: 120, type: "lowpass", gain: 0.6 });
+        this.tone(out, t, "sine", 120, 40, 0.35, 0.4);
         break;
     }
   }

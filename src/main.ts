@@ -24,7 +24,9 @@ import { DialogueUI } from "./game/dialogueUI";
 import { QuestTracker } from "./game/questTracker";
 import { TALK_RANGE } from "./domain/npc";
 import { questById } from "./domain/quests";
-import { SKILL_BAR, SKILLS } from "./domain/skills";
+import { SKILLS, type SkillId } from "./domain/skills";
+import { CLASS_ORDER, CLASSES, isClassId } from "./domain/classes";
+import { ProjectileViews } from "./game/projectileViews";
 import { directionFromYaw } from "./domain/math";
 import { useFirstPotion } from "./domain/inventory";
 import { createTerrainMesh } from "./game/terrainMesh";
@@ -62,10 +64,41 @@ scene.add(createTerrainMesh());
 scene.add(createEnvironment());
 
 // Continua do save se houver um; "Novo jogo" apaga o save e recarrega a página.
+// Sem save, a classe escolhida na tela inicial fica em sessionStorage e a página recarrega com ela.
 const SEED = DEFAULT_SEED;
 const existingSave = loadSave();
-const world = existingSave ? restoreGame(existingSave) : generateWorld({ seed: SEED });
+const CLASS_KEY = "vale.newClass";
+let chosenClass: "warrior" | "archer" | "mage" = "warrior";
+try {
+  const stored = sessionStorage.getItem(CLASS_KEY);
+  if (isClassId(stored)) chosenClass = stored;
+} catch {
+  /* padrão */
+}
+const world = existingSave ? restoreGame(existingSave) : generateWorld({ seed: SEED, classId: chosenClass });
 const player = world.player!;
+if (!existingSave) {
+  const picker = document.getElementById("class-picker")!;
+  picker.classList.remove("hidden");
+  document.getElementById("overlay-hint")!.textContent = `Clique na tela para jogar como ${CLASSES[chosenClass].name}`;
+  for (const id of CLASS_ORDER) {
+    const c = CLASSES[id];
+    const card = document.createElement("button");
+    card.className = `class-card${id === chosenClass ? " selected" : ""}`;
+    card.innerHTML = `<div class="name">${c.name}</div><div class="tagline">${c.tagline}</div><div class="desc">${c.description}</div><div class="stats"><span>Vida <b>${c.baseMaxHealth}</b></span><span>Dano <b>${c.baseDamage}</b></span><span>${c.attackStyle === "melee" ? "Corpo a corpo" : "À distância"}</span></div>`;
+    card.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (id === chosenClass) return;
+      try {
+        sessionStorage.setItem(CLASS_KEY, id);
+      } catch {
+        /* ignora */
+      }
+      window.location.reload();
+    });
+    picker.appendChild(card);
+  }
+}
 if (existingSave) {
   const info = document.getElementById("overlay-save")!;
   info.textContent = `Save encontrado: ${describeSave(existingSave)}`;
@@ -76,7 +109,13 @@ if (existingSave) {
   newBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     if (confirm("Começar um novo jogo apaga o save atual. Continuar?")) {
+      suppressAutosave = true;
       clearSave();
+      try {
+        sessionStorage.removeItem(CLASS_KEY);
+      } catch {
+        /* ignora */
+      }
       window.location.reload();
     }
   });
@@ -105,7 +144,13 @@ function spatial(pos: { x: number; z: number }): { pan: number; distance: number
 }
 const inventoryUI = new InventoryUI(world, player);
 const dropViews = new DropViews(scene);
-const skillBar = new SkillBar();
+const skillBar = new SkillBar(player.abilities!.skills.map((s) => s.id));
+const projectileViews = new ProjectileViews(scene);
+const SKILL_SFX: Record<SkillId, "whirlwind" | "charge" | "warcry" | "secondWind" | "roll" | "dodge" | "shoot" | "explode"> = {
+  whirlwind: "whirlwind", charge: "charge", warcry: "warcry", secondWind: "secondWind",
+  piercingShot: "shoot", arrowRain: "explode", disengage: "roll", focus: "warcry",
+  fireball: "shoot", frostNova: "explode", blink: "dodge", arcaneShield: "secondWind",
+};
 const dialogue = new DialogueUI(world, player);
 const questTracker = new QuestTracker();
 const interactEl = document.getElementById("interact")!;
@@ -200,8 +245,10 @@ function toast(text: string): void {
 }
 
 let lastSaveAt = 0;
+/** Ligado antes de recarregar para "Novo jogo" ou importar: o autosave de saída não pode sobrescrever. */
+let suppressAutosave = false;
 function saveGame(reason: string): void {
-  if (!started || !isAlive(player)) return;
+  if (suppressAutosave || !started || !isAlive(player)) return;
   const save = serializeGame(world, SEED);
   if (writeSave(save)) {
     lastSaveAt = performance.now();
@@ -220,6 +267,7 @@ menu.onImport = () => {
   void importSave().then((save) => {
     if (!save) return toast("Arquivo de save inválido");
     if (confirm(`Carregar este save? ${describeSave(save)}\nO progresso atual não salvo será perdido.`)) {
+      suppressAutosave = true;
       writeSave(save);
       window.location.reload();
     }
@@ -227,7 +275,13 @@ menu.onImport = () => {
 };
 menu.onNewGame = () => {
   if (confirm("Começar um novo jogo apaga o save atual. Continuar?")) {
+    suppressAutosave = true;
     clearSave();
+    try {
+      sessionStorage.removeItem(CLASS_KEY); // volta à escolha de classe
+    } catch {
+      /* ignora */
+    }
     window.location.reload();
   }
 };
@@ -282,7 +336,10 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
       case "attack": {
         views.get(ev.source)?.triggerSwing();
         const src = world.get(ev.source);
-        if (src) audio.play("swing", { ...spatial(src.transform.position), pitch: src.boss ? 0.6 : src.kind === "player" ? 1.1 : 0.85 });
+        if (src) {
+          const ranged = src.classId && CLASSES[src.classId].attackStyle !== "melee";
+          audio.play(ranged ? "shoot" : "swing", { ...spatial(src.transform.position), pitch: src.boss ? 0.6 : src.kind === "player" ? 1.1 : 0.85 });
+        }
         break;
       }
       case "windup": {
@@ -400,18 +457,40 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
       }
       case "skill": {
         const def = SKILLS[ev.skill];
-        audio.play(ev.skill);
+        audio.play(SKILL_SFX[ev.skill]);
         if (ev.skill === "whirlwind") {
           views.get(ev.entity)?.triggerSpin();
           hud.pushLog(ev.hits > 0 ? `${def.name} acertou ${ev.hits} inimigo${ev.hits > 1 ? "s" : ""}!` : `${def.name} não acertou ninguém.`, ev.hits > 0 ? "dmg-out" : "gain");
         } else if (ev.skill === "warcry") {
           floats.spawn(player.transform.position, "GRITO DE GUERRA!", "#ff9f43", 1.1);
           hud.pushLog("+50% de dano por 8 s!", "level");
-        } else if (ev.skill === "charge") {
+        } else if (ev.skill === "charge" || ev.skill === "piercingShot" || ev.skill === "fireball" || ev.skill === "arrowRain") {
           views.get(ev.entity)?.triggerSwing();
+        } else if (ev.skill === "focus") {
+          floats.spawn(player.transform.position, "FOCO!", "#9ce39c", 1.0);
+          hud.pushLog("+40% de dano por 8 s!", "level");
+        } else if (ev.skill === "frostNova") {
+          projectileViews.burst(player.transform.position, 4, "#8fd3ff");
+          hud.pushLog(ev.hits > 0 ? `${def.name} acertou ${ev.hits} inimigo${ev.hits > 1 ? "s" : ""}!` : `${def.name} não acertou ninguém.`, ev.hits > 0 ? "dmg-out" : "gain");
+        } else if (ev.skill === "arcaneShield") {
+          hud.pushLog("Escudo Arcano ativo.", "level");
         }
         break;
       }
+      case "projectileHit":
+        if (ev.explodeRadius > 0) {
+          projectileViews.burst(ev.position, ev.explodeRadius, ev.projectileId === -1 ? "#9ce39c" : "#ff9a3c");
+          audio.play("explode", spatial(ev.position));
+        } else {
+          projectileViews.burst(ev.position, 0.4, "#ffd37a");
+        }
+        break;
+      case "shieldAbsorb":
+        if (ev.entity === player.id) floats.spawn(player.transform.position, `(${ev.amount})`, "#8fb3ff", 0.8);
+        break;
+      case "shieldEnd":
+        if (ev.entity === player.id) hud.pushLog("Escudo Arcano acabou.", "dmg-out");
+        break;
       case "dodge":
         if (ev.entity === player.id) {
           audio.play("dodge");
@@ -483,7 +562,7 @@ function frame(): void {
     ab.aimDirection = moving && roll ? { ...player.movement.intent } : directionFromYaw(cam.facingYaw);
     if (roll) ab.wantsRoll = true;
     if (skill !== null) {
-      const id = SKILL_BAR[skill];
+      const id = ab.skills[skill]?.id;
       if (id) {
         const state = ab.skills.find((s) => s.id === id);
         if (state && state.cooldownLeft > 0) hud.pushLog(`${SKILLS[id].name} em recarga (${Math.ceil(state.cooldownLeft)}s)`, "dmg-out");
@@ -524,6 +603,7 @@ function frame(): void {
   if (npcNear) interactText.textContent = `Falar com ${npcNear.name}`;
   questTracker.update(player);
   dropViews.update(world, world.time);
+  projectileViews.update(world, frameDt, world.time);
   floats.update(frameDt);
   hud.update(player, target);
   hud.updateBoss(world);

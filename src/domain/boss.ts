@@ -8,8 +8,8 @@ export type TelegraphShape =
   | { kind: "circle"; radius: number; at?: Vec3 }
   | { kind: "line"; length: number; width: number; direction: Vec2 };
 
-/** aoe: área fixada na posição do alvo no início do aviso (sair dela evita). */
-export type PatternKind = "melee" | "slam" | "charge" | "aoe";
+/** aoe: área fixada na posição do alvo no início do aviso (sair dela evita). projectile: dispara. */
+export type PatternKind = "melee" | "slam" | "charge" | "aoe" | "projectile";
 
 /** Um golpe telegrafado. Inimigos comuns têm um só (melee); chefes alternam vários. */
 export interface AttackPattern {
@@ -20,6 +20,8 @@ export interface AttackPattern {
   range: number;
   /** aoe: distância máxima para mirar. */
   castRange?: number;
+  /** projectile: tipo do projétil. */
+  projectile?: "arrow" | "bolt" | "fireball" | "piercingArrow";
   windup: number;
   damageMultiplier: number;
   cooldown: number;

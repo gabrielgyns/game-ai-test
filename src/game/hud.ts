@@ -12,6 +12,7 @@ function el<T extends HTMLElement>(id: string): T {
 /** Interface em HTML sobre o canvas. Só lê o domínio, nunca o altera. */
 export class Hud {
   private readonly level = el("hud-level");
+  private readonly name = el("hud-name");
   private readonly hpFill = el("hud-hp-fill");
   private readonly hpText = el("hud-hp-text");
   private readonly xpFill = el("hud-xp-fill");
@@ -67,6 +68,7 @@ export class Hud {
 
   update(player: Entity, target: Entity | undefined): void {
     const prog = player.progression;
+    if (this.name.textContent !== player.name) this.name.textContent = player.name;
     this.level.textContent = `Nível ${prog?.level ?? 1}`;
     const hp = Math.ceil(player.health.current);
     this.hpFill.style.width = `${(player.health.current / player.health.max) * 100}%`;

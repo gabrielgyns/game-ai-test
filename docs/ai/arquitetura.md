@@ -41,6 +41,11 @@ o servidor roda `stepWorld` e o cliente roda só `src/game`.
   o aoe fixa o ponto (posição do alvo) **no início**.
 - **Biomas**: `biomeAt`/`biomeWeights` em `biomes.ts` dirigem relevo, água, cor do terreno, props e
   spawns. Transição suave por peso em X.
+- **Classes**: `classes.ts` é a única fonte de atributos base, estilo de ataque e barra de
+  habilidades. O ataque básico vira um `AttackPattern` melee ou `projectile` conforme a classe.
+  Projéteis vivem em `world.projectiles` e são resolvidos por `projectileSystem` (após o combate).
+- **Direção de mira do jogador** é `abilities.aimDirection` (câmera), escrita por `main.ts` a cada
+  frame; ataques, projéteis e dashes do jogador usam ela, não o yaw suavizado do corpo.
 - **Ids de item** são globais (`items.ts`); ao carregar um save, `resetItemIds(max + 1)`.
 - **Save**: só o que muda é salvo; o mundo é regenerado pela seed. Mudar a geração do mundo não
   quebra saves antigos, mas mudar o formato de `SaveData` exige subir `SAVE_VERSION` e migrar.

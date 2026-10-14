@@ -2,33 +2,31 @@ import type { Entity, EntityId } from "./components";
 import { vec3, type Vec3 } from "./math";
 import { xpForLevel } from "./progression";
 import { createEquipment as createEquipmentSlots, createInventory, recomputeStats } from "./inventory";
-import { createPotion, type Item } from "./items";
+import { createPotion } from "./items";
 import { createAbilities } from "./skills";
+import { CLASSES, type ClassId } from "./classes";
 
-/** Espada inicial do herói: fixa, sem id de loot. */
-function starterSword(): Item {
-  return { id: 0, name: "Espada Velha", kind: "equipment", slot: "weapon", rarity: "common", stats: { damage: 4 }, icon: "sword", value: 1, quantity: 1, maxStack: 1 };
-}
-
-export function createPlayer(id: EntityId, position: Vec3): Entity {
+export function createPlayer(id: EntityId, position: Vec3, classId: ClassId = "warrior"): Entity {
+  const c = CLASSES[classId];
   const player: Entity = {
     id,
     kind: "player",
-    name: "Herói",
+    name: c.name,
     archetype: "hero",
+    classId,
     transform: { position: { ...position }, yaw: 0 },
-    movement: { speed: 7, speedMultiplier: 1, intent: { x: 0, z: 0 } },
-    health: { current: 100, max: 100, baseMax: 100, regenPerSecond: 4, lastDamagedAt: -Infinity },
-    combat: { damage: 10, baseDamage: 10, range: 2.4, cooldown: 0.55, cooldownLeft: 0, wantsAttack: false, windupTime: 0, windupLeft: 0 },
+    movement: { speed: c.speed, speedMultiplier: 1, intent: { x: 0, z: 0 } },
+    health: { current: c.baseMaxHealth, max: c.baseMaxHealth, baseMax: c.baseMaxHealth, regenPerSecond: c.regenPerSecond, lastDamagedAt: -Infinity },
+    combat: { damage: c.baseDamage, baseDamage: c.baseDamage, range: c.attackRange, cooldown: c.attackCooldown, cooldownLeft: 0, wantsAttack: false, windupTime: 0, windupLeft: 0 },
     progression: { level: 1, xp: 0, xpToNext: xpForLevel(1) },
     wallet: { gold: 0 },
     inventory: createInventory(20),
     equipment: createEquipmentSlots(),
-    abilities: createAbilities(),
+    abilities: createAbilities(c.skills),
     quests: {},
     stats: { kills: 0 },
   };
-  player.equipment!.weapon = starterSword();
+  player.equipment!.weapon = c.starterWeapon();
   player.inventory!.items[0] = createPotion("small", 2);
   recomputeStats(player);
   player.health.current = player.health.max;

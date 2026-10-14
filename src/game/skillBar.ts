@@ -1,5 +1,5 @@
 import type { Entity } from "../domain/components";
-import { SKILL_BAR, SKILLS, type SkillId } from "../domain/skills";
+import { SKILLS, type SkillId } from "../domain/skills";
 import { iconCanvas } from "./itemIcons";
 import { countItems } from "../domain/inventory";
 
@@ -10,8 +10,8 @@ export class SkillBar {
   private readonly potionSlot: HTMLDivElement;
   private readonly potionCount: HTMLSpanElement;
 
-  constructor() {
-    SKILL_BAR.forEach((id, i) => {
+  constructor(skillIds: SkillId[]) {
+    skillIds.forEach((id, i) => {
       const def = SKILLS[id];
       const el = document.createElement("div");
       el.className = "skill ready";
@@ -71,7 +71,9 @@ export class SkillBar {
       slot.cd.style.height = `${ratio * 100}%`;
       slot.text.textContent = s.cooldownLeft > 0 ? `${Math.ceil(s.cooldownLeft)}` : "";
       slot.el.classList.toggle("ready", s.cooldownLeft <= 0);
-      slot.el.classList.toggle("active", s.id === "warcry" && ab.damageBuff !== null);
+      const isBuff = s.id === "warcry" || s.id === "focus";
+      const isShield = s.id === "arcaneShield";
+      slot.el.classList.toggle("active", (isBuff && ab.damageBuff !== null) || (isShield && ab.shield !== null));
     }
   }
 }

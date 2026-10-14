@@ -76,7 +76,7 @@ describe("inventário e equipamento", () => {
   it("armadura aumenta vida máxima mantendo a proporção da vida atual", () => {
     const { world, player } = setup();
     player.health.current = 50; // 50%
-    const armor = createEquipment(() => 0.5, 1, "common"); // Túnica de Couro (+15)
+    const armor = createEquipment(() => 0.6, 1, "common"); // Túnica de Couro (+15)
     addItem(player.inventory!, armor);
     equipFromInventory(world, player, player.inventory!.items.indexOf(armor));
     expect(player.health.max).toBe(115);

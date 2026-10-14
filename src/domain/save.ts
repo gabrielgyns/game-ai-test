@@ -4,6 +4,7 @@ import { resetItemIds, type Item } from "./items";
 import type { Vec3 } from "./math";
 import type { QuestLog } from "./quests";
 import { generateWorld } from "./worldgen";
+import { isClassId, type ClassId } from "./classes";
 import type { World } from "./world";
 
 export const SAVE_VERSION = 1;
@@ -15,6 +16,7 @@ export interface SaveData {
   seed: number;
   time: number;
   player: {
+    classId?: ClassId;
     position: Vec3;
     yaw: number;
     health: number;
@@ -41,6 +43,7 @@ export function serializeGame(world: World, seed: number): SaveData {
     seed,
     time: world.time,
     player: {
+      classId: p.classId ?? "warrior",
       position: { ...p.transform.position },
       yaw: p.transform.yaw,
       health: p.health.current,
@@ -68,7 +71,7 @@ export function isSaveData(value: unknown): value is SaveData {
 
 /** Reconstrói um mundo a partir do snapshot. Inimigos renascem em casa; o herói volta exatamente onde estava. */
 export function restoreGame(save: SaveData): World {
-  const world = generateWorld({ seed: save.seed });
+  const world = generateWorld({ seed: save.seed, classId: isClassId(save.player.classId) ? save.player.classId : "warrior" });
   world.time = save.time;
   const p = world.player!;
   const s = save.player;

@@ -26,6 +26,11 @@ Abra `http://localhost:5173` e clique na tela para começar.
 | ESC | menu de pausa |
 
 Gosmas vivem perto do santuário central, goblins mais longe e orcs na borda do mapa.
+Escolha uma classe ao começar: **Guerreiro** (espada, corpo a corpo, vida alta), **Arqueiro**
+(flechas de longe com ajuda de mira, Tiro Perfurante, Chuva de Flechas, Recuo Ágil, Foco) ou **Mago**
+(raios arcanos, Bola de Fogo que explode, Nova Gélida, Teleporte, Escudo Arcano). Cada classe tem
+sua barra de quatro habilidades e sua arma inicial; arcos e cajados também caem como loot.
+
 Derrote inimigos para ganhar XP, ouro e loot: equipamentos de três slots (arma, armadura,
 acessório) em quatro raridades (comum, incomum, raro, épico) e poções pequenas e grandes,
 que se empilham na mochila. Itens caem no chão e são coletados ao passar por cima.
@@ -76,13 +81,15 @@ src/
     components.ts  Entity e seus componentes (Transform, Health, Combat, Progression, EnemyAI…)
     world.ts       agregado raiz: entidades, tempo e fila de eventos
     factories.ts   criação de jogador e inimigos (templates por tipo)
-    systems/       movimento, IA (máquina de estados), habilidades/esquiva, combate, coleta, renascimento
+    systems/       movimento, IA, habilidades/esquiva, combate, projéteis, coleta, renascimento
     simulation.ts  stepWorld(world, dt): roda os sistemas e devolve eventos
     progression.ts XP e nível
     items.ts       definições de itens, raridades e geração por tier
     inventory.ts   mochila, equipamento e recálculo de atributos
     loot.ts        tabelas de drop por inimigo
-    skills.ts      definições das habilidades, esquiva e buffs
+    skills.ts      definições das 12 habilidades, esquiva, buffs e escudo
+    classes.ts     as três classes: atributos, estilo de ataque, arma inicial e barra
+    projectiles.ts projéteis (flecha, raio, bola de fogo) com explosão e perfuração
     boss.ts        chefes: padrões de golpe (melee, área, investida), formas de telegraph e fases
     npc.ts         NPCs do santuário e suas falas
     quests.ts      definições de quests, diário do jogador, aceitar/avançar/entregar
@@ -106,6 +113,7 @@ src/
     audio.ts       sintetizador de efeitos e música generativa (Web Audio)
     itemIcons.ts   ícones de itens em pixel art (usados na UI e nos drops 3D)
     dropViews.ts   itens caídos no chão: ícone extrudado em voxel, anel e feixe por raridade
+    projectileViews.ts flechas, raios e bolas de fogo em voo, explosões
     terrainMesh.ts terreno em blocos (colunas por célula, degraus de 0,5 m)
     environment.ts árvores, pedras e santuário em voxels (instanciados)
   main.ts          bootstrap e loop com passo fixo de simulação

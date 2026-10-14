@@ -27,6 +27,7 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 - [x] Biomas: Pântano Sombrio (oeste, água, aranhas, zumbis do lodo) e Deserto Escaldante (leste, escorpiões, salteadores)
 - [x] Segundo chefe: Rainha Aranha no pântano, com Teia Venenosa mirada no jogador, Bote e aranhas na fúria
 - [x] 3 quests novas (Rainha, escorpiões, salteadores); o Guarda passa a dar quest
+- [x] Classes: Guerreiro, Arqueiro (flechas, ajuda de mira) e Mago (raios, Bola de Fogo, Escudo Arcano), cada uma com 4 habilidades
 
 ## Próximos
 
@@ -39,6 +40,6 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 5. **Mais quests.** Objetivos de coleta e exploração, quests repetíveis diárias, e um mercador para vender loot.
 6. **Vários slots de save** e save na nuvem (quando houver servidor).
 7. **Áudio com assets.** Trocar a síntese por samples e trilha composta quando houver arte sonora.
-8. **Classes.** Guerreiro, arqueiro, mago (Perfect World), com árvore de habilidades.
+8. **Árvore de habilidades** por classe e pontos ao subir de nível.
 9. **Dungeons.** Áreas instanciadas com chefes e loot garantido (Minecraft Dungeons).
 10. **Multiplayer.** Servidor rodando o mesmo domínio; cliente só renderiza.

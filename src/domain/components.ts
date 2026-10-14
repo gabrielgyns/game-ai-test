@@ -3,6 +3,7 @@ import type { Equipment, Inventory } from "./inventory";
 import type { Abilities } from "./skills";
 import type { AttackPattern, Boss } from "./boss";
 import type { QuestLog } from "./quests";
+import type { ClassId } from "./classes";
 
 export type EntityId = number;
 export type EntityKind = "player" | "enemy" | "npc";
@@ -112,6 +113,8 @@ export interface Entity {
   quests?: QuestLog;
   /** Contadores de progresso (abates etc.). */
   stats?: { kills: number };
+  /** Classe do herói (define ataque básico e barra de habilidades). */
+  classId?: ClassId;
 }
 
 /** Quem pode ferir quem: jogador e inimigos são hostis entre si; NPCs ficam fora. */

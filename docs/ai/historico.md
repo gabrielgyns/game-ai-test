@@ -32,5 +32,12 @@ com screenshots antes de serem considerados prontos.
     jogo pausado mostravam o herói na posição antiga porque as views não atualizavam na pausa;
     agora atualizam com dt 0 (e equipar na mochila já reflete no modelo).
 
+15. **Classes**: Guerreiro, Arqueiro e Mago com atributos, estilo de ataque básico (melee, flecha,
+    raio), arma inicial e barra própria de 4 habilidades. Projéteis como entidades do mundo com
+    sistema próprio (acerto, perfuração, explosão, ajuda de mira em cone de 22°). Escudo Arcano
+    absorve antes da vida. Escolha de classe na tela inicial (sessionStorage + reload). Bug
+    corrigido no caminho: "Novo jogo" pelo menu era desfeito pelo autosave de `beforeunload`
+    (flag `suppressAutosave`).
+
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).
