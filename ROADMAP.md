@@ -45,6 +45,8 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 
 ## Próximos
 
+Itens técnicos (desempenho, qualidade gráfica, memória) ficam no [BACKLOG](BACKLOG.md).
+
 1. **Lock-on.** Travar a câmera num alvo (Zelda) como alternativa ao modo livre.
 2. **Mais quests.** Objetivos de coleta e exploração e quests repetíveis diárias.
 3. **Save na nuvem** (quando houver servidor); os slots locais já existem.

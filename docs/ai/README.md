@@ -13,6 +13,7 @@ lições aprendidas. **Qualquer IA (ou pessoa) que for mexer no projeto deve ler
 | [licoes.md](licoes.md) | Insights e armadilhas descobertas no caminho |
 | [fluxo-de-trabalho.md](fluxo-de-trabalho.md) | Como desenvolver, verificar, commitar e entregar neste projeto |
 | [../../ROADMAP.md](../../ROADMAP.md) | O que já foi feito e os próximos marcos |
+| [../../BACKLOG.md](../../BACKLOG.md) | Itens técnicos (desempenho e afins), com medições e critério de pronto |
 
 Regra de manutenção: ao fechar um marco, atualize `historico.md` e o `ROADMAP.md`; ao tomar uma decisão
 estrutural, registre em `decisoes.md`; ao descobrir uma armadilha, anote em `licoes.md`.

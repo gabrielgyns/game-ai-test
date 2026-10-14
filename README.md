@@ -140,7 +140,8 @@ adereços de cenário mostram cada nível de detalhe (perto, meio, longe) e pode
 `.vox`; um `.vox` arrastado para a cena aparece na vitrine. É onde o visual é trabalhado antes de ir
 para o jogo.
 
-Veja o [ROADMAP](ROADMAP.md) para a visão e os próximos marcos.
+Veja o [ROADMAP](ROADMAP.md) para a visão e os próximos marcos, e o [BACKLOG](BACKLOG.md) para os
+itens técnicos (desempenho).
 
 ## Para IAs e novos colaboradores
 
