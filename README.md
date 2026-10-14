@@ -47,6 +47,12 @@ generativa que vira um tema pulsante quando um chefe entra em combate. Volumes n
 
 Veja o [ROADMAP](ROADMAP.md) para a visão e os próximos marcos.
 
+## Para IAs e novos colaboradores
+
+A pasta [`docs/ai`](docs/ai/README.md) guarda a memória do projeto: visão e referências, arquitetura
+e invariantes, registro de decisões, histórico dos marcos com os pedidos do dono, lições aprendidas e
+o fluxo de trabalho. O [`CLAUDE.md`](CLAUDE.md) na raiz aponta para ela. Leia antes de alterar o jogo.
+
 ## Comandos
 
 ```bash
