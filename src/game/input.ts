@@ -9,11 +9,17 @@ export class Input {
   onFirstInteraction: (() => void) | null = null;
   /** Chamado quando o pointer lock é perdido (ESC) ou obtido. */
   onPointerLockChange: ((locked: boolean) => void) | null = null;
+  /** ESC pressionado enquanto o mouse NÃO está capturado (o navegador engole o ESC que solta o lock). */
+  onEscape: (() => void) | null = null;
 
   constructor(private readonly canvas: HTMLCanvasElement) {
     window.addEventListener("keydown", (e) => {
       if (e.repeat) return;
       this.keys.add(e.code);
+      if (e.code === "Escape" && !this.pointerLocked) {
+        this.onEscape?.();
+        return;
+      }
       if (e.code === "Space") {
         this.attackQueued = true;
         e.preventDefault();
@@ -48,7 +54,9 @@ export class Input {
   }
 
   requestLock(): void {
-    this.canvas.requestPointerLock();
+    // Em navegadores modernos retorna uma Promise que rejeita se o lock for recusado.
+    const result = this.canvas.requestPointerLock() as unknown;
+    if (result instanceof Promise) result.catch(() => {});
   }
 
   isDown(code: string): boolean {

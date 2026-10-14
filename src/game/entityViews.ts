@@ -13,6 +13,7 @@ class EntityView {
   private swingTime = Infinity;
   private walkPhase = 0;
   private deathTime = 0;
+  private visualY: number | null = null;
 
   constructor(readonly entity: Entity, scene: THREE.Scene) {
     this.model = createModel(entity.archetype);
@@ -48,7 +49,9 @@ class EntityView {
     const root = this.model.root;
     const alive = isAlive(e);
     const p = e.transform.position;
-    root.position.set(p.x, p.y, p.z);
+    // O terreno é em degraus: a altura visual persegue a real para a subida parecer um passo, não um salto.
+    this.visualY = this.visualY === null ? p.y : this.visualY + (p.y - this.visualY) * clamp(dt * 14, 0, 1);
+    root.position.set(p.x, this.visualY, p.z);
     root.rotation.y = e.transform.yaw;
 
     // Morte: afunda e some; renascimento: volta ao normal.

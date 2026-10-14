@@ -13,12 +13,12 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 - [x] XP, nível, ouro, regeneração, morte e renascimento
 - [x] Andar de ré (S) e de lado (A/D) mantendo o alvo à frente
 - [x] Menu de pausa com ESC (continuar, reiniciar, sensibilidade do mouse)
+- [x] Estilo voxel: personagens, árvores, pedras e terreno em blocos, com greedy meshing
 
 ## Próximos
 
-1. **Estilo voxel.** Trocar as primitivas por modelos feitos de cubos (herói, inimigos, árvores)
-   e terreno em blocos com degraus, mantendo as cores chapadas. Candidatos: modelos `.vox`
-   (MagicaVoxel) carregados em runtime, ou geração procedural de voxels por código.
+1. **Mais vida no mundo voxel.** Água, flores e grama alta, variação de biomas, ciclo de dia e noite,
+   e suporte a modelos `.vox` (MagicaVoxel) para quem quiser desenhar personagens num editor.
 2. **Inventário e equipamento.** Drops de itens, slots (arma, armadura, acessório), raridades.
 3. **Habilidades.** Barra de 4 skills com cooldown; esquiva com rolamento (Zelda).
 4. **Lock-on.** Travar a câmera num alvo (Zelda) como alternativa ao modo livre.

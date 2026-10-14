@@ -1,6 +1,6 @@
 # Vale das Gosmas
 
-RPG 3D single-player, low-poly, rodando no navegador. TypeScript + Three.js + Vite.
+RPG 3D single-player em estilo voxel, rodando no navegador. TypeScript + Three.js + Vite.
 
 ## Jogar
 
@@ -54,12 +54,13 @@ src/
   game/            apresentação em Three.js e HUD em HTML
     camera.ts      câmera orbital em terceira pessoa
     input.ts       teclado, mouse e pointer lock
-    models.ts      modelos low-poly feitos de primitivas
+    voxel.ts       VoxelBuilder: pinta cubos numa grade e gera a malha (greedy meshing)
+    models.ts      herói e inimigos desenhados em voxels
     entityViews.ts liga entidades a modelos, animação procedural e barras de vida
     effects.ts     números de dano flutuantes
     hud.ts         painéis de status, alvo e log de combate
-    terrainMesh.ts malha do terreno com cores por altura e inclinação
-    environment.ts árvores, pedras e santuário (instanciados)
+    terrainMesh.ts terreno em blocos (colunas por célula, degraus de 0,5 m)
+    environment.ts árvores, pedras e santuário em voxels (instanciados)
   main.ts          bootstrap e loop com passo fixo de simulação
 ```
 

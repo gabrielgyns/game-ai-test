@@ -20,8 +20,8 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color("#9ec9e8");
-scene.fog = new THREE.Fog("#9ec9e8", 60, 170);
+scene.background = new THREE.Color("#8fc5ee");
+scene.fog = new THREE.Fog("#8fc5ee", 70, 180);
 
 const hemi = new THREE.HemisphereLight("#cfe8ff", "#5a7a3a", 0.9);
 scene.add(hemi);
@@ -36,7 +36,8 @@ sun.shadow.camera.left = -shadowSize;
 sun.shadow.camera.right = shadowSize;
 sun.shadow.camera.top = shadowSize;
 sun.shadow.camera.bottom = -shadowSize;
-sun.shadow.bias = -0.0008;
+sun.shadow.bias = -0.0015;
+sun.shadow.normalBias = 0.04;
 scene.add(sun, sun.target);
 
 scene.add(createTerrainMesh());
@@ -66,7 +67,16 @@ input.onPointerLockChange = (locked) => {
   if (locked) menu.close();
   else menu.open();
 };
-menu.onResume = () => input.requestLock();
+function resume(): void {
+  menu.close();
+  paused = false;
+  // Chrome recusa recapturar o mouse por ~1s depois de um ESC; se falhar, o próximo clique captura.
+  input.requestLock();
+}
+menu.onResume = resume;
+input.onEscape = () => {
+  if (started && menu.isOpen) resume();
+};
 
 window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -185,6 +195,7 @@ if (import.meta.env.DEV) {
     world,
     player,
     cam,
+    renderer,
     openMenu: () => {
       started = true;
       paused = true;

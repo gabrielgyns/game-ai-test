@@ -1,64 +1,84 @@
 import * as THREE from "three";
 import { terrainHeight, SPAWN_FLAT_RADIUS, WORLD_HALF } from "../domain/terrain";
 import { seededRandom } from "../domain/worldgen";
+import { VoxelBuilder, voxelMaterial } from "./voxel";
 
-/** Árvores e pedras instanciadas: cenário barato, estilo low-poly. */
+/** Voxel de cenário: 4 por metro (mais grosso que os personagens, como blocos de mundo). */
+const V = 1 / 4;
+
+function treeGeometry(variant: number): THREE.BufferGeometry {
+  const b = new VoxelBuilder();
+  const trunk = "#6b4a2b";
+  const leaf = ["#2f7a3e", "#3b8f3a", "#2a6b4a"][variant % 3]!;
+  const h = 6 + variant * 2;
+  b.box(-1, 0, -1, 1, h, 1, trunk);
+  // Copa em camadas: larga embaixo, estreita em cima.
+  b.box(-4, h - 1, -4, 4, h + 2, 4, leaf);
+  b.box(-3, h + 2, -3, 3, h + 4, 3, leaf);
+  b.box(-2, h + 4, -2, 2, h + 6, 2, leaf);
+  b.box(-1, h + 6, -1, 1, h + 7, 1, leaf);
+  return b.build(V, 0.1);
+}
+
+function rockGeometry(variant: number): THREE.BufferGeometry {
+  const b = new VoxelBuilder();
+  const stone = ["#8a8780", "#77756e", "#9a968c"][variant % 3]!;
+  b.box(-3, 0, -2, 3, 2, 2, stone);
+  b.box(-2, 2, -2, 2, 3, 1, stone);
+  b.box(-1, 3, -1, 1, 4, 1, stone);
+  if (variant % 2) b.box(-4, 0, -1, -3, 1, 1, stone);
+  return b.build(V, 0.1);
+}
+
+/** Árvores, pedras e santuário, todos em voxels e instanciados. */
 export function createEnvironment(seed = 4242): THREE.Group {
   const group = new THREE.Group();
   const rand = seededRandom(seed);
   const dummy = new THREE.Object3D();
 
-  const TREES = 260;
-  const trunkGeo = new THREE.CylinderGeometry(0.25, 0.35, 2.2, 6);
-  const trunkMat = new THREE.MeshStandardMaterial({ color: "#6b4a2b", flatShading: true });
-  const leafGeo = new THREE.ConeGeometry(1.6, 3.6, 7);
-  const leafMat = new THREE.MeshStandardMaterial({ color: "#2f7a3e", flatShading: true });
-  const trunks = new THREE.InstancedMesh(trunkGeo, trunkMat, TREES);
-  const leaves = new THREE.InstancedMesh(leafGeo, leafMat, TREES);
-  trunks.castShadow = leaves.castShadow = true;
-  leaves.receiveShadow = true;
-
-  for (let i = 0; i < TREES; i++) {
-    const { x, z } = randomPoint(rand, SPAWN_FLAT_RADIUS + 2);
-    const y = terrainHeight(x, z);
-    const s = 0.8 + rand() * 0.7;
-    dummy.position.set(x, y + 1.1 * s, z);
-    dummy.scale.setScalar(s);
-    dummy.rotation.set(0, rand() * Math.PI * 2, 0);
-    dummy.updateMatrix();
-    trunks.setMatrixAt(i, dummy.matrix);
-    dummy.position.y = y + (2.2 + 1.6) * s;
-    dummy.updateMatrix();
-    leaves.setMatrixAt(i, dummy.matrix);
+  const TREES_PER_VARIANT = 90;
+  for (let v = 0; v < 3; v++) {
+    const trees = new THREE.InstancedMesh(treeGeometry(v), voxelMaterial(), TREES_PER_VARIANT);
+    trees.castShadow = trees.receiveShadow = true;
+    for (let i = 0; i < TREES_PER_VARIANT; i++) {
+      const { x, z } = randomPoint(rand, SPAWN_FLAT_RADIUS + 2);
+      dummy.position.set(Math.floor(x) + 0.5, terrainHeight(x, z), Math.floor(z) + 0.5);
+      dummy.rotation.set(0, Math.floor(rand() * 4) * (Math.PI / 2), 0);
+      dummy.scale.setScalar(0.85 + rand() * 0.5);
+      dummy.updateMatrix();
+      trees.setMatrixAt(i, dummy.matrix);
+    }
+    group.add(trees);
   }
-  group.add(trunks, leaves);
 
-  const ROCKS = 120;
-  const rockGeo = new THREE.DodecahedronGeometry(0.9, 0);
-  const rockMat = new THREE.MeshStandardMaterial({ color: "#8a8780", flatShading: true });
-  const rocks = new THREE.InstancedMesh(rockGeo, rockMat, ROCKS);
-  rocks.castShadow = rocks.receiveShadow = true;
-  for (let i = 0; i < ROCKS; i++) {
-    const { x, z } = randomPoint(rand, 6);
-    const s = 0.5 + rand() * 1.4;
-    dummy.position.set(x, terrainHeight(x, z) + s * 0.3, z);
-    dummy.scale.set(s, s * (0.6 + rand() * 0.5), s);
-    dummy.rotation.set(rand(), rand() * Math.PI * 2, rand());
-    dummy.updateMatrix();
-    rocks.setMatrixAt(i, dummy.matrix);
+  const ROCKS_PER_VARIANT = 40;
+  for (let v = 0; v < 3; v++) {
+    const rocks = new THREE.InstancedMesh(rockGeometry(v), voxelMaterial(), ROCKS_PER_VARIANT);
+    rocks.castShadow = rocks.receiveShadow = true;
+    for (let i = 0; i < ROCKS_PER_VARIANT; i++) {
+      const { x, z } = randomPoint(rand, 6);
+      dummy.position.set(Math.floor(x) + 0.5, terrainHeight(x, z), Math.floor(z) + 0.5);
+      dummy.rotation.set(0, Math.floor(rand() * 4) * (Math.PI / 2), 0);
+      dummy.scale.setScalar(0.7 + rand() * 1.2);
+      dummy.updateMatrix();
+      rocks.setMatrixAt(i, dummy.matrix);
+    }
+    group.add(rocks);
   }
-  group.add(rocks);
 
-  // Pedras em círculo no spawn: ponto de referência para o jogador achar o caminho de volta.
-  const shrineMat = new THREE.MeshStandardMaterial({ color: "#d9d2c0", flatShading: true });
+  // Santuário: pilares de pedra clara em círculo, ponto de referência do spawn.
+  const pillar = new VoxelBuilder().box(-1, 0, -1, 1, 5, 1, "#d9d2c0").box(-2, 5, -2, 2, 6, 2, "#c8bfa8").build(V, 0.08);
+  const pillars = new THREE.InstancedMesh(pillar, voxelMaterial(), 8);
+  pillars.castShadow = pillars.receiveShadow = true;
   for (let i = 0; i < 8; i++) {
     const a = (i / 8) * Math.PI * 2;
-    const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.3, 0.7), shrineMat);
-    pillar.position.set(Math.cos(a) * 8, terrainHeight(0, 0) + 0.55, Math.sin(a) * 8);
-    pillar.rotation.y = -a;
-    pillar.castShadow = true;
-    group.add(pillar);
+    dummy.position.set(Math.round(Math.cos(a) * 8) + 0.5, terrainHeight(0, 0), Math.round(Math.sin(a) * 8) + 0.5);
+    dummy.rotation.set(0, 0, 0);
+    dummy.scale.setScalar(1);
+    dummy.updateMatrix();
+    pillars.setMatrixAt(i, dummy.matrix);
   }
+  group.add(pillars);
   return group;
 }
 

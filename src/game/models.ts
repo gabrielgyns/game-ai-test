@@ -1,123 +1,113 @@
 import * as THREE from "three";
+import { VoxelBuilder, voxelMaterial } from "./voxel";
 
 /** Um modelo visual com ganchos de animação simples. */
 export interface CharacterModel {
   root: THREE.Group;
-  /** Ponto do pivô do braço que balança no ataque. */
+  /** Pivô do braço que balança no ataque. */
   weaponArm?: THREE.Object3D;
-  /** Altura aproximada, para posicionar a barra de vida. */
+  /** Altura aproximada em metros, para posicionar a barra de vida. */
   height: number;
 }
 
-const mat = (color: string) => new THREE.MeshStandardMaterial({ color, flatShading: true, roughness: 0.8 });
+/** Tamanho de um voxel de personagem, em metros (8 voxels = 1 m). */
+const V = 1 / 8;
 
-function shadowed<T extends THREE.Object3D>(obj: T): T {
-  obj.traverse((o) => {
-    if (o instanceof THREE.Mesh) o.castShadow = true;
-  });
-  return obj;
+function mesh(builder: VoxelBuilder, scale = V): THREE.Mesh {
+  const m = new THREE.Mesh(builder.build(scale), voxelMaterial());
+  m.castShadow = true;
+  m.receiveShadow = false;
+  return m;
 }
 
+/* Todos os modelos: origem nos pés, centro em X/Z, frente apontando para -Z. */
+
 export function createHero(): CharacterModel {
+  const skin = "#e8b893", cloth = "#3b5aa6", leather = "#6b4a2b", hair = "#4a2e1a", eye = "#1b1b1b";
+  const b = new VoxelBuilder();
+  b.box(-3, 0, -1, -1, 6, 1, leather).box(1, 0, -1, 3, 6, 1, leather); // pernas
+  b.box(-3, 1, -1, -1, 2, 1, "#2b2b2b").box(1, 1, -1, 3, 2, 1, "#2b2b2b"); // botas
+  b.box(-4, 6, -2, 4, 13, 2, cloth); // tronco
+  b.box(-4, 6, -2, 4, 7, 2, leather); // cinto
+  b.box(-6, 7, -1, -4, 13, 1, skin); // braço esquerdo
+  b.box(-3, 13, -3, 3, 19, 3, skin); // cabeça
+  b.box(-3, 18, -3, 3, 20, 3, hair).box(-3, 15, 1, 3, 19, 3, hair).box(-3, 17, -3, 3, 18, -2, hair); // cabelo
+  b.set(-2, 16, -3, eye).set(1, 16, -3, eye); // olhos
+
   const root = new THREE.Group();
-  const skin = mat("#e8b893");
-  const cloth = mat("#3b5aa6");
-  const leather = mat("#6b4a2b");
+  root.add(mesh(b));
 
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.7, 4, 8), cloth);
-  body.position.y = 1.0;
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.34, 10, 8), skin);
-  head.position.y = 1.85;
-  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.36, 10, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat("#4a2e1a"));
-  hair.position.y = 1.9;
-  const belt = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.12, 10), leather);
-  belt.position.y = 0.95;
-
-  const legGeo = new THREE.CapsuleGeometry(0.14, 0.4, 3, 6);
-  const legL = new THREE.Mesh(legGeo, leather);
-  legL.position.set(-0.18, 0.35, 0);
-  const legR = legL.clone();
-  legR.position.x = 0.18;
-
-  const armL = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.45, 3, 6), skin);
-  armL.position.set(-0.56, 1.1, 0);
-
-  // Braço direito com espada: pivô no ombro para a animação de golpe.
+  // Braço direito + espada, com pivô no ombro para o golpe.
+  const arm = new VoxelBuilder();
+  arm.box(-1, -6, -1, 1, 0, 1, skin);
+  arm.box(-1, -6, -3, 1, -5, -1, "#c9a227"); // guarda
+  arm.box(-1, -6, -13, 0, -5, -3, "#d8dde6"); // lâmina
   const weaponArm = new THREE.Group();
-  weaponArm.position.set(0.56, 1.4, 0);
-  const armR = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.45, 3, 6), skin);
-  armR.position.y = -0.3;
-  const blade = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.3, 0.22), mat("#d8dde6"));
-  blade.position.set(0, -0.2, -0.75);
-  blade.rotation.x = Math.PI / 2;
-  const guard = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.08, 0.1), mat("#c9a227"));
-  guard.position.set(0, -0.55, -0.15);
-  weaponArm.add(armR, blade, guard);
-
-  root.add(body, head, hair, belt, legL, legR, armL, weaponArm);
-  return { root: shadowed(root), weaponArm, height: 2.2 };
+  weaponArm.position.set(5 * V, 13 * V, 0);
+  weaponArm.add(mesh(arm));
+  root.add(weaponArm);
+  return { root, weaponArm, height: 20 * V + 0.1 };
 }
 
 export function createSlime(): CharacterModel {
+  const body = "#5fd36b", dark = "#3fa84c", eye = "#1b1b1b";
+  const b = new VoxelBuilder();
+  b.disc(0, 0, 0, 4.2, dark);
+  b.disc(0, 1, 0, 5, body).disc(0, 2, 0, 5.2, body).disc(0, 3, 0, 5, body);
+  b.disc(0, 4, 0, 4.3, body).disc(0, 5, 0, 3.2, body).disc(0, 6, 0, 1.8, body);
+  b.set(-2, 3, -5, eye).set(-2, 4, -5, eye).set(2, 3, -5, eye).set(2, 4, -5, eye);
   const root = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.SphereGeometry(0.7, 10, 8), mat("#5fd36b"));
-  body.scale.set(1, 0.75, 1);
-  body.position.y = 0.55;
-  const eyeMat = mat("#1b1b1b");
-  for (const sx of [-1, 1]) {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.09, 6, 6), eyeMat);
-    eye.position.set(sx * 0.25, 0.72, -0.55);
-    root.add(eye);
-  }
-  root.add(body);
-  return { root: shadowed(root), height: 1.1 };
+  root.add(mesh(b));
+  return { root, height: 7 * V + 0.15 };
 }
 
 export function createGoblin(): CharacterModel {
+  const skin = "#7bb04a", rag = "#5a3d2b", eye = "#1b1b1b";
+  const b = new VoxelBuilder();
+  b.box(-2, 0, -1, -1, 4, 1, skin).box(1, 0, -1, 2, 4, 1, skin); // pernas finas
+  b.box(-3, 4, -2, 3, 10, 2, rag); // tronco
+  b.box(-5, 5, -1, -3, 10, 1, skin); // braço esquerdo
+  b.box(-3, 10, -3, 3, 15, 3, skin); // cabeça
+  b.box(-6, 12, -1, -3, 13, 0, skin).box(3, 12, -1, 6, 13, 0, skin); // orelhas
+  b.set(-2, 12, -3, eye).set(1, 12, -3, eye);
+  b.set(0, 10, -3, "#f1ead6").set(-1, 10, -3, "#f1ead6"); // dentes
   const root = new THREE.Group();
-  const skin = mat("#7bb04a");
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.33, 0.5, 4, 8), mat("#5a3d2b"));
-  body.position.y = 0.8;
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 10, 8), skin);
-  head.position.y = 1.5;
-  for (const sx of [-1, 1]) {
-    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.4, 5), skin);
-    ear.position.set(sx * 0.4, 1.6, 0);
-    ear.rotation.z = sx * -Math.PI / 2.4;
-    root.add(ear);
-  }
+  root.add(mesh(b));
+
+  const arm = new VoxelBuilder();
+  arm.box(-1, -5, -1, 1, 0, 1, skin);
+  arm.box(-1, -5, -8, 1, -4, -1, "#8a5a2b"); // porrete
+  arm.box(-2, -6, -9, 2, -3, -6, "#8a5a2b"); // cabeça do porrete
   const weaponArm = new THREE.Group();
-  weaponArm.position.set(0.45, 1.1, 0);
-  const club = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.16, 1.0, 6), mat("#8a5a2b"));
-  club.position.set(0, -0.1, -0.5);
-  club.rotation.x = Math.PI / 2;
-  weaponArm.add(club);
-  root.add(body, head, weaponArm);
-  return { root: shadowed(root), weaponArm, height: 1.9 };
+  weaponArm.position.set(4 * V, 10 * V, 0);
+  weaponArm.add(mesh(arm));
+  root.add(weaponArm);
+  return { root, weaponArm, height: 15 * V + 0.1 };
 }
 
 export function createOrc(): CharacterModel {
+  const skin = "#4f7a3a", armor = "#3c3c45", eye = "#ff4040";
+  const b = new VoxelBuilder();
+  b.box(-4, 0, -2, -1, 7, 2, skin).box(1, 0, -2, 4, 7, 2, skin); // pernas
+  b.box(-6, 7, -3, 6, 17, 3, armor); // tronco largo
+  b.box(-6, 7, -3, 6, 9, 3, "#2a2a30"); // cinto
+  b.box(-9, 9, -2, -6, 17, 2, skin); // braço esquerdo
+  b.box(-4, 17, -4, 4, 24, 4, skin); // cabeça
+  b.box(-4, 23, -4, 4, 25, 4, armor); // elmo
+  b.set(-3, 20, -4, eye).set(2, 20, -4, eye);
+  b.set(-3, 17, -5, "#f1ead6").set(2, 17, -5, "#f1ead6").set(-3, 18, -5, "#f1ead6").set(2, 18, -5, "#f1ead6"); // presas
   const root = new THREE.Group();
-  const skin = mat("#4f7a3a");
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.62, 0.9, 4, 8), mat("#3c3c45"));
-  body.position.y = 1.3;
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.7), skin);
-  head.position.y = 2.35;
-  for (const sx of [-1, 1]) {
-    const tusk = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.25, 5), mat("#f1ead6"));
-    tusk.position.set(sx * 0.18, 2.1, -0.36);
-    root.add(tusk);
-  }
+  root.add(mesh(b));
+
+  const arm = new VoxelBuilder();
+  arm.box(-1, -8, -2, 2, 0, 2, skin);
+  arm.box(0, -8, -14, 1, -7, -2, "#5a3d2b"); // cabo do machado
+  arm.box(-1, -11, -14, 2, -4, -11, "#aab0b8"); // lâmina
   const weaponArm = new THREE.Group();
-  weaponArm.position.set(0.8, 1.8, 0);
-  const axeHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.6, 6), mat("#5a3d2b"));
-  axeHandle.position.set(0, -0.2, -0.7);
-  axeHandle.rotation.x = Math.PI / 2;
-  const axeHead = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.7, 0.5), mat("#aab0b8"));
-  axeHead.position.set(0, -0.2, -1.4);
-  weaponArm.add(axeHandle, axeHead);
-  root.add(body, head, weaponArm);
-  return { root: shadowed(root), weaponArm, height: 2.9 };
+  weaponArm.position.set(7 * V, 17 * V, 0);
+  weaponArm.add(mesh(arm));
+  root.add(weaponArm);
+  return { root, weaponArm, height: 25 * V + 0.1 };
 }
 
 export function createModel(archetype: string): CharacterModel {
