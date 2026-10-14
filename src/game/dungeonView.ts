@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { DUNGEON_ORIGIN, trapPhase, type DungeonRun } from "../domain/dungeon";
+import { DUNGEON_ORIGIN, trapPhase, type DungeonRun, type DungeonThemeId } from "../domain/dungeon";
 import { isFloorTile, roomAt, Tile, tileOf, type DungeonLayout } from "../domain/dungeonLayout";
 import { DECOR_BUILDERS, DECOR_VOXEL, type DecorKind } from "./dungeonDecor";
 import { createPortal, type Portal } from "./portal";
@@ -20,25 +20,119 @@ const CV = 6;
 const V = 1 / CV;
 const WALL_H = 18; // 3 m
 
+/**
+ * Paleta e adereços de cada tema: a mesma planta vira cripta de pedra (musgo, tapetes vermelhos,
+ * tochas) ou caverna de gelo (blocos azuis, neve nas frestas, pingentes, chama fria).
+ */
+interface DungeonStyle {
+  wall: string[];
+  /** Mancha na base das paredes (musgo ou geada). */
+  wallBase: string[];
+  crack: string;
+  plinth: [string, string];
+  mortar: string;
+  top: [string, string, string, string];
+  arch: [string, string, string, string];
+  pillar: string[];
+  pillarCap: string;
+  stairRim: [string, string];
+  steps: [string, string];
+  pit: [string, string];
+  floor: string[];
+  joint: string;
+  floorAccent: string[];
+  trap: [string, string];
+  rug: [string, string, string];
+  speck: string;
+  /** Adereço de cada "papel" (o da cripta é o próprio nome). */
+  decor: Record<"coffin" | "barrel" | "bones" | "candles" | "banner" | "cobweb" | "rubble" | "urn" | "spikes" | "brazier", DecorKind>;
+  flame: [string, string, string];
+  torchLight: string;
+  brazierLight: string;
+  candleLight: string;
+  dust: string;
+  snow: boolean;
+  portal: string;
+}
+
+const STYLES: Record<DungeonThemeId, DungeonStyle> = {
+  crypt: {
+    wall: ["#4e4a52", "#58545c", "#625e66", "#6c6870", "#5c5048"],
+    wallBase: ["#3e5a30", "#4a6a36", "#56763c"],
+    crack: "#2e2a30",
+    plinth: ["#3e3a40", "#36323a"],
+    mortar: "#2a272c",
+    top: ["#77737c", "#3a363e", "#86828b", "#4a464e"],
+    arch: ["#4a464e", "#86828b", "#6a6670", "#76727c"],
+    pillar: ["#6e6a76", "#78747f", "#827e88"],
+    pillarCap: "#7a7682",
+    stairRim: ["#5a5660", "#76727c"],
+    steps: ["#4a464e", "#56525a"],
+    pit: ["#08080a", "#2a272c"],
+    floor: ["#46434c", "#4e4b54", "#55525c", "#5c5862"],
+    joint: "#2e2c32",
+    floorAccent: ["#3e5a30", "#4a6a36"],
+    trap: ["#141216", "#3a3a42"],
+    rug: ["#c9a23a", "#5a1018", "#7a1a24"],
+    speck: "#cfc4ac",
+    decor: { coffin: "coffin", barrel: "barrel", bones: "bones", candles: "candles", banner: "banner", cobweb: "cobweb", rubble: "rubble", urn: "urn", spikes: "spikes", brazier: "brazier" },
+    flame: ["#ff7a1a", "#ffb43a", "#ffe08a"],
+    torchLight: "#ffa04a",
+    brazierLight: "#ff7a3a",
+    candleLight: "#ffc46a",
+    dust: "#d8c8a8",
+    snow: false,
+    portal: "#9a5aff",
+  },
+  iceCave: {
+    wall: ["#6a98ba", "#7aa8c8", "#8ab8d6", "#9ac6e0", "#aed4ea"],
+    wallBase: ["#dceef8", "#e8f4fa", "#f4fafd"],
+    crack: "#4a7898",
+    plinth: ["#5a7a98", "#4e6e8a"],
+    mortar: "#3e6280",
+    top: ["#c8e4f2", "#5a84a4", "#e4f2fa", "#7aa0bc"],
+    arch: ["#5a84a4", "#e4f2fa", "#9ac6e0", "#aed4ea"],
+    pillar: ["#a6d8ee", "#b8e2f2", "#cceaf6"],
+    pillarCap: "#e4f4fa",
+    stairRim: ["#6a90ae", "#9ac0d8"],
+    steps: ["#5a7a98", "#6a8aa8"],
+    pit: ["#060a10", "#2a3e52"],
+    floor: ["#b0c8da", "#bcd2e2", "#c8dcea", "#d4e4f0"],
+    joint: "#8aa6bc",
+    floorAccent: ["#e8f4fa", "#f4fafd"],
+    trap: ["#1a2a3a", "#6a8aa8"],
+    rug: ["#e8f6ff", "#1e3a66", "#2a4a7a"],
+    speck: "#ffffff",
+    decor: { coffin: "iceCluster", barrel: "snowdrift", bones: "frozenBones", candles: "iceLamp", banner: "iceCluster", cobweb: "icicles", rubble: "snowdrift", urn: "iceCluster", spikes: "iceSpikes", brazier: "iceBrazier" },
+    flame: ["#3a9ae8", "#7ad0ff", "#e0f8ff"],
+    torchLight: "#7ac8ff",
+    brazierLight: "#5ab0ff",
+    candleLight: "#8ad8ff",
+    dust: "#ffffff",
+    snow: true,
+    portal: "#5ad0ff",
+  },
+};
+
 const isWall = (L: DungeonLayout, i: number, j: number) => tileOf(L, i, j) === Tile.Void;
 const walkable = (L: DungeonLayout, i: number, j: number) => isFloorTile(tileOf(L, i, j));
 
 /** Pedra das paredes: tom por bloco (linhas de 4 voxels, juntas a cada 5, alternadas por fileira). */
-function wallStone(vx: number, vy: number, vz: number, alongX: boolean): { color: string; mortar: boolean } {
+function wallStone(vx: number, vy: number, vz: number, alongX: boolean, st: DungeonStyle): { color: string; mortar: boolean } {
   const row = Math.floor(vy / 4);
   const u = alongX ? vx : vz;
   const off = (row % 2) * 2 + (row % 3);
   const block = Math.floor((u + off) / 5);
   const mortar = vy % 4 === 0 || (u + off) % 5 === 0;
   const tone = hash3(block, row, alongX ? vz : vx, 11);
-  let color = pickTone(["#4e4a52", "#58545c", "#625e66", "#6c6870", "#5c5048"], tone);
-  if (vy < 4 && noise3(vx / 4, vy / 3, vz / 4, 5) > 0.62) color = pickTone(["#3e5a30", "#4a6a36", "#56763c"], hash3(vx, vy, vz));
-  if (hash3(vx, vy, vz, 3) < 0.015) color = "#2e2a30"; // rachadura
+  let color = pickTone(st.wall, tone);
+  if (vy < 4 && noise3(vx / 4, vy / 3, vz / 4, 5) > 0.62) color = pickTone(st.wallBase, hash3(vx, vy, vz));
+  if (hash3(vx, vy, vz, 3) < 0.015) color = st.crack; // rachadura
   return { color, mortar };
 }
 
 /** Estrutura do andar: paredes (só a pele que dá para o chão), topo, arcos, pilares e o poço da escada. */
-function buildStructure(L: DungeonLayout, run: DungeonRun): VoxelBuilder {
+function buildStructure(L: DungeonLayout, run: DungeonRun, st: DungeonStyle = STYLES[run.theme]): VoxelBuilder {
   const b = new VoxelBuilder();
   const stairCells = stairsCells(run);
   for (let j = 0; j < L.height; j++)
@@ -62,14 +156,14 @@ function buildStructure(L: DungeonLayout, run: DungeonRun): VoxelBuilder {
           const vx = i * CV + lx, vz = j * CV + lz;
           if (depth <= 1) {
             for (let vy = 0; vy < WALL_H - 2; vy++) {
-              const s = wallStone(vx, vy, vz, alongX);
+              const s = wallStone(vx, vy, vz, alongX, st);
               const plinth = vy < 2;
               if (depth === 0 && s.mortar && !plinth) continue; // argamassa funda: relevo dos blocos
-              b.set(vx, vy, vz, plinth ? (vy === 1 ? "#3e3a40" : "#36323a") : depth === 1 && s.mortar ? "#2a272c" : s.color);
+              b.set(vx, vy, vz, plinth ? (vy === 1 ? st.plinth[0] : st.plinth[1]) : depth === 1 && s.mortar ? st.mortar : s.color);
             }
           }
           // Topo da parede: tampa a célula inteira, com borda mais clara.
-          b.set(vx, WALL_H - 2, vz, depth <= 1 ? "#77737c" : "#3a363e").set(vx, WALL_H - 1, vz, depth === 0 ? "#86828b" : "#4a464e");
+          b.set(vx, WALL_H - 2, vz, depth <= 1 ? st.top[0] : st.top[1]).set(vx, WALL_H - 1, vz, depth === 0 ? st.top[2] : st.top[3]);
         }
     }
 
@@ -81,7 +175,7 @@ function buildStructure(L: DungeonLayout, run: DungeonRun): VoxelBuilder {
       if (!mouth) continue;
       for (let lx = 0; lx < CV; lx++)
         for (let lz = 0; lz < CV; lz++)
-          for (let vy = 13; vy < WALL_H; vy++) b.set(i * CV + lx, vy, j * CV + lz, vy === 13 ? "#4a464e" : vy === WALL_H - 1 ? "#86828b" : pickTone(["#6a6670", "#76727c"], hash3(i, vy, j)));
+          for (let vy = 13; vy < WALL_H; vy++) b.set(i * CV + lx, vy, j * CV + lz, vy === 13 ? st.arch[0] : vy === WALL_H - 1 ? st.arch[1] : pickTone([st.arch[2], st.arch[3]], hash3(i, vy, j)));
     }
 
   // Pilares 2×2 (exceto o poço da escada): base, fuste com caneluras e capitel.
@@ -99,7 +193,7 @@ function buildStructure(L: DungeonLayout, run: DungeonRun): VoxelBuilder {
             const capital = vy >= WALL_H - 3 && Math.max(Math.abs(x + 0.5), Math.abs(z + 0.5)) <= CV - 0.5 - (vy === WALL_H - 3 ? 1 : 0);
             const shaft = r <= 4 - flute;
             if (!(base || capital || shaft)) continue;
-            b.set(cx + x, vy, cz + z, base || capital ? "#7a7682" : pickTone(["#6e6a76", "#78747f", "#827e88"], noise3((cx + x) / 3, vy / 5, (cz + z) / 3, 2)));
+            b.set(cx + x, vy, cz + z, base || capital ? st.pillarCap : pickTone(st.pillar, noise3((cx + x) / 3, vy / 5, (cz + z) / 3, 2)));
           }
         }
     }
@@ -111,14 +205,14 @@ function buildStructure(L: DungeonLayout, run: DungeonRun): VoxelBuilder {
       for (let z = -CV - 1; z < CV + 1; z++) {
         const rim = x < -CV + 1 || x >= CV - 1 || z < -CV + 1 || z >= CV - 1;
         if (rim) {
-          b.set(sx + x, 0, sz + z, "#5a5660").set(sx + x, 1, sz + z, "#76727c");
+          b.set(sx + x, 0, sz + z, st.stairRim[0]).set(sx + x, 1, sz + z, st.stairRim[1]);
           continue;
         }
         // Degraus: descem ao longo de x, do lado -x para o +x; o fundo é preto.
         const step = Math.floor((x + CV - 1) / 1.5);
         const floorY = -1 - step;
-        b.set(sx + x, floorY, sz + z, step % 2 ? "#4a464e" : "#56525a");
-        for (let y = floorY - 1; y >= -10; y--) b.set(sx + x, y, sz + z, y < -8 ? "#08080a" : "#2a272c");
+        b.set(sx + x, floorY, sz + z, step % 2 ? st.steps[0] : st.steps[1]);
+        for (let y = floorY - 1; y >= -10; y--) b.set(sx + x, y, sz + z, y < -8 ? st.pit[0] : st.pit[1]);
       }
   }
   return b;
@@ -133,7 +227,7 @@ const stairsCells = (run: DungeonRun): Set<number> => {
 };
 
 /** Piso: lajes 3×3 com juntas, grades nas armadilhas, tapete vermelho nos salões e na arena. */
-function buildFloor(L: DungeonLayout): VoxelBuilder {
+function buildFloor(L: DungeonLayout, st: DungeonStyle = STYLES.crypt): VoxelBuilder {
   const b = new VoxelBuilder();
   for (let j = 0; j < L.height; j++)
     for (let i = 0; i < L.width; i++) {
@@ -152,16 +246,16 @@ function buildFloor(L: DungeonLayout): VoxelBuilder {
           const vx = i * CV + lx, vz = j * CV + lz;
           let color: string;
           if (t === Tile.Trap) {
-            color = (lx + lz) % 2 === 0 && lx % 2 === 0 ? "#141216" : "#3a3a42";
+            color = (lx + lz) % 2 === 0 && lx % 2 === 0 ? st.trap[0] : st.trap[1];
           } else if (rug) {
             const edge = lx === 0 && (Math.abs((i + 0.5) - ((room!.i0 + room!.i1) / 2)) > 1);
-            color = edge ? "#c9a23a" : hash3(vx, 0, vz, 4) < 0.08 ? "#5a1018" : "#7a1a24";
+            color = edge ? st.rug[0] : hash3(vx, 0, vz, 4) < 0.08 ? st.rug[1] : st.rug[2];
           } else {
             const joint = vx % 3 === 0 || vz % 3 === 0;
             const slab = hash3(Math.floor(vx / 3), 0, Math.floor(vz / 3), 7);
-            color = joint ? "#2e2c32" : pickTone(["#46434c", "#4e4b54", "#55525c", "#5c5862"], slab);
-            if (!joint && nearWall && noise3(vx / 4, 0, vz / 4, 9) > 0.66) color = pickTone(["#3e5a30", "#4a6a36"], hash3(vx, 1, vz));
-            if (!joint && hash3(vx, 2, vz, 5) < 0.01) color = "#cfc4ac"; // ossinho perdido
+            color = joint ? st.joint : pickTone(st.floor, slab);
+            if (!joint && nearWall && noise3(vx / 4, 0, vz / 4, 9) > 0.66) color = pickTone(st.floorAccent, hash3(vx, 1, vz));
+            if (!joint && hash3(vx, 2, vz, 5) < 0.01) color = st.speck; // ossinho perdido (ou floco de neve)
           }
           b.set(vx, 0, vz, color);
         }
@@ -172,6 +266,7 @@ function buildFloor(L: DungeonLayout): VoxelBuilder {
 /** Onde vai cada adereço: encostado nas paredes das salas, longe das entradas e do caminho. */
 function decorPlacements(L: DungeonLayout, run: DungeonRun): { kind: DecorKind; x: number; z: number; yaw: number; y?: number }[] {
   const out: { kind: DecorKind; x: number; z: number; yaw: number; y?: number }[] = [];
+  const D = STYLES[run.theme].decor;
   const rand = (i: number, j: number, s: number) => hash3(i, j, run.floor * 31 + s, run.seed % 9973);
   for (const room of L.rooms) {
     const ci = (room.i0 + room.i1) / 2, cj = (room.j0 + room.j1) / 2;
@@ -187,22 +282,22 @@ function decorPlacements(L: DungeonLayout, run: DungeonRun): { kind: DecorKind; 
         const facing = Math.atan2(di, dj); // -Z local aponta para longe da parede
         const r = rand(i, j, 1);
         if (walls.length >= 2 && rand(i, j, 2) < 0.6) {
-          out.push({ kind: "cobweb", x: x + walls.reduce((n, w) => n + w[0], 0) * 0.5, z: z + walls.reduce((n, w) => n + w[1], 0) * 0.5, yaw: Math.atan2(-walls.reduce((n, w) => n + w[0], 0), -walls.reduce((n, w) => n + w[1], 0)) + Math.PI / 4, y: 2.8 });
+          out.push({ kind: D.cobweb, x: x + walls.reduce((n, w) => n + w[0], 0) * 0.5, z: z + walls.reduce((n, w) => n + w[1], 0) * 0.5, yaw: Math.atan2(-walls.reduce((n, w) => n + w[0], 0), -walls.reduce((n, w) => n + w[1], 0)) + Math.PI / 4, y: 2.8 });
           continue;
         }
-        if (r < 0.05) out.push({ kind: "banner", x: x + di * 0.45, z: z + dj * 0.45, yaw: facing, y: 2.6 });
-        else if (r < 0.08) out.push({ kind: "coffin", x: x - di * 0.1, z: z - dj * 0.1, yaw: facing + Math.PI / 2 });
-        else if (r < 0.12) out.push({ kind: "barrel", x, z, yaw: r * 40 });
-        else if (r < 0.16) out.push({ kind: "bones", x, z, yaw: r * 50 });
-        else if (r < 0.19) out.push({ kind: "candles", x, z, yaw: r * 30 });
-        else if (r < 0.21) out.push({ kind: "urn", x, z, yaw: r * 20 });
-        else if (r < 0.24) out.push({ kind: "rubble", x, z, yaw: r * 60 });
+        if (r < 0.05) out.push({ kind: D.banner, x: x + di * 0.45, z: z + dj * 0.45, yaw: facing, y: 2.6 });
+        else if (r < 0.08) out.push({ kind: D.coffin, x: x - di * 0.1, z: z - dj * 0.1, yaw: facing + Math.PI / 2 });
+        else if (r < 0.12) out.push({ kind: D.barrel, x, z, yaw: r * 40 });
+        else if (r < 0.16) out.push({ kind: D.bones, x, z, yaw: r * 50 });
+        else if (r < 0.19) out.push({ kind: D.candles, x, z, yaw: r * 30 });
+        else if (r < 0.21) out.push({ kind: D.urn, x, z, yaw: r * 20 });
+        else if (r < 0.24) out.push({ kind: D.rubble, x, z, yaw: r * 60 });
       }
     // Braseiros nos cantos das salas grandes (chefe e escada).
     if (room.kind === "boss" || room.kind === "stairs") {
       for (const [fi, fj] of [[0.22, 0.22], [0.78, 0.22], [0.22, 0.78], [0.78, 0.78]] as const) {
         const i = Math.floor(room.i0 + (room.i1 - room.i0) * fi), j = Math.floor(room.j0 + (room.j1 - room.j0) * fj);
-        if (tileOf(L, i, j) === Tile.Floor) out.push({ kind: "brazier", x: DUNGEON_ORIGIN.x + i + 0.5, z: DUNGEON_ORIGIN.z + j + 0.5, yaw: 0 });
+        if (tileOf(L, i, j) === Tile.Floor) out.push({ kind: D.brazier, x: DUNGEON_ORIGIN.x + i + 0.5, z: DUNGEON_ORIGIN.z + j + 0.5, yaw: 0 });
       }
     }
   }
@@ -278,11 +373,11 @@ function sconceGeometry(): THREE.BufferGeometry {
   return b.build(1 / 8, { jitter: 0, ao: false });
 }
 
-function flameGeometry(): THREE.BufferGeometry {
+function flameGeometry(colors: [string, string, string]): THREE.BufferGeometry {
   return new VoxelBuilder()
-    .box(-1, 0, -1, 1, 2, 1, "#ff7a1a")
-    .box(-1, 2, 0, 1, 3, 1, "#ffb43a")
-    .set(0, 3, 0, "#ffe08a")
+    .box(-1, 0, -1, 1, 2, 1, colors[0])
+    .box(-1, 2, 0, 1, 3, 1, colors[1])
+    .set(0, 3, 0, colors[2])
     .build(1 / 8, { jitter: 0, ao: false });
 }
 
@@ -314,6 +409,8 @@ export class DungeonView {
   private readonly dust: THREE.Points;
   private readonly dummy = new THREE.Object3D();
   private readonly structureMaterial = cutawayMaterial();
+  /** Caverna de gelo: a "poeira" vira neve que cai devagar. */
+  private snowing = false;
   /** Quanto tempo levou para montar o último andar (para medir). */
   lastBuildMs = 0;
 
@@ -356,8 +453,8 @@ export class DungeonView {
     }
     const r = this.run;
     // Poeira: acompanha o herói e sobe devagar.
-    this.dust.position.set(focus.x, 0, focus.z);
-    this.dust.rotation.y = time * 0.02;
+    this.dust.position.set(focus.x, this.snowing ? 3 - ((time * 0.5) % 3) : 0, focus.z);
+    this.dust.rotation.y = time * (this.snowing ? 0.05 : 0.02);
     (this.dust.material as THREE.PointsMaterial).opacity = 0.35 + Math.sin(time * 0.7) * 0.08;
 
     // As luzes mais próximas do herói ganham luz de verdade; as outras só brilham.
@@ -458,12 +555,17 @@ export class DungeonView {
     this.layout = run?.layout ?? null;
     if (!run) return;
     const L = run.layout;
+    const st = STYLES[run.theme];
+    const dustMat = this.dust.material as THREE.PointsMaterial;
+    dustMat.color.set(st.dust);
+    dustMat.size = st.snow ? 0.08 : 0.05;
+    this.snowing = st.snow;
 
     // Estrutura (com recorte) e piso, cada um numa malha só.
-    const structure = new THREE.Mesh(buildStructure(L, run).build(V, { jitter: 0, aoStrength: 0.55 }), this.structureMaterial);
+    const structure = new THREE.Mesh(buildStructure(L, run, st).build(V, { jitter: 0, aoStrength: 0.55 }), this.structureMaterial);
     structure.position.set(DUNGEON_ORIGIN.x, 0, DUNGEON_ORIGIN.z);
     structure.castShadow = structure.receiveShadow = true;
-    const floor = new THREE.Mesh(buildFloor(L).build(V, { jitter: 0, ao: false, skipGroundFaces: true }), voxelMaterial());
+    const floor = new THREE.Mesh(buildFloor(L, st).build(V, { jitter: 0, ao: false, skipGroundFaces: true }), voxelMaterial());
     floor.position.set(DUNGEON_ORIGIN.x, -V, DUNGEON_ORIGIN.z);
     floor.receiveShadow = true;
     this.group.add(structure, floor);
@@ -484,10 +586,10 @@ export class DungeonView {
         this.dummy.scale.setScalar(1);
         this.dummy.updateMatrix();
         mesh.setMatrixAt(k, this.dummy.matrix);
-        if (kind === "brazier") this.lightSpots.push({ pos: new THREE.Vector3(d.x, 1.3, d.z), color: new THREE.Color("#ff7a3a"), power: 11 });
-        if (kind === "candles") this.lightSpots.push({ pos: new THREE.Vector3(d.x, 0.7, d.z), color: new THREE.Color("#ffc46a"), power: 4 });
+        if (kind === st.decor.brazier) this.lightSpots.push({ pos: new THREE.Vector3(d.x, 1.3, d.z), color: new THREE.Color(st.brazierLight), power: 11 });
+        if (kind === st.decor.candles) this.lightSpots.push({ pos: new THREE.Vector3(d.x, 0.7, d.z), color: new THREE.Color(st.candleLight), power: 4 });
       });
-      mesh.castShadow = kind !== "cobweb" && kind !== "banner";
+      mesh.castShadow = kind !== "cobweb" && kind !== "banner" && kind !== "icicles";
       mesh.receiveShadow = true;
       mesh.computeBoundingSphere();
       this.group.add(mesh);
@@ -508,7 +610,7 @@ export class DungeonView {
     const sconces = new THREE.InstancedMesh(sconceGeometry(), voxelMaterial(), torchSpots.length);
     const flameMat = new THREE.MeshBasicMaterial({ vertexColors: true });
     flameMat.color.setScalar(2.2); // acima de 1: brilha no bloom
-    this.flames = new THREE.InstancedMesh(flameGeometry(), flameMat, torchSpots.length);
+    this.flames = new THREE.InstancedMesh(flameGeometry(st.flame), flameMat, torchSpots.length);
     torchSpots.forEach((s, k) => {
       this.dummy.position.copy(s.pos).add(new THREE.Vector3(-Math.sin(s.yaw) * 0.45, -0.3, -Math.cos(s.yaw) * 0.45));
       this.dummy.rotation.set(0, s.yaw, 0);
@@ -517,7 +619,7 @@ export class DungeonView {
       sconces.setMatrixAt(k, this.dummy.matrix);
       const p = s.pos.clone().add(new THREE.Vector3(0, 0.05, 0));
       this.torches.push(p);
-      this.lightSpots.push({ pos: p, color: new THREE.Color("#ffa04a"), power: 9 });
+      this.lightSpots.push({ pos: p, color: new THREE.Color(st.torchLight), power: 9 });
     });
     sconces.computeBoundingSphere();
     this.group.add(sconces, this.flames);
@@ -526,7 +628,7 @@ export class DungeonView {
     for (let j = 0; j < L.height; j++)
       for (let i = 0; i < L.width; i++) if (tileOf(L, i, j) === Tile.Trap) this.spikeCells.push(new THREE.Vector3(DUNGEON_ORIGIN.x + i + 0.5, 0, DUNGEON_ORIGIN.z + j + 0.5));
     if (this.spikeCells.length) {
-      this.spikes = new THREE.InstancedMesh(decorGeometry("spikes"), voxelMaterial(), this.spikeCells.length);
+      this.spikes = new THREE.InstancedMesh(decorGeometry(st.decor.spikes), voxelMaterial(), this.spikeCells.length);
       this.spikes.frustumCulled = false;
       this.warnPlates = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.96, 0.96).rotateX(-Math.PI / 2), this.warnMaterial, this.spikeCells.length);
       this.spikeCells.forEach((c, k) => {
@@ -556,7 +658,7 @@ export class DungeonView {
     if (run.stairs) this.lightSpots.push({ pos: new THREE.Vector3(run.stairs.x, -0.6, run.stairs.z), color: new THREE.Color("#9a6aff"), power: 10 });
 
     if (run.floor === 1) {
-      this.startPortal = createPortal("#9a5aff");
+      this.startPortal = createPortal(st.portal);
       this.startPortal.group.position.set(run.startPortal.x, 0, run.startPortal.z);
       this.startPortal.group.rotation.y = Math.PI / 2;
       this.group.add(this.startPortal.group);
@@ -567,5 +669,5 @@ export class DungeonView {
 
 /** Para o lab e testes: monta só as malhas de estrutura e piso de um andar. */
 export function buildDungeonMeshes(run: DungeonRun): { structure: THREE.BufferGeometry; floor: THREE.BufferGeometry } {
-  return { structure: buildStructure(run.layout, run).build(V, { jitter: 0, aoStrength: 0.55 }), floor: buildFloor(run.layout).build(V, { jitter: 0, ao: false, skipGroundFaces: true }) };
+  return { structure: buildStructure(run.layout, run).build(V, { jitter: 0, aoStrength: 0.55 }), floor: buildFloor(run.layout, STYLES[run.theme]).build(V, { jitter: 0, ao: false, skipGroundFaces: true }) };
 }

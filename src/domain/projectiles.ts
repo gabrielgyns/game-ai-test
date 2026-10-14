@@ -2,7 +2,7 @@ import type { EntityId } from "./components";
 import type { Vec2, Vec3 } from "./math";
 import type { PoolSpec } from "./hazards";
 
-export type ProjectileKind = "arrow" | "bolt" | "fireball" | "piercingArrow" | "stinger" | "acidGlob" | "bone";
+export type ProjectileKind = "arrow" | "bolt" | "fireball" | "piercingArrow" | "stinger" | "acidGlob" | "bone" | "iceShard";
 
 export interface Projectile {
   id: number;
@@ -30,6 +30,9 @@ export interface Projectile {
   stun?: number;
 }
 
+/** Frio dos estilhaços e do chão congelado: lentidão e duração. */
+export const CHILL = { factor: 0.65, seconds: 1.6 };
+
 export const PROJECTILE_SPECS: Record<ProjectileKind, { speed: number; hitRadius: number }> = {
   arrow: { speed: 28, hitRadius: 0.9 },
   piercingArrow: { speed: 32, hitRadius: 1.0 },
@@ -38,4 +41,6 @@ export const PROJECTILE_SPECS: Record<ProjectileKind, { speed: number; hitRadius
   stinger: { speed: 17, hitRadius: 0.8 },
   acidGlob: { speed: 15, hitRadius: 1.0 },
   bone: { speed: 15, hitRadius: 0.8 },
+  /** Estilhaço de gelo: quem leva fica lento (ver `CHILL`). */
+  iceShard: { speed: 19, hitRadius: 0.9 },
 };

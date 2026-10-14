@@ -5,7 +5,7 @@ import { directionFromYaw, directionXZ, distanceXZ } from "../math";
 import { CHARGE } from "../skills";
 import { CLASSES } from "../classes";
 import { fireProjectile } from "./projectiles";
-import { applySlow, vulnerability } from "../status";
+import { applySlow, isStunned, speedFactor, vulnerability } from "../status";
 import { hasSetPower } from "../sets";
 import { hasTalent } from "../skillTree";
 import { playerRespawnPoint } from "../dungeon";
@@ -214,6 +214,10 @@ export function applyDamage(world: World, source: Entity, target: Entity, amount
   if (kind !== "hazard" && hasSetPower(source, "royalFury") && source.health.current < source.health.max * 0.5) {
     amount = Math.round(amount * (1 + SET_POWERS.royalFuryBonus));
   }
+  // Estilhaçar (Rainha Gélida, 3 peças): alvo lento ou atordoado apanha mais.
+  if (kind !== "hazard" && hasSetPower(source, "shatter") && (isStunned(target) || speedFactor(target) < 1)) {
+    amount = Math.round(amount * (1 + SET_POWERS.shatterBonus));
+  }
   // Crítico (afixo da Águia): sorteado antes de escudos, para o número grande valer o golpe inteiro.
   let crit = false;
   const critChance = kind === "hazard" ? 0 : (source.bonuses?.critChance ?? 0) + (source.abilities?.damageBuff?.critBonus ?? 0);
@@ -248,6 +252,11 @@ export function applyDamage(world: World, source: Entity, target: Entity, amount
   if (vuln > 0) amount = Math.round(amount * (1 + vuln));
   // Casca de Areia (Imperador, 3 peças).
   if (hasSetPower(target, "sandShell")) amount = Math.max(1, Math.round(amount * (1 - SET_POWERS.sandShellReduction)));
+  // Pele de Geleira (Gigante de Gelo, 3 peças): golpes enormes perdem metade do excesso.
+  if (hasSetPower(target, "glacier")) {
+    const cap = target.health.max * SET_POWERS.glacierThreshold;
+    if (amount > cap) amount = Math.round(cap + (amount - cap) * SET_POWERS.glacierKeep);
+  }
   const guard = target.abilities?.guard;
   if (guard && guard.timeLeft > 0) amount = Math.max(1, Math.round(amount * (1 - guard.reduction)));
   // Escudo absorve antes da vida.
@@ -335,6 +344,10 @@ export const SET_POWERS = {
   soulHarvestHeal: 0.06,
   soulHarvestCooldown: 1,
   thornsFraction: 0.3,
+  /** Pele de Geleira: o que passa desta fração da vida máxima num golpe só entra pela metade. */
+  glacierThreshold: 0.15,
+  glacierKeep: 0.5,
+  shatterBonus: 0.4,
 };
 
 const REGEN_DELAY_SECONDS = 5;

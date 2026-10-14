@@ -207,3 +207,16 @@ vira a da Mercadora) e uma Pedra de Teleporte, que se ativa ao chegar perto e le
 vila conhecida (`player.villages` no save). A pedra é a viagem rápida: barata o bastante para usar,
 cara o bastante para a passagem a pé ainda fazer sentido perto.
 
+## D39. Dungeons como temas sobre a mesma máquina
+A segunda dungeon não ganhou código próprio: `DUNGEON_THEMES` descreve o que muda (entrada, nível
+mínimo, nível-base da força, mistura de inimigos, guardião, chefe) e a planta, os eventos, as vidas, o
+baú e o fluxo continuam os mesmos. A força dos inimigos parte do nível-base do tema
+(`levelScale(nível) / levelScale(base)`), então bichos que já nascem fortes (yeti nível 24) não dobram
+de novo. A apresentação escolhe paleta, adereços, luz e "poeira" (neve na caverna) pelo id do tema.
+Sem vidas, o herói acorda no ponto seguro da zona da entrada, não sempre no santuário.
+
+## D40. Gelo escorregadio como velocidade guardada
+`movement.slide` guarda a velocidade de todo mundo; fora do gelo ela é igual à desejada, no gelo ela só
+se aproxima da desejada aos poucos (`ICE_GRIP`). Assim quem entra correndo no lago entra embalado, e
+parar ou virar leva tempo, sem física nova. Vale para inimigos também.
+

@@ -61,6 +61,8 @@ export const SHOPS: Record<string, ShopProfile> = {
   merchant: { minLevel: 1, salt: 17, rarities: (rand) => ["uncommon", "uncommon", "rare", rand() < 0.2 ? "epic" : "rare"] },
   /** Mascate Faelan, no acampamento da floresta. */
   peddler: { minLevel: 12, salt: 911, rarities: (rand) => ["uncommon", "rare", "rare", "rare", rand() < 0.45 ? "epic" : "rare"] },
+  /** Mercadora Sigrid, na vila de Pedra-Fria. */
+  trader: { minLevel: 20, salt: 4421, rarities: (rand) => ["rare", "rare", "rare", rand() < 0.5 ? "epic" : "rare", rand() < 0.25 ? "epic" : "rare"] },
 };
 
 /** Estoque do dia: determinístico por dia, nível e loja, com ao menos um raro e chance de épico. */

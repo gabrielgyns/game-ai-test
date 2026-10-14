@@ -1,7 +1,8 @@
 import type { Entity, EntityId } from "./components";
+import type { ProjectileKind } from "./projectiles";
 import { createEquipment as createEquipmentSlots, createInventory } from "./inventory";
 import type { Vec2, Vec3 } from "./math";
-import { ACID_POOL, SPORE_POOL, type PoolSpec } from "./hazards";
+import { ACID_POOL, FROST_POOL, SPORE_POOL, type PoolSpec } from "./hazards";
 import { createAbilities } from "./skills";
 
 /** Forma do aviso de golpe, desenhada no chão pela apresentação. */
@@ -27,7 +28,7 @@ export interface AttackPattern {
   /** aoe: distância máxima para mirar. */
   castRange?: number;
   /** projectile/fan/lob: tipo do projétil. */
-  projectile?: "arrow" | "bolt" | "fireball" | "piercingArrow" | "stinger" | "acidGlob" | "bone";
+  projectile?: ProjectileKind;
   /** fan: quantos projéteis; lob: quantos arremessos (o primeiro no alvo, os outros em volta). */
   count?: number;
   /** fan: abertura total do leque, em graus. */
@@ -280,7 +281,7 @@ export function createSkeletonLord(id: EntityId, position: Vec3, level = 5): Ent
 }
 
 /** Que lacaio cada chefe convoca na fase final. */
-export const BOSS_MINION: Record<string, string> = { goblinKing: "goblin", spiderQueen: "spider", scorpionEmperor: "banditArcher", skeletonLord: "skeleton", ancientTreant: "wolf" };
+export const BOSS_MINION: Record<string, string> = { goblinKing: "goblin", spiderQueen: "spider", scorpionEmperor: "banditArcher", skeletonLord: "skeleton", ancientTreant: "wolf", frostGiant: "snowWolf", iceQueen: "iceWraith" };
 
 export const ANCIENT_TREANT_PATTERNS: AttackPattern[] = [
   { id: "vineLash", name: "Chicote de Vinhas", kind: "melee", range: 4.4, windup: 0.9, damageMultiplier: 1, cooldown: 2.3, minPhase: 1 },
@@ -308,6 +309,70 @@ export function createAncientTreant(id: EntityId, position: Vec3): Entity {
     combat: { damage: 70, baseDamage: 70, range: 4.4, cooldown: 2.3, cooldownLeft: 0, wantsAttack: false, windupTime: 0.9, windupLeft: 0 },
     ai: { state: "idle", home: { ...position }, aggroRange: 18, leashRange: 45, xpReward: 5000, goldReward: 900, respawnSeconds: 180 },
     boss: { title: "Ente Ancião", patterns: ANCIENT_TREANT_PATTERNS, cooldowns: {}, phase: 1, phaseThresholds: [0.6, 0.3], windupScale: 1, summoned: false, engaged: false },
+    abilities: { ...createAbilities(), skills: [] },
+    inventory: createInventory(0),
+    equipment: createEquipmentSlots(),
+  };
+}
+
+export const FROST_GIANT_PATTERNS: AttackPattern[] = [
+  { id: "glacialFist", name: "Punho Glacial", kind: "melee", range: 4.6, windup: 0.95, damageMultiplier: 1, cooldown: 2.4, minPhase: 1 },
+  { id: "quake", name: "Tremor Gélido", kind: "slam", range: 7, windup: 1.5, damageMultiplier: 1.7, cooldown: 7, minPhase: 1 },
+  { id: "avalanche", name: "Avalanche", kind: "lob", range: 17, projectile: "iceShard", count: 4, pool: FROST_POOL, impactRadius: 2.2, windup: 1.2, damageMultiplier: 0.7, cooldown: 7.5, minPhase: 1 },
+  { id: "shardFan", name: "Estilhaços", kind: "fan", range: 16, projectile: "iceShard", count: 9, spreadDeg: 110, windup: 1.0, damageMultiplier: 0.55, cooldown: 6, minPhase: 2 },
+  { id: "giantRush", name: "Avanço do Gigante", kind: "charge", range: 13, windup: 0.9, damageMultiplier: 1.5, cooldown: 8, minPhase: 2 },
+];
+
+/**
+ * Gigante de Gelo, chefe dos Picos Gelados (nível 28): soca, faz o chão tremer, arremessa blocos de
+ * gelo que congelam o chão onde caem (quem fica em cima apanha e fica lento) e, ferido, solta leques de
+ * estilhaços e avança. Na fúria, uiva e chama os lobos das neves.
+ */
+export function createFrostGiant(id: EntityId, position: Vec3): Entity {
+  const maxHealth = 9000;
+  return {
+    id,
+    kind: "enemy",
+    name: "Gigante de Gelo",
+    archetype: "frostGiant",
+    level: 28,
+    transform: { position: { ...position }, yaw: 0 },
+    movement: { speed: 3.9, speedMultiplier: 1, intent: { x: 0, z: 0 } },
+    health: { current: maxHealth, max: maxHealth, baseMax: maxHealth, regenPerSecond: 20, lastDamagedAt: -Infinity },
+    combat: { damage: 120, baseDamage: 120, range: 4.6, cooldown: 2.4, cooldownLeft: 0, wantsAttack: false, windupTime: 0.95, windupLeft: 0 },
+    ai: { state: "idle", home: { ...position }, aggroRange: 18, leashRange: 45, xpReward: 26000, goldReward: 1800, respawnSeconds: 180 },
+    boss: { title: "Gigante de Gelo", patterns: FROST_GIANT_PATTERNS, cooldowns: {}, phase: 1, phaseThresholds: [0.6, 0.3], windupScale: 1, summoned: false, engaged: false },
+    abilities: { ...createAbilities(), skills: [] },
+    inventory: createInventory(0),
+    equipment: createEquipmentSlots(),
+  };
+}
+
+export const ICE_QUEEN_PATTERNS: AttackPattern[] = [
+  { id: "iceBlade", name: "Lâmina de Gelo", kind: "melee", range: 3.4, windup: 0.8, damageMultiplier: 1, cooldown: 2, minPhase: 1 },
+  { id: "blizzard", name: "Nevasca", kind: "fan", range: 16, projectile: "iceShard", count: 7, spreadDeg: 90, windup: 0.95, damageMultiplier: 0.65, cooldown: 5.5, minPhase: 1 },
+  { id: "iceTomb", name: "Prisão de Gelo", kind: "aoe", range: 3.4, castRange: 16, windup: 1.3, damageMultiplier: 1.6, cooldown: 7, minPhase: 1 },
+  { id: "frostField", name: "Chão Congelado", kind: "lob", range: 15, projectile: "iceShard", count: 3, pool: FROST_POOL, impactRadius: 2, windup: 1.1, damageMultiplier: 0.6, cooldown: 8, minPhase: 2 },
+  { id: "glide", name: "Deslize Gélido", kind: "charge", range: 12, windup: 0.7, damageMultiplier: 1.3, cooldown: 7, minPhase: 2 },
+];
+
+/** Rainha Gélida, chefe da Caverna de Gelo: escala com o nível da caverna, como o Lorde na cripta. */
+export function createIceQueen(id: EntityId, position: Vec3, level = 22): Entity {
+  const k = (0.7 + 0.1 * Math.max(1, level)) / (0.7 + 0.1 * 22);
+  const maxHealth = Math.round(6500 * k);
+  const damage = Math.round(95 * k);
+  return {
+    id,
+    kind: "enemy",
+    name: "Rainha Gélida",
+    archetype: "iceQueen",
+    level: level + 2,
+    transform: { position: { ...position }, yaw: Math.PI / 2 },
+    movement: { speed: 4.8, speedMultiplier: 1, intent: { x: 0, z: 0 } },
+    health: { current: maxHealth, max: maxHealth, baseMax: maxHealth, regenPerSecond: 0, lastDamagedAt: -Infinity },
+    combat: { damage, baseDamage: damage, range: 3.4, cooldown: 2, cooldownLeft: 0, wantsAttack: false, windupTime: 0.8, windupLeft: 0 },
+    ai: { state: "idle", home: { ...position }, aggroRange: 13, leashRange: 30, xpReward: Math.round(18000 * k), goldReward: Math.round(1400 * k), respawnSeconds: Infinity, needsSight: true },
+    boss: { title: "Rainha Gélida", patterns: ICE_QUEEN_PATTERNS, cooldowns: {}, phase: 1, phaseThresholds: [0.6, 0.3], windupScale: 1, summoned: false, engaged: false },
     abilities: { ...createAbilities(), skills: [] },
     inventory: createInventory(0),
     equipment: createEquipmentSlots(),

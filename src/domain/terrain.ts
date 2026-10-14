@@ -25,6 +25,7 @@ export const STEP_HEIGHT = 0.5;
 export function terrainHeightSmooth(x: number, z: number): number {
   const zone = zoneAt(x, z);
   if (zone.id === "floresta") return forestHeightSmooth(x - zone.center.x, z - zone.center.z);
+  if (zone.id === "picos") return peaksHeightSmooth(x - zone.center.x, z - zone.center.z);
   return valeHeightSmooth(x, z);
 }
 
@@ -53,10 +54,60 @@ function forestHeightSmooth(lx: number, lz: number): number {
   const ruins = 2.5 * (1 - smoothstep(18, 28, dRuins));
   const river = (1 - smoothstep(3.5, 8, Math.abs(lz - forestRiverZ(lx)))) * 6 * smoothstep(10, 22, dBoss) * smoothstep(10, 20, dCamp);
   const edge = Math.max(Math.abs(lx), Math.abs(lz));
-  // Penhascos na borda, abertos no portão (sul, no meio).
-  const gate = lz > 0 ? smoothstep(5, 14, Math.abs(lx)) : 1;
+  // Penhascos na borda, abertos nas passagens (sul, no meio, para o vale; norte, a leste, para os Picos).
+  const gate = lz > 0 ? smoothstep(5, 14, Math.abs(lx)) : smoothstep(5, 14, Math.abs(lx - 50));
   const wall = smoothstep(WORLD_HALF - 18, WORLD_HALF, edge) * 16 * gate;
   return hills * flatten + ruins - river + wall;
+}
+
+/** Lugares dos Picos Gelados, em coordenadas locais: vila, lago congelado, arena do Gigante e a caverna. */
+export const PEAKS_VILLAGE = { x: 0, z: 76 };
+export const PEAKS_LAKE = { x: -46, z: 8 };
+export const PEAKS_LAKE_RADIUS = 21;
+export const PEAKS_BOSS_HOME = { x: 0, z: -78 };
+export const PEAKS_CAVE = { x: 62, z: -30 };
+/** Altura do gelo do lago (plano e liso). */
+export const PEAKS_ICE = -1;
+
+/** Borda irregular do lago congelado (raio por ângulo). */
+const lakeRadius = (lx: number, lz: number): number => {
+  const a = Math.atan2(lz - PEAKS_LAKE.z, lx - PEAKS_LAKE.x);
+  return PEAKS_LAKE_RADIUS + Math.sin(a * 3 + 0.7) * 3 + Math.sin(a * 5) * 1.5;
+};
+
+/**
+ * Relevo dos Picos Gelados: cristas afiadas (ruído "dobrado", que vira aresta onde cruza o zero),
+ * mais altas perto das bordas e baixas no meio, onde ficam os vales por onde se anda. Planos: a vila
+ * ao sul, perto da passagem; o lago congelado a oeste; o patamar da caverna na encosta leste; e o
+ * platô do Gigante, um degrau acima, ao norte.
+ */
+function peaksHeightSmooth(lx: number, lz: number): number {
+  const ridge = 1 - Math.abs(Math.sin(lx * 0.043 + 1.3) * Math.cos(lz * 0.039 - 0.6) + Math.sin((lx + lz) * 0.021) * 0.4);
+  const fromCenter = Math.hypot(lx * 0.9, lz) / 110;
+  const peaks = Math.pow(Math.max(0, ridge), 3) * (4 + 10 * smoothstep(0.25, 0.9, fromCenter));
+  const bumps = Math.sin(lx * 0.11 + 2) * Math.cos(lz * 0.09) * 1.2 + Math.sin((lx - lz) * 0.05) * 1.6;
+  const dVillage = Math.hypot(lx - PEAKS_VILLAGE.x, lz - PEAKS_VILLAGE.z);
+  const dBoss = Math.hypot(lx - PEAKS_BOSS_HOME.x, lz - PEAKS_BOSS_HOME.z);
+  const dCave = Math.hypot(lx - PEAKS_CAVE.x, lz - PEAKS_CAVE.z);
+  const dLake = Math.hypot(lx - PEAKS_LAKE.x, lz - PEAKS_LAKE.z) - lakeRadius(lx, lz);
+  const flatten = Math.min(smoothstep(13, 26, dVillage), smoothstep(16, 28, dBoss), smoothstep(6, 14, dCave), smoothstep(0, 10, dLake));
+  // Trilha da passagem (sul, no meio) até a vila: sem crista no caminho.
+  const trail = lz > PEAKS_VILLAGE.z ? smoothstep(4, 12, Math.abs(lx)) : 1;
+  const relief = (peaks + bumps) * flatten * trail;
+  const plateau = 3 * (1 - smoothstep(16, 28, dBoss));
+  const ledge = 4 * (1 - smoothstep(6, 14, dCave));
+  const lake = -2 * (1 - smoothstep(-2, 4, dLake));
+  const edge = Math.max(Math.abs(lx), Math.abs(lz));
+  const wall = smoothstep(WORLD_HALF - 18, WORLD_HALF, edge) * 18 * (lz > 0 ? smoothstep(5, 14, Math.abs(lx)) : 1);
+  return 1 + relief + plateau + ledge + lake + wall;
+}
+
+/** O lago congelado dos Picos: chão liso, onde quem anda escorrega. */
+export function isIce(x: number, z: number): boolean {
+  const zone = zoneAt(x, z);
+  if (zone.id !== "picos") return false;
+  const lx = x - zone.center.x, lz = z - zone.center.z;
+  return Math.hypot(lx - PEAKS_LAKE.x, lz - PEAKS_LAKE.z) < lakeRadius(lx, lz);
 }
 
 function valeHeightSmooth(x: number, z: number): number {
@@ -106,6 +157,8 @@ export function terrainHeight(x: number, z: number): number {
   const cx = Math.floor(x / CELL_SIZE) * CELL_SIZE + CELL_SIZE / 2;
   const cz = Math.floor(z / CELL_SIZE) * CELL_SIZE + CELL_SIZE / 2;
   const h = Math.round(terrainHeightSmooth(cx, cz) / STEP_HEIGHT) * STEP_HEIGHT;
+  // O lago dos Picos é um espelho de gelo plano.
+  if (isIce(cx, cz)) return PEAKS_ICE;
   // No rio da floresta, o fundo vira espelho d'água plano.
   if (h < FOREST_WATER && zoneAt(cx, cz).id === "floresta") return FOREST_WATER;
   // No pântano, tudo abaixo do nível da água vira um espelho plano (o fundo não importa).

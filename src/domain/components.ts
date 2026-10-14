@@ -30,6 +30,8 @@ export interface Movement {
    * Permite andar de ré e de lado mantendo o alvo à frente (estilo MMO).
    */
   faceYaw?: number;
+  /** Velocidade atual; no gelo ela só alcança a desejada aos poucos (escorrega). */
+  slide?: Vec2;
 }
 
 export interface Health {

@@ -8,7 +8,7 @@ import { terrainHeight } from "./terrain";
  * `World`, cada uma num pedaço distante do plano, como a cripta; a apresentação desenha só a zona onde
  * o herói está. O save não precisa saber de zona: a posição do herói já diz onde ele está.
  */
-export type ZoneId = "vale" | "floresta";
+export type ZoneId = "vale" | "floresta" | "picos";
 
 export interface ZoneDefinition {
   id: ZoneId;
@@ -27,6 +27,15 @@ export interface ZoneDefinition {
 
 export const ZONES: Record<ZoneId, ZoneDefinition> = {
   vale: { id: "vale", name: "Vale das Gosmas", center: { x: 0, z: 0 }, half: 110, levels: [1, 12], subtitle: "Gosmas, goblins e orcs; o pântano a oeste, o deserto a leste e três chefes.", respawn: { x: 0, z: 0 } },
+  picos: {
+    id: "picos",
+    name: "Picos Gelados",
+    center: { x: 0, z: -840 },
+    half: 110,
+    levels: [20, 28],
+    subtitle: "Lobos das neves, yetis e espectros no gelo; a Caverna de Gelo na encosta e o Gigante de Gelo no alto.",
+    respawn: { x: 0, z: -840 + 71 },
+  },
   floresta: { id: "floresta", name: "Floresta Ancestral", center: { x: 0, z: -420 }, half: 110, levels: [12, 20], subtitle: "Lobos em matilha, entes despertos, ecos élficos nas ruínas e o Ente Ancião ao norte.", respawn: { x: 0, z: -420 + 89 } },
 };
 
@@ -66,6 +75,8 @@ export interface ZonePassage {
 
 export const ZONE_PASSAGES: ZonePassage[] = [
   { id: "vale-floresta", from: "vale", to: "floresta", at: { x: 22, z: -101 }, out: { x: 0, z: -1 }, width: 5, arrive: { x: 0, z: -420 + 92 }, arriveYaw: 0 },
+  { id: "floresta-picos", from: "floresta", to: "picos", at: { x: 50, z: -420 - 101 }, out: { x: 0, z: -1 }, width: 5, arrive: { x: 0, z: -840 + 92 }, arriveYaw: 0 },
+  { id: "picos-floresta", from: "picos", to: "floresta", at: { x: 0, z: -840 + 101 }, out: { x: 0, z: 1 }, width: 5, arrive: { x: 50, z: -420 - 92 }, arriveYaw: Math.PI },
   { id: "floresta-vale", from: "floresta", to: "vale", at: { x: 0, z: -420 + 101 }, out: { x: 0, z: 1 }, width: 5, arrive: { x: 22, z: -92 }, arriveYaw: Math.PI },
 ];
 

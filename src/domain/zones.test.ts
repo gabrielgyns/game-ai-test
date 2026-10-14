@@ -49,7 +49,7 @@ describe("zonas", () => {
       expect(isWater(p.transform.position.x, p.transform.position.z)).toBe(false);
       expect(passageAt(p.transform.position)).toBeUndefined(); // não volta sem querer
     }
-    expect(world.drainEvents().filter((e) => e.type === "zoneTravel")).toHaveLength(2);
+    expect(world.drainEvents().filter((e) => e.type === "zoneTravel")).toHaveLength(ZONE_PASSAGES.length);
   });
 
   it("a boca de cada passagem é alcançável andando (a borda trava o resto)", () => {
@@ -105,7 +105,7 @@ describe("zonas", () => {
     p.transform.position = { ...forest(0, 60), y: 0 };
     const m = mapMarkers(world, p);
     expect(m.every((k) => zoneAt(k.x, k.z).id === "floresta")).toBe(true);
-    expect(m.find((k) => k.kind === "gate")?.label).toBe("Vale das Gosmas");
+    expect(m.filter((k) => k.kind === "gate").map((k) => k.label).sort()).toEqual(["Picos Gelados", "Vale das Gosmas"]);
     expect(m.filter((k) => k.kind === "boss").map((k) => k.label)).toEqual(["Ente Ancião"]);
     expect(m.some((k) => k.kind === "portal")).toBe(false);
     expect(m.filter((k) => k.kind === "stash" || k.kind === "waystone")).toHaveLength(2);

@@ -10,10 +10,10 @@ import { itemPower, newItemId, scaleStats, type EquipSlot, type Item, type ItemS
  *
  * Analogia: as peças avulsas são boas cartas; o conjunto é a combinação que vira a mão.
  */
-export type SetId = "goblinKing" | "spiderQueen" | "scorpionEmperor" | "skeletonLord" | "ancientTreant";
+export type SetId = "goblinKing" | "spiderQueen" | "scorpionEmperor" | "skeletonLord" | "ancientTreant" | "frostGiant" | "iceQueen";
 
 /** Poderes de 3 peças. Cada um é lido num ponto do combate (ver `combat.ts`). */
-export type SetPower = "royalFury" | "venom" | "sandShell" | "soulHarvest" | "thorns";
+export type SetPower = "royalFury" | "venom" | "sandShell" | "soulHarvest" | "thorns" | "glacier" | "shatter";
 
 interface PieceTemplate {
   name: string;
@@ -105,6 +105,34 @@ export const SETS: Record<SetId, SetDefinition> = {
     accessory: { name: "Amuleto de Seiva", icon: "amulet", stats: { damage: 9, maxHealth: 30 } },
     two: { stat: "regen", value: 6, text: "+6 vida/s, mesmo em combate" },
     three: { power: "thorns", text: "Casca de Espinhos: quem te fere leva 30% do dano de volta" },
+  },
+  frostGiant: {
+    id: "frostGiant",
+    name: "Armadura do Inverno",
+    boss: "frostGiant",
+    weapon: {
+      warrior: { name: "Martelo Glacial", icon: "axe", stats: { damage: 36 } },
+      archer: { name: "Arco do Gelo Eterno", icon: "bow", stats: { damage: 35 } },
+      mage: { name: "Cajado da Nevasca", icon: "staff", stats: { damage: 37 } },
+    },
+    armor: { name: "Pele do Gigante", icon: "armor", visual: "plate", stats: { maxHealth: 180 } },
+    accessory: { name: "Coração de Geleira", icon: "amulet", stats: { damage: 10, maxHealth: 35 } },
+    two: { stat: "maxHealth", value: 90, text: "+90 vida" },
+    three: { power: "glacier", text: "Pele de Geleira: num golpe só, o dano acima de 15% da sua vida entra pela metade" },
+  },
+  iceQueen: {
+    id: "iceQueen",
+    name: "Regalia da Rainha Gélida",
+    boss: "iceQueen",
+    weapon: {
+      warrior: { name: "Lâmina da Rainha", icon: "sword", stats: { damage: 35 } },
+      archer: { name: "Arco Boreal", icon: "bow", stats: { damage: 34 } },
+      mage: { name: "Cetro Boreal", icon: "staff", stats: { damage: 36 } },
+    },
+    armor: { name: "Manto Boreal", icon: "armor", visual: "tunic", stats: { maxHealth: 140, speedPercent: 6 } },
+    accessory: { name: "Diadema de Gelo", icon: "ring", stats: { damage: 13 } },
+    two: { stat: "speedPercent", value: 8, text: "+8% de velocidade" },
+    three: { power: "shatter", text: "Estilhaçar: +40% de dano em inimigos lentos ou atordoados" },
   },
 };
 

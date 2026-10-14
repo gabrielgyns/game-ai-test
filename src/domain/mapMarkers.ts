@@ -1,5 +1,5 @@
 import { isAlive, type Entity, type EntityId } from "./components";
-import { DUNGEON_ENTRANCE } from "./dungeon";
+import { DUNGEON_THEMES } from "./dungeon";
 import { VILLAGE_LIST } from "./villages";
 import { questsForNpc } from "./quests";
 import { DUNGEON_REGION_X } from "./terrain";
@@ -70,9 +70,7 @@ export function mapMarkers(world: World, player: Entity): MapMarker[] {
     out.push({ kind: "waystone", x: v.stone.x, z: v.stone.z, label: "Pedra de Teleporte" });
   }
   const run = world.dungeon;
-  if (at(DUNGEON_ENTRANCE.x, DUNGEON_ENTRANCE.z)) {
-    out.push({ kind: "portal", x: DUNGEON_ENTRANCE.x, z: DUNGEON_ENTRANCE.z, label: "Cripta Esquecida" });
-  }
+  for (const t of Object.values(DUNGEON_THEMES)) if (at(t.entrance.x, t.entrance.z)) out.push({ kind: "portal", x: t.entrance.x, z: t.entrance.z, label: t.name });
   if (run && place === "cripta") {
     // A saída da entrada só existe no primeiro andar; no último, o portal aparece depois do chefe.
     if (run.floor === 1) out.push({ kind: "exit", x: run.startPortal.x, z: run.startPortal.z, label: "Saída" });

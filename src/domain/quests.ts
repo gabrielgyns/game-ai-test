@@ -234,6 +234,77 @@ export const QUESTS: QuestDefinition[] = [
       complete: "Olha esse veio... Isto é para você. Quando a próxima trilha abrir, vai precisar.",
     },
   },
+  // Picos Gelados: vila de Pedra-Fria.
+  {
+    id: "snowWolves",
+    title: "Uivos na Nevasca",
+    giver: "hunter",
+    description: "Lobos das neves rondam a trilha que sobe da floresta. Derrote 10 deles.",
+    objective: { kind: "kill", archetype: "snowWolf", count: 10, label: "Lobos das neves derrotados" },
+    reward: { xp: 16000, gold: 1000, item: { kind: "potion", size: "large", quantity: 4 } },
+    requires: [],
+    dialogue: {
+      offer: "Subiu a trilha inteira e ainda está de pé? Bom. Os lobos das neves estão chegando cada noite mais perto das casas. Dez deles e eu volto a dormir.",
+      progress: "Eles somem na neve. Fique de costas para uma pedra e conte as sombras.",
+      complete: "Dez peles brancas. Fica com as poções; aqui em cima elas valem mais que ouro.",
+    },
+  },
+  {
+    id: "wraiths",
+    title: "Vozes no Gelo",
+    giver: "hunter",
+    description: "Espectros gélidos assombram o lago congelado a oeste e atiram estilhaços que deixam lento. Derrote 8 deles.",
+    objective: { kind: "kill", archetype: "iceWraith", count: 8, label: "Espectros derrotados" },
+    reward: { xp: 22000, gold: 1400, item: { kind: "equipment", tier: 3, rarity: "rare" } },
+    requires: ["snowWolves"],
+    dialogue: {
+      offer: "Tem gente que se afogou naquele lago, antes de ele congelar de vez. Agora eles cantam e atiram gelo em quem passa. Oito espectros. Cuidado com o chão: gelo escorrega.",
+      progress: "Os estilhaços deixam lento. Lento no gelo é pedir para apanhar. Mude de direção cedo.",
+      complete: "O lago ficou quieto. Este arco era do meu pai, mas você vai usar melhor do que eu.",
+    },
+  },
+  {
+    id: "yetis",
+    title: "Pegadas Gigantes",
+    giver: "jarl",
+    description: "Yetis desceram das cristas e atacam os caçadores. Derrote 6 deles.",
+    objective: { kind: "kill", archetype: "yeti", count: 6, label: "Yetis derrotados" },
+    reward: { xp: 30000, gold: 1800, item: { kind: "equipment", tier: 3, rarity: "rare" } },
+    requires: ["snowWolves"],
+    dialogue: {
+      offer: "Yeti nunca desce até a vila. Agora desce. Alguma coisa lá em cima está espantando eles. Seis, para começar, e depois a gente conversa sobre o que está lá em cima.",
+      progress: "O soco do yeti tem aviso longo. Quem fica para ver, não vê mais nada.",
+      complete: "Seis. A vila te deve. E eu te devo a verdade: quem espanta os yetis é o Gigante de Gelo.",
+    },
+  },
+  {
+    id: "iceCave",
+    title: "A Dona do Frio",
+    giver: "jarl",
+    description: "Na Caverna de Gelo, na encosta leste, a Rainha Gélida guarda o coração do inverno. Derrote-a.",
+    objective: { kind: "kill", archetype: "iceQueen", count: 1, label: "Rainha Gélida derrotada" },
+    reward: { xp: 40000, gold: 2500, item: { kind: "equipment", tier: 3, rarity: "epic" } },
+    requires: ["yetis"],
+    dialogue: {
+      offer: "A caverna da encosta leste nunca teve fundo. Agora tem dona: uma rainha feita de gelo, e o frio todo sai de lá. Entre, desça os dois andares e acabe com ela.",
+      progress: "Dentro da caverna você tem três vidas. Use os santuários antes da porta dela.",
+      complete: "O vento mudou. Pela primeira vez em anos, a lareira esquentou a sala inteira. Toma, é seu.",
+    },
+  },
+  {
+    id: "frostGiant",
+    title: "O Gigante da Montanha",
+    giver: "jarl",
+    description: "No platô ao norte acordou o Gigante de Gelo, que arremessa avalanches e congela o chão. Derrote-o.",
+    objective: { kind: "kill", archetype: "frostGiant", count: 1, label: "Gigante de Gelo derrotado" },
+    reward: { xp: 60000, gold: 4000, item: { kind: "equipment", tier: 3, rarity: "epic" } },
+    requires: ["yetis", "wraiths"],
+    dialogue: {
+      offer: "Está na hora. O Gigante dorme no platô ao norte, depois das cristas. Ele joga blocos de gelo que congelam o chão: não fique em cima. Quando sangra, uiva e os lobos vêm. Derrube o gigante e os Picos voltam a ser nossos.",
+      progress: "Chão azul é chão congelado: fere e prende. Lute fora dele.",
+      complete: "Trezentos anos e ninguém tinha feito isso. Pedra-Fria nunca vai esquecer seu nome. E as peças da armadura dele são suas.",
+    },
+  },
 ];
 
 export function questById(id: string): QuestDefinition | undefined {

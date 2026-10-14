@@ -7,6 +7,7 @@ import { generateWorld, seededRandom } from "./worldgen";
 import { World } from "./world";
 import { countItems } from "./inventory";
 import { NPC_DEFS } from "./npc";
+import { zoneAt } from "./zones";
 
 beforeEach(() => resetItemIds());
 
@@ -84,12 +85,12 @@ describe("quests", () => {
     expect(questState(player.quests!, "king")).toBe("available");
   });
 
-  it("mundo gerado tem os quatro NPCs no santuário (e a vila na floresta); nenhum é alvo de golpes", () => {
+  it("mundo gerado tem os quatro NPCs no santuário (e as vilas das outras zonas); nenhum é alvo de golpes", () => {
     const world = generateWorld();
-    const forestNpcs = ["armorer", "peddler", "ranger"];
-    const npcs = [...world.npcs()].filter((n) => !forestNpcs.includes(n.npc!.id));
+    const inVale = (n: { transform: { position: { x: number; z: number } } }) => zoneAt(n.transform.position.x, n.transform.position.z).id === "vale";
+    const npcs = [...world.npcs()].filter(inVale);
     expect(npcs.map((n) => n.npc!.id).sort()).toEqual(["elder", "guard", "merchant", "smith"]);
-    expect([...world.npcs()].filter((n) => forestNpcs.includes(n.npc!.id))).toHaveLength(3);
+    expect([...world.npcs()].filter((n) => !inVale(n))).toHaveLength(6);
     for (const n of npcs) expect(Math.hypot(n.transform.position.x, n.transform.position.z)).toBeLessThan(10);
     const player = world.player!;
     player.combat.wantsAttack = true;

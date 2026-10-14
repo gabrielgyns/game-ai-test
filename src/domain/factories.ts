@@ -51,7 +51,7 @@ export interface EnemyTemplate {
   xpReward: number;
   goldReward: number;
   /** Atiradores: golpe básico à distância e distância que tentam manter. */
-  ranged?: { projectile: "arrow" | "bolt"; keepDistance: number };
+  ranged?: { projectile: "arrow" | "bolt" | "iceShard"; keepDistance: number };
 }
 
 export const ENEMY_TEMPLATES = {
@@ -255,6 +255,50 @@ export const ENEMY_TEMPLATES = {
     xpReward: 420,
     goldReward: 60,
     ranged: { projectile: "bolt", keepDistance: 9 },
+  },
+  // Picos Gelados (níveis 20 a 28).
+  snowWolf: {
+    level: 21,
+    name: "Lobo das Neves",
+    archetype: "snowWolf",
+    maxHealth: 560,
+    damage: 48,
+    speed: 7.4,
+    range: 1.9,
+    cooldown: 0.9,
+    windup: 0.35,
+    aggroRange: 16,
+    xpReward: 1100,
+    goldReward: 65,
+  },
+  iceWraith: {
+    level: 22,
+    name: "Espectro Gélido",
+    archetype: "iceWraith",
+    maxHealth: 640,
+    damage: 58,
+    speed: 5,
+    range: 15,
+    cooldown: 2.2,
+    windup: 0.7,
+    aggroRange: 18,
+    xpReward: 1300,
+    goldReward: 85,
+    ranged: { projectile: "iceShard", keepDistance: 9 },
+  },
+  yeti: {
+    level: 24,
+    name: "Yeti",
+    archetype: "yeti",
+    maxHealth: 1700,
+    damage: 96,
+    speed: 4.2,
+    range: 2.7,
+    cooldown: 1.9,
+    windup: 1.0,
+    aggroRange: 13,
+    xpReward: 2300,
+    goldReward: 130,
   },
 } as const satisfies Record<string, EnemyTemplate>;
 

@@ -2,6 +2,8 @@ import { isHostile } from "../components";
 import { distanceXZ } from "../math";
 import type { World } from "../world";
 import { applyDamage } from "./combat";
+import { applySlow } from "../status";
+import { CHILL } from "../projectiles";
 
 /** Poças: pulsam dano em quem é hostil ao dono e somem quando o tempo acaba. */
 export function hazardSystem(world: World, dt: number): void {
@@ -21,6 +23,7 @@ export function hazardSystem(world: World, dt: number): void {
       if (!isHostile(owner, e)) continue;
       if (distanceXZ(h.position, e.transform.position) > h.radius) continue;
       applyDamage(world, owner, e, h.damage, "hazard");
+      if (h.kind === "frost" && e.health.current > 0) applySlow(world, e, CHILL.factor, CHILL.seconds);
     }
   }
 }

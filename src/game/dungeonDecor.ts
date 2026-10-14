@@ -8,7 +8,10 @@ import { blob, bough, hash3, limb, noise3, pickTone, trimBelow, type Paint } fro
  */
 export const DECOR_VOXEL = 1 / 12;
 
-export type DecorKind = "coffin" | "barrel" | "bones" | "candles" | "banner" | "cobweb" | "rubble" | "urn" | "spikes" | "shrine" | "brazier";
+export type DecorKind =
+  | "coffin" | "barrel" | "bones" | "candles" | "banner" | "cobweb" | "rubble" | "urn" | "spikes" | "shrine" | "brazier"
+  // Caverna de Gelo.
+  | "iceCluster" | "snowdrift" | "icicles" | "iceLamp" | "frozenBones" | "iceSpikes" | "iceBrazier";
 
 const stone: (seed: number) => Paint = (seed) => (x, y, z) => pickTone(["#5e5a64", "#6a6670", "#76727c", "#827e88"], Math.min(0.999, noise3(x / 3, y / 3, z / 3, seed) * 0.7 + hash3(x, y, z, seed) * 0.3));
 
@@ -161,4 +164,86 @@ function brazier(): VoxelBuilder {
   return b;
 }
 
-export const DECOR_BUILDERS: Record<DecorKind, () => VoxelBuilder> = { coffin, barrel, bones, candles, banner, cobweb, rubble, urn, spikes, shrine, brazier };
+
+const ICE = ["#8fcbe8", "#a6d8ee", "#bfe4f4", "#d8f0fa"];
+const SNOW = ["#dfe9f2", "#eaf2f8", "#f4f9fc"];
+
+/** Aglomerado de cristais de gelo encostado na parede. */
+function iceCluster(): VoxelBuilder {
+  const b = new VoxelBuilder();
+  const paint: Paint = (x, y, z) => pickTone(ICE, Math.min(0.999, y / 22 * 0.5 + hash3(x, y, z, 3) * 0.5));
+  for (const [x, z, h, lean] of [[0, 2, 22, 0], [-4, 0, 14, -0.3], [4, 1, 16, 0.35], [1, -3, 10, 0.2], [-2, 4, 12, -0.15]] as const) {
+    limb(b, [x, 0, z], [x + lean * h, h * 0.8, z + 1], 2.2, 1.6, paint);
+    limb(b, [x + lean * h, h * 0.8, z + 1], [x + lean * h * 1.2, h, z + 1], 1.6, 0.4, paint);
+  }
+  blob(b, [0, 0, 1], [6, 1, 5], (x, y, z) => pickTone(SNOW, hash3(x, y, z)), { rough: 0.3, seed: 2, floor: 0 });
+  return b;
+}
+
+/** Monte de neve que entrou pelas frestas. */
+function snowdrift(): VoxelBuilder {
+  const b = new VoxelBuilder();
+  blob(b, [0, 0, 2], [8, 3.5, 6], (x, y, z) => pickTone(SNOW, Math.min(0.999, noise3(x / 3, y, z / 3, 4) * 0.6 + hash3(x, y, z) * 0.4)), { rough: 0.2, grain: 3, seed: 6, floor: 0 });
+  blob(b, [5, 0, -2], [4, 2, 4], (x, y, z) => pickTone(SNOW, hash3(x, y, z, 2)), { rough: 0.2, seed: 7, floor: 0 });
+  return trimBelow(b);
+}
+
+/** Pingentes num canto do teto (como as teias da cripta: x+ e z+ são as paredes). */
+function icicles(): VoxelBuilder {
+  const b = new VoxelBuilder();
+  for (let k = 0; k < 16; k++) {
+    const x = -2 - Math.floor(hash3(k, 0, 0, 3) * 12), z = -2 - Math.floor(hash3(k, 1, 0, 3) * 12);
+    if (x + z < -18) continue;
+    const len = 4 + Math.floor(hash3(k, 2, 0, 3) * 12);
+    for (let d = 0; d < len; d++) b.set(x, -d, z, d === len - 1 ? "#f4fcff" : pickTone(ICE, d / len));
+  }
+  return b;
+}
+
+/** Lamparina de cristal: pedra baixa com um cristal azul que brilha no lugar das velas. */
+function iceLamp(): VoxelBuilder {
+  const b = new VoxelBuilder();
+  blob(b, [0, 1, 0], [4, 2, 4], stone(5), { rough: 0.2, seed: 5, floor: 0 });
+  for (let y = 3; y < 11; y++) {
+    const r = y < 7 ? (y - 2) * 0.6 : (11 - y) * 0.6;
+    for (let x = -2; x <= 2; x++) for (let z = -2; z <= 2; z++) if (Math.abs(x) + Math.abs(z) <= r) b.set(x, y, z, x + z > 0 ? "#bfeeff" : "#5ad0ff");
+  }
+  return b;
+}
+
+/** Ossada presa no gelo: os ossos da cripta com uma crosta azul por cima. */
+function frozenBones(): VoxelBuilder {
+  const b = bones();
+  const tops: [number, number, number][] = [];
+  b.forEach((x, y, z) => {
+    if (!b.has(x, y + 1, z) && hash3(x, y, z, 8) < 0.5) tops.push([x, y, z]);
+  });
+  for (const [x, y, z] of tops) b.set(x, y + 1, z, pickTone(ICE, hash3(x, y, z)));
+  return b;
+}
+
+/** Espinhos de gelo da armadilha. */
+function iceSpikes(): VoxelBuilder {
+  const b = new VoxelBuilder();
+  for (let x = -5; x < 6; x += 3)
+    for (let z = -5; z < 6; z += 3) {
+      const h = 6 + ((x * 7 + z * 13 + 100) % 3);
+      b.box(x, 0, z, x + 2, h - 2, z + 2, "#8fcbe8").box(x, h - 2, z, x + 2, h - 1, z + 2, "#bfe4f4").set(x, h - 1, z, "#f4fcff");
+    }
+  return b;
+}
+
+/** Braseiro de chama fria: bacia de ferro com fogo azul. */
+function iceBrazier(): VoxelBuilder {
+  const b = new VoxelBuilder();
+  for (const [x, z] of [[-3, -3], [2, -3], [-3, 2], [2, 2]] as const) b.box(x, 0, z, x + 1, 8, z + 1, "#3a4252");
+  for (let x = -5; x < 5; x++) for (let z = -5; z < 5; z++) if (Math.hypot(x + 0.5, z + 0.5) < 5) b.set(x, 8, z, "#4a5262");
+  for (let x = -4; x < 4; x++) for (let z = -4; z < 4; z++) if (Math.hypot(x + 0.5, z + 0.5) < 4) b.set(x, 9, z, hash3(x, 9, z) < 0.5 ? "#3a9ae8" : "#7ad0ff");
+  bough(b, [[0, 9, 0], [1, 12, 0], [0, 14, 1]], 1.6, 0.4, () => "#cfefff");
+  return b;
+}
+
+export const DECOR_BUILDERS: Record<DecorKind, () => VoxelBuilder> = {
+  coffin, barrel, bones, candles, banner, cobweb, rubble, urn, spikes, shrine, brazier,
+  iceCluster, snowdrift, icicles, iceLamp, frozenBones, iceSpikes, iceBrazier,
+};

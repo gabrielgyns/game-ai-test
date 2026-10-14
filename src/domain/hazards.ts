@@ -6,7 +6,7 @@ import type { Vec3 } from "./math";
  * pulsos. É o que transforma o chão em parte da luta: o jogador precisa ler o terreno, não só
  * o inimigo.
  */
-export type HazardKind = "acid" | "fire" | "arrows" | "spores";
+export type HazardKind = "acid" | "fire" | "arrows" | "spores" | "frost";
 
 export interface Hazard {
   id: number;
@@ -41,3 +41,5 @@ export const FIRE_POOL: PoolSpec = { kind: "fire", radius: 2.6, damageFraction: 
 export const ARROW_STORM: PoolSpec = { kind: "arrows", radius: 3.5, damageFraction: 0.35, duration: 3, tickEvery: 0.5 };
 /** Nuvem de Esporos do Ente Ancião: poça venenosa larga e demorada. */
 export const SPORE_POOL: PoolSpec = { kind: "spores", radius: 3, damageFraction: 0.2, duration: 9, tickEvery: 0.5 };
+/** Avalanche do Gigante de Gelo: chão congelado que fere e deixa lento quem fica em cima. */
+export const FROST_POOL: PoolSpec = { kind: "frost", radius: 3.2, damageFraction: 0.16, duration: 7, tickEvery: 0.5 };

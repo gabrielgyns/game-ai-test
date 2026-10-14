@@ -80,6 +80,37 @@ export const NPC_DEFS: NpcDefinition[] = [
     idle: [
       "Meu baú é o mesmo do santuário, sabia? Coisa de elfo: o que você guarda lá, tira aqui.",
       "Peça de conjunto só cai de chefe. A do Ente Ancião regenera vida e devolve dor a quem te bate.",
+      "Ao norte, depois da clareira do Ancião e um pouco a leste, a mata acaba numa trilha de pedra que sobe para os Picos Gelados. Leve casaco. E poções.",
+    ],
+  },
+  // Picos Gelados: vila de Pedra-Fria.
+  {
+    id: "jarl",
+    name: "Jarl Bjorn",
+    archetype: "jarl",
+    idle: [
+      "Pedra-Fria aguenta o inverno há trezentos anos. Não vai ser um gigante mal-humorado que vai derrubar a gente.",
+      "O lago a oeste é gelo puro. Bonito de ver, péssimo de lutar: quem corre em cima não para quando quer.",
+      "A Caverna de Gelo fica na encosta leste. Lá dentro o frio tem dona.",
+    ],
+  },
+  {
+    id: "trader",
+    name: "Mercadora Sigrid",
+    archetype: "furTrader",
+    shop: "trader",
+    idle: [
+      "Peles, ferro bom e o que as caravanas trazem antes da neve fechar a trilha. Aqui nada é barato, mas tudo presta.",
+      "Estilhaço de gelo deixa a gente lenta. Se o espectro mirar, saia da linha antes, não depois.",
+    ],
+  },
+  {
+    id: "hunter",
+    name: "Caçadora Eira",
+    archetype: "hunter",
+    idle: [
+      "Lobo da neve caça em silêncio. Quando você ouvir, já são três.",
+      "Yeti é lento para levantar o braço. Quando levanta, saia de baixo.",
     ],
   },
 ];

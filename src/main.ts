@@ -39,7 +39,7 @@ import { DungeonView } from "./game/dungeonView";
 import { createPortal } from "./game/portal";
 import { terrainHeight } from "./domain/terrain";
 import {
-  descend, DUNGEON_ENTRANCE, DUNGEON_LIVES, DUNGEON_NAME, DUNGEON_ORIGIN, dungeonInteraction, enterDungeon, exitDungeon, inDungeonSpace, openChest,
+  descend, DUNGEON_LIVES, DUNGEON_ORIGIN, DUNGEON_THEMES, dungeonInteraction, dungeonNear, enterDungeon, exitDungeon, inDungeonSpace, openChest,
   openSideChest, useShrine,
 } from "./domain/dungeon";
 import { roomAt } from "./domain/dungeonLayout";
@@ -47,13 +47,15 @@ import { ShopUI } from "./game/shopUI";
 import { SkillTreeUI } from "./game/skillTreeUI";
 import { Minimap } from "./game/minimap";
 import { passageAt, travel, ZONE_PASSAGES, ZONES, zoneAt, type ZoneId } from "./domain/zones";
-import { FOREST_CAMP } from "./domain/terrain";
+import { FOREST_CAMP, PEAKS_VILLAGE } from "./domain/terrain";
 import type { Environment } from "./game/environment";
 import { StashUI } from "./game/stashUI";
 import { WaystoneUI } from "./game/waystoneUI";
 import { knownVillages, teleport, teleportFee, VILLAGES, VILLAGE_LIST, villageInteraction, type VillageId } from "./domain/villages";
 import { npcById } from "./domain/npc";
 import { createPassageMarker, type PassageMarker } from "./game/passage";
+import { Snowfall } from "./game/snowfall";
+import type { Portal } from "./game/portal";
 import { createWaystoneGlow, type WaystoneGlow } from "./game/waystone";
 import { LoadingScreen } from "./game/loading";
 import { displayRarity } from "./game/itemTooltip";
@@ -91,11 +93,10 @@ scene.add(terrainMesh);
 await loadVoxOverrides();
 const environment = createEnvironment();
 scene.add(environment.group);
-// Cripta: desenhada a partir da planta do domínio ao entrar; o portal de entrada fica no mapa.
+// Dungeons: desenhadas a partir da planta do domínio ao entrar; os portais de entrada ficam nas zonas.
 const dungeonView = new DungeonView(scene);
-const entrancePortal = createPortal();
-entrancePortal.group.position.set(DUNGEON_ENTRANCE.x, terrainHeight(DUNGEON_ENTRANCE.x, DUNGEON_ENTRANCE.z), DUNGEON_ENTRANCE.z);
-scene.add(entrancePortal.group);
+const snowfall = new Snowfall();
+scene.add(snowfall.points);
 // Braseiros nos pilares do santuário: chamas que brilham mais à noite e uma luz quente no centro.
 const braziers = createBraziers();
 scene.add(braziers.group);
@@ -111,13 +112,25 @@ interface ZoneVisuals {
   foliage: Foliage;
   passages: PassageMarker[];
   stones: { village: VillageId; glow: WaystoneGlow }[];
+  /** Portais das dungeons desta zona. */
+  portals: Portal[];
 }
 const zoneVisuals = new Map<ZoneId, ZoneVisuals>();
-const FOREST_FOG = new THREE.Color("#3a5a48");
+/** Neblina de cada zona fora do vale: cor, quanto puxar para ela e quanto encurtar a distância. */
+const ZONE_FOG: Partial<Record<ZoneId, { color: THREE.Color; mix: number; near: number; far: number; sky: number }>> = {
+  floresta: { color: new THREE.Color("#3a5a48"), mix: 0.55, near: 0.45, far: 0.62, sky: 0.35 },
+  picos: { color: new THREE.Color("#c8d8e8"), mix: 0.6, near: 0.5, far: 0.7, sky: 0.45 },
+};
+/** Fogueira da vila da zona (uma luz só, sempre na cena, que muda de lugar com a zona). */
+const VILLAGE_FIRE: Partial<Record<ZoneId, { x: number; z: number }>> = {
+  floresta: { x: ZONES.floresta.center.x + FOREST_CAMP.x, z: ZONES.floresta.center.z + FOREST_CAMP.z },
+  picos: { x: ZONES.picos.center.x + PEAKS_VILLAGE.x, z: ZONES.picos.center.z + PEAKS_VILLAGE.z + 1 },
+};
 const campfireLight = new THREE.PointLight("#ff9a4a", 0, 18, 1.4);
+scene.add(campfireLight);
 
 /** Passagens e pedras de teleporte de uma zona. */
-function zoneMarkers(zone: ZoneId, group: THREE.Group): Pick<ZoneVisuals, "passages" | "stones"> {
+function zoneMarkers(zone: ZoneId, group: THREE.Group): Pick<ZoneVisuals, "passages" | "stones" | "portals"> {
   const passages = ZONE_PASSAGES.filter((g) => g.from === zone).map((g) => {
     const marker = createPassageMarker(g, zone === "vale" ? "#d8f0c8" : "#c8e8d0");
     group.add(marker.group);
@@ -128,7 +141,17 @@ function zoneMarkers(zone: ZoneId, group: THREE.Group): Pick<ZoneVisuals, "passa
     group.add(glow.group);
     return { village: v.id, glow };
   });
-  return { passages, stones };
+  const portals = Object.values(DUNGEON_THEMES)
+    .filter((t) => zoneAt(t.entrance.x, t.entrance.z).id === zone)
+    .map((t) => {
+      const portal = createPortal(t.id === "iceCave" ? "#5ad0ff" : "#9a5aff");
+      const c = ZONES[zone].center;
+      portal.group.position.set(t.entrance.x, terrainHeight(t.entrance.x, t.entrance.z), t.entrance.z);
+      if (t.id !== "crypt") portal.group.rotation.y = Math.atan2(t.entrance.x - c.x, t.entrance.z - c.z);
+      group.add(portal.group);
+      return portal;
+    });
+  return { passages, stones, portals };
 }
 
 function ensureZoneVisuals(id: ZoneId): ZoneVisuals {
@@ -136,16 +159,13 @@ function ensureZoneVisuals(id: ZoneId): ZoneVisuals {
   if (zv) return zv;
   const group = new THREE.Group();
   if (id === "vale") {
-    group.add(terrainMesh, foliage.group, environment.group, braziers.group, entrancePortal.group);
+    group.add(terrainMesh, foliage.group, environment.group, braziers.group);
     zv = { group, environment, foliage, ...zoneMarkers(id, group) };
   } else {
     const zone = ZONES[id];
     const env = createEnvironment(5151, zone);
     const fol = new Foliage(9173 + 31, zone);
     group.add(createTerrainMesh(zone), fol.group, env.group);
-    const camp = { x: zone.center.x + FOREST_CAMP.x, z: zone.center.z + FOREST_CAMP.z };
-    campfireLight.position.set(camp.x, terrainHeight(camp.x, camp.z) + 1.2, camp.z);
-    group.add(campfireLight);
     zv = { group, environment: env, foliage: fol, ...zoneMarkers(id, group) };
   }
   scene.add(group);
@@ -251,22 +271,32 @@ function nearestNpc(): Entity | undefined {
   return best;
 }
 
-/** O que o F faz agora: portais e baú da cripta têm prioridade sobre conversar. */
+/** O que o F faz agora: portais e baús das dungeons têm prioridade sobre conversar. */
 function currentInteraction(): { label: string; act: () => void } | null {
   const d = dungeonInteraction(world, player);
   const level = player.progression?.level ?? 1;
-  if (d === "enter") return { label: `Entrar na ${DUNGEON_NAME} (nível ${level})`, act: () => afterDungeonChange(() => enterDungeon(world, player)) };
+  if (d === "enter") {
+    const theme = dungeonNear(player.transform.position)!;
+    const lv = Math.max(theme.minLevel, level);
+    return {
+      label: `Entrar na ${theme.name} (nível ${lv})`,
+      act: () =>
+        void loadArea({ title: theme.name, subtitle: `Dois andares, o ${theme.bossName} no fundo e três vidas.`, detail: `Inimigos nível ${lv}` }, null, () => enterDungeon(world, player, undefined, theme.id)),
+    };
+  }
   if (d === "chest") return { label: "Abrir o baú", act: () => { openChest(world, player); handleEvents(world.drainEvents()); } };
   if (d === "sideChest") return { label: "Abrir o baú do tesouro", act: () => { openSideChest(world, player); handleEvents(world.drainEvents()); } };
   if (d === "shrine") return { label: "Tocar o santuário (cura e bênção)", act: () => { useShrine(world, player); handleEvents(world.drainEvents()); } };
-  if (d === "stairs") return { label: "Descer a escada (andar 2: o Lorde)", act: () => afterDungeonChange(() => descend(world, player)) };
-  if (d === "stairsLocked") return { label: "A escada está selada: vença o Cavaleiro Sepulcral", act: () => toast("Vença o Cavaleiro Sepulcral para abrir a escada.") };
-  if (d === "exit") return { label: "Voltar ao vale (vitória)", act: () => afterDungeonChange(() => exitDungeon(world, player, "complete")) };
+  const run = world.dungeon;
+  const theme = run ? DUNGEON_THEMES[run.theme] : undefined;
+  if (d === "stairs") return { label: `Descer a escada (andar 2: ${theme!.bossName})`, act: () => afterDungeonChange(() => descend(world, player)) };
+  if (d === "stairsLocked") return { label: `A escada está selada: vença o ${theme!.guardian.name}`, act: () => toast(`Vença o ${theme!.guardian.name} para abrir a escada.`) };
+  if (d === "exit") return { label: "Sair (vitória)", act: () => afterDungeonChange(() => exitDungeon(world, player, "complete")) };
   if (d === "leave") {
     return {
-      label: "Sair da cripta (desistir)",
+      label: `Sair da ${theme!.name} (desistir)`,
       act: () => {
-        if (confirm("Sair agora fecha a cripta. Na próxima entrada ela será outra. Sair?")) afterDungeonChange(() => exitDungeon(world, player, "leave"));
+        if (confirm(`Sair agora fecha a ${theme!.name}. Na próxima entrada ela será outra. Sair?`)) afterDungeonChange(() => exitDungeon(world, player, "leave"));
       },
     };
   }
@@ -356,7 +386,7 @@ const sanctuaryPanelOpen = () => stashUI.isOpen || waystoneUI.isOpen;
  * zona de destino (na primeira visita) e os modelos completos do cenário, e clareia.
  */
 const loading = new LoadingScreen();
-async function loadArea(card: { title: string; subtitle: string; detail?: string }, to: ZoneId, change: () => void): Promise<void> {
+async function loadArea(card: { title: string; subtitle: string; detail?: string }, to: ZoneId | null, change: () => void): Promise<void> {
   if (loading.busy) return;
   paused = true;
   player.movement.intent = { x: 0, z: 0 };
@@ -364,6 +394,14 @@ async function loadArea(card: { title: string; subtitle: string; detail?: string
     afterDungeonChange(change);
     progress(0.15);
     await new Promise((r) => requestAnimationFrame(r));
+    if (to === null) {
+      // Dungeon: monta o andar atrás da tela.
+      const p = player.transform.position;
+      dungeonView.update(world.dungeon, new THREE.Vector3(p.x, p.y, p.z), world.time, cam.camera);
+      for (const other of zoneVisuals.values()) other.group.visible = false;
+      progress(0.9);
+      return;
+    }
     const zv = ensureZoneVisuals(to);
     progress(0.4);
     // Monta os modelos completos já, atrás da tela, em vez de um por quadro com o jogo rodando.
@@ -735,7 +773,7 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         break;
       case "respawn":
         if (ev.entity === player.id) {
-          hud.pushLog(inDungeonSpace(player.transform.position.x) ? "Você voltou à sala inicial da cripta." : "Você renasceu no santuário.", "level");
+          hud.pushLog(inDungeonSpace(player.transform.position.x) ? "Você voltou à sala inicial." : "Você renasceu na vila.", "level");
           cam.snap();
         }
         break;
@@ -897,8 +935,8 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
       }
       case "dungeonEnter":
         audio.play("bossPhase");
-        hud.pushLog(`Você entrou na ${DUNGEON_NAME} (nível ${ev.level}): ${ev.rooms} salas e um chefe. Três vidas.`, "level");
-        floats.spawn(player.transform.position, DUNGEON_NAME.toUpperCase(), "#c08aff", 1.4);
+        const dname = world.dungeon ? DUNGEON_THEMES[world.dungeon.theme].name : "dungeon";
+        hud.pushLog(`Você entrou na ${dname} (nível ${ev.level}): ${ev.rooms} salas e um chefe. Três vidas.`, "level");
         break;
       case "zoneTravel": {
         const to = ZONES[ev.to as ZoneId];
@@ -970,7 +1008,7 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         break;
       case "dungeonExit":
         audio.setBossMode(false);
-        hud.pushLog(ev.reason === "complete" ? "De volta ao vale, vitorioso." : ev.reason === "failed" ? "A cripta se fechou. Ela será outra na próxima vez." : "Você saiu da cripta.", ev.reason === "failed" ? "dmg-in" : "gain");
+        hud.pushLog(ev.reason === "complete" ? "De volta, vitorioso." : ev.reason === "failed" ? "A dungeon se fechou. Ela será outra na próxima vez." : "Você saiu da dungeon.", ev.reason === "failed" ? "dmg-in" : "gain");
         views.prune(world);
         cam.snap();
         saveGame("auto");
@@ -1120,22 +1158,28 @@ function frame(): void {
     for (const marker of current.passages) marker.update(world.time);
     const known = knownVillages(player);
     for (const s of current.stones) s.glow.update(world.time, known.includes(s.village));
-    if (zoneId === "vale") {
-      braziers.update(world.time, sky.night);
-      entrancePortal.update(world.time);
-    } else {
-      // Floresta: neblina mais fechada e esverdeada, sob a copa.
+    for (const portal of current.portals) portal.update(world.time);
+    if (zoneId === "vale") braziers.update(world.time, sky.night);
+    // Floresta: neblina esverdeada, sob a copa. Picos: branca e azulada, de nevasca.
+    const look = ZONE_FOG[zoneId];
+    if (look) {
       const fog = scene.fog as THREE.Fog;
-      fog.color.lerp(FOREST_FOG, 0.55);
-      fog.near *= 0.45;
-      fog.far *= 0.62;
-      (scene.background as THREE.Color).lerp(FOREST_FOG, 0.35);
-      campfireLight.intensity = 6 + Math.sin(world.time * 11) * 0.8 + sky.night * 10;
+      fog.color.lerp(look.color, look.mix);
+      fog.near *= look.near;
+      fog.far *= look.far;
+      (scene.background as THREE.Color).lerp(look.color, look.sky);
     }
+    const fire = VILLAGE_FIRE[zoneId];
+    if (fire) campfireLight.position.set(fire.x, terrainHeight(fire.x, fire.z) + 1.2, fire.z);
+    campfireLight.intensity = fire ? 6 + Math.sin(world.time * 11) * 0.8 + sky.night * 10 : 0;
+  } else {
+    campfireLight.intensity = 0;
   }
+  snowfall.points.visible = zoneId === "picos" && !indoor;
+  snowfall.update(world.time, p);
   dungeonView.update(world.dungeon, focus, world.time, cam.camera);
   views.prune(world);
-  hud.updateDungeon(world.dungeon ? { name: DUNGEON_NAME, level: world.dungeon.level, floor: world.dungeon.floor, floors: world.dungeon.floors, cleared: world.dungeon.clearedRooms.length, total: world.dungeon.layout.rooms.filter((r) => r.kind === "combat" || r.kind === "stairs").length, lives: world.dungeon.livesLeft, maxLives: DUNGEON_LIVES, boss: world.dungeon.bossDefeated } : null);
+  hud.updateDungeon(world.dungeon ? { name: DUNGEON_THEMES[world.dungeon.theme].name, level: world.dungeon.level, floor: world.dungeon.floor, floors: world.dungeon.floors, cleared: world.dungeon.clearedRooms.length, total: world.dungeon.layout.rooms.filter((r) => r.kind === "combat" || r.kind === "stairs").length, lives: world.dungeon.livesLeft, maxLives: DUNGEON_LIVES, boss: world.dungeon.bossDefeated } : null);
   particles.update(frameDt);
   hud.setClock(formatClock(clockAt(world.time)), sky.night > 0.5);
   views.update(simDt, cam.camera, target?.id, world.time, player);

@@ -46,6 +46,8 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 - [x] Dungeon 2.0: cripta em dois andares com salas de formas variadas, salas de tesouro e santuário, emboscadas, ondas, armadilhas de espinhos, Cavaleiro Sepulcral guardando a escada, visual esculpido (paredes em relevo, arcos, colunas, tapetes, adereços, luz colorida) e inimigos que contornam paredes (campo de fluxo)
 - [x] Sistema de zonas (estilo Ragnarok): o mundo em áreas ligadas por passagens na borda, com tela de carregamento, só a área do herói desenhada
 - [x] Vilas: cada área com a sua (baú compartilhado, loja regional, quests) e Pedras de Teleporte entre as vilas visitadas, por ouro
+- [x] Picos Gelados (níveis 20 a 28): neve caindo, lago congelado escorregadio, Vila de Pedra-Fria (Jarl Bjorn, Mercadora Sigrid, Caçadora Eira) com 5 quests, lobos das neves, espectros gélidos, yetis e o Gigante de Gelo com a Armadura do Inverno
+- [x] Dungeons por tema: a Caverna de Gelo (Guardião Glacial, Rainha Gélida e a Regalia da Rainha Gélida), ao lado da Cripta Esquecida
 - [x] Floresta Ancestral (níveis 12 a 20): rio, ruínas de Elar, vila do acampamento (Guardiã Lyra, Mascate Faelan, Armeira Kaia) com 5 quests, lobos, entes, espíritos élficos e o Ente Ancião com o conjunto Coração da Floresta
 - [x] Lab de modelos (`/lab.html`): vitrine de tudo que aparece no jogo, luz, animações e comparação com a versão anterior
 
@@ -70,7 +72,7 @@ mais forte é 12 e só a cripta acompanha o herói. A ordem dos marcos ataca iss
    quests, pedra), inimigos novos, chefe com conjunto e, de preferência, uma dungeon própria. Áreas de
    passagem (só trilha e inimigos, sem vila) também cabem entre duas vilas.
 4. **Zonas novas**, cada uma com cara própria, uma vila, uma dungeon e um chefe com conjunto:
-   - Picos Gelados (20 a 28): neve, gelo escorregadio, yetis, nevasca.
+   - ~~Picos Gelados (20 a 28)~~: feitos, com a Caverna de Gelo.
    - Terras Vulcânicas (28 a 36): lava, cinzas, demônios do fogo.
    - Uma dungeon própria da Floresta (Santuário Élfico, ver Fase 3).
 5. ~~Viagem rápida~~: feita como Pedras de Teleporte nas vilas (ver acima).
@@ -82,8 +84,9 @@ mais forte é 12 e só a cripta acompanha o herói. A ordem dos marcos ataca iss
 ### Fase 3: dungeons maiores e mais elaboradas
 
 8. ~~Dungeon 2.0~~: feita (ver acima). Ficaram para depois: portas trancadas com chave e salas secretas.
-9. **Temas de dungeon**, um por zona, cada um com inimigos, armadilhas, chefe e conjunto próprios: Mina
-    Abandonada, Templo do Deserto, Covil da Rainha, Santuário Élfico, Caverna de Gelo, Forja Vulcânica.
+9. **Temas de dungeon**, um por zona, cada um com inimigos, armadilhas, chefe e conjunto próprios. A
+    máquina de temas existe (`DUNGEON_THEMES`) e a ~~Caverna de Gelo~~ foi a primeira; faltam Mina
+    Abandonada, Templo do Deserto, Covil da Rainha, Santuário Élfico e Forja Vulcânica.
 10. **Dungeons de fim de jogo.** Modificadores sorteados (escuridão, inimigos explosivos, sem cura),
     níveis de dificuldade acima do mundo e chaves que caem como loot (como mapas no Path of Exile), com
     recordes locais de tempo.

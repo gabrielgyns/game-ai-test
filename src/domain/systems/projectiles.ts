@@ -1,10 +1,10 @@
 import { isAlive, isHostile, type Entity } from "../components";
 import { distanceXZ } from "../math";
-import { PROJECTILE_SPECS, type Projectile } from "../projectiles";
+import { CHILL, PROJECTILE_SPECS, type Projectile } from "../projectiles";
 import { terrainHeight } from "../terrain";
 import type { World } from "../world";
 import { applyDamage } from "./combat";
-import { applyStun } from "../status";
+import { applySlow, applyStun } from "../status";
 import { isWalkable } from "../dungeon";
 
 /** Move projéteis, resolve acertos (primeiro hostil no raio) e explosões. */
@@ -38,6 +38,7 @@ export function projectileSystem(world: World, dt: number): void {
       } else {
         applyDamage(world, owner, hit, p.damage, p.fromSkill ? "skill" : "basic");
         if (p.stun && hit.health.current > 0) applyStun(world, hit, p.stun);
+        if (p.kind === "iceShard" && hit.health.current > 0) applySlow(world, hit, CHILL.factor, CHILL.seconds);
         world.emit({ type: "projectileHit", projectileId: p.id, target: hit.id, position: { ...p.position }, explodeRadius: 0 });
       }
       if (!p.pierce) {

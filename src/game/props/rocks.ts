@@ -10,7 +10,7 @@ const GRANITE = ["#5f5d58", "#6c6a64", "#7a7871", "#88857d", "#96938a"];
 const MOSS = ["#3f6a2a", "#4d7a30", "#5c8a38", "#6e9a42"];
 
 /** Pedra com faces irregulares (ruído grosso) e rachaduras finas mais escuras. */
-function stonePaint(tones: string[], seed: number): Paint {
+export function stonePaint(tones: string[], seed: number): Paint {
   return (x, y, z) => {
     const crack = Math.abs(noise3(x / 5, y / 5, z / 5, seed + 11) - 0.5);
     if (crack < 0.018) return "#3f3d3a";

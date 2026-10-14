@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { terrainHeight, SPAWN_FLAT_RADIUS, WORLD_HALF } from "../domain/terrain";
 import { BOSS_HOME, seededRandom } from "../domain/worldgen";
 import { biomeAt, DESERT_BOSS_HOME, SWAMP_BOSS_HOME } from "../domain/biomes";
-import { FOREST_BOSS_HOME, FOREST_CAMP, FOREST_RUINS, forestRiverZ, isWater } from "../domain/terrain";
+import { FOREST_BOSS_HOME, FOREST_CAMP, FOREST_RUINS, forestRiverZ, isIce, isWater, PEAKS_BOSS_HOME, PEAKS_CAVE, PEAKS_LAKE, PEAKS_LAKE_RADIUS, PEAKS_VILLAGE } from "../domain/terrain";
 import { ZONE_PASSAGES, ZONES, type ZoneDefinition } from "../domain/zones";
 import { DUNGEON_ENTRANCE } from "../domain/dungeon";
 import { VILLAGES } from "../domain/villages";
@@ -179,6 +179,69 @@ export function placeForestProps(seed = 5151): PropPlacement[] {
   return out;
 }
 
+/** Adereços dos Picos Gelados, em coordenadas locais da zona. */
+const PEAKS_SCATTER: ForestScatter[] = [
+  { kind: "pineSnow", count: 150, scale: [0.85, 1.3] },
+  { kind: "frozenTree", count: 25, scale: [0.85, 1.2] },
+  { kind: "snowRock1", count: 45, scale: [0.8, 1.6] },
+  { kind: "snowRock2", count: 45, scale: [0.8, 1.6] },
+  { kind: "iceCrystal", count: 18, scale: [0.7, 1.2], where: (lx, lz) => Math.hypot(lx - PEAKS_LAKE.x, lz - PEAKS_LAKE.z) < PEAKS_LAKE_RADIUS + 12 },
+  { kind: "iceCrystal", count: 14, scale: [0.7, 1.3], where: (lx) => lx > 30 },
+];
+
+export function placePeaksProps(seed = 7171): PropPlacement[] {
+  const zone = ZONES.picos;
+  const rand = seededRandom(seed);
+  const out: PropPlacement[] = [];
+  const world = (lx: number, lz: number) => ({ x: zone.center.x + lx, z: zone.center.z + lz });
+  const push = (kind: PropKind, lx: number, lz: number, yaw: number, scale: number, sink = SINK) => {
+    const p = world(lx, lz);
+    out.push({ kind, x: p.x, y: terrainHeight(p.x, p.z) - sink, z: p.z, yaw, scale });
+  };
+  /** Gira para o -Z local do modelo apontar para (tx, tz). */
+  const facing = (lx: number, lz: number, tx: number, tz: number) => Math.atan2(lx - tx, lz - tz);
+  const free = (lx: number, lz: number) => {
+    const p = world(lx, lz);
+    if (isIce(p.x, p.z) || onTrail(p.x, p.z)) return false;
+    if (Math.hypot(lx - PEAKS_VILLAGE.x, lz - PEAKS_VILLAGE.z) < 22) return false;
+    if (Math.hypot(lx - PEAKS_BOSS_HOME.x, lz - PEAKS_BOSS_HOME.z) < 20) return false;
+    if (Math.hypot(lx - PEAKS_CAVE.x, lz - PEAKS_CAVE.z) < 12) return false;
+    return Math.max(Math.abs(lx), Math.abs(lz)) < zone.half - 5;
+  };
+  for (const s of PEAKS_SCATTER) {
+    let placed = 0;
+    for (let tries = 0; placed < s.count && tries < s.count * 60; tries++) {
+      const lx = (rand() * 2 - 1) * (zone.half - 5), lz = (rand() * 2 - 1) * (zone.half - 5);
+      const p = world(lx, lz);
+      if (!free(lx, lz) || (s.where && !s.where(lx, lz, terrainHeight(p.x, p.z)))) continue;
+      push(s.kind, lx, lz, rand() * Math.PI * 2, s.scale[0] + rand() * (s.scale[1] - s.scale[0]));
+      placed++;
+    }
+  }
+  // Vila de Pedra-Fria: cabanas em roda, viradas para a fogueira, o baú e a Pedra de Teleporte.
+  const v = PEAKS_VILLAGE;
+  for (const [dx, dz, s] of [[-16, -2, 1], [16, 0, 1], [-13, -15, 0.9], [13, -15, 0.95], [-17, 12, 0.85]] as const) {
+    push("cabin", v.x + dx, v.z + dz, facing(v.x + dx, v.z + dz, v.x, v.z), s, 0);
+  }
+  push("campfire", v.x, v.z + 1, 0, 1, 0);
+  const village = VILLAGES.pedraFria;
+  const local = (p: { x: number; z: number }) => ({ lx: p.x - zone.center.x, lz: p.z - zone.center.z });
+  const st = local(village.stash), sn = local(village.stone);
+  push("stash", st.lx, st.lz, facing(st.lx, st.lz, v.x, v.z), 1, 0);
+  push("waystone", sn.lx, sn.lz, facing(sn.lx, sn.lz, v.x, v.z), 1, 0);
+  // Boca da Caverna de Gelo, atrás do portal, virada para o meio dos Picos.
+  const away = Math.atan2(PEAKS_CAVE.x, PEAKS_CAVE.z);
+  push("caveMouth", PEAKS_CAVE.x + Math.sin(away) * 3.2, PEAKS_CAVE.z + Math.cos(away) * 3.2, away, 1, 0.3);
+  // Arena do Gigante: anel de pináculos de gelo e cristais entre eles.
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2 + 0.2;
+    push("iceSpire", PEAKS_BOSS_HOME.x + Math.cos(a) * 17, PEAKS_BOSS_HOME.z + Math.sin(a) * 17, a * 3, 0.9 + (i % 3) * 0.15);
+    const b = a + Math.PI / 8;
+    push("iceCrystal", PEAKS_BOSS_HOME.x + Math.cos(b) * 19, PEAKS_BOSS_HOME.z + Math.sin(b) * 19, b, 0.8);
+  }
+  return out;
+}
+
 export interface Environment {
   group: THREE.Group;
   props: PropField;
@@ -189,10 +252,11 @@ export interface Environment {
 /** Árvores, pedras e marcos de uma zona, com a barraca de quem vende na vila. */
 export function createEnvironment(seed = 4242, zone: ZoneDefinition = ZONES.vale): Environment {
   const group = new THREE.Group();
-  const props = new PropField(zone.id === "floresta" ? placeForestProps() : placeProps(seed));
+  const props = new PropField(zone.id === "floresta" ? placeForestProps() : zone.id === "picos" ? placePeaksProps() : placeProps(seed));
   group.add(props.group);
   // Barraca de quem vende, atrás do vendedor, com o balcão virado para o centro da vila.
-  const center = zone.id === "vale" ? { x: 0, z: 0 } : { x: zone.center.x + FOREST_CAMP.x, z: zone.center.z + FOREST_CAMP.z };
+  const villageCenter = { vale: { x: 0, z: 0 }, floresta: FOREST_CAMP, picos: PEAKS_VILLAGE }[zone.id];
+  const center = { x: zone.center.x + villageCenter.x, z: zone.center.z + villageCenter.z };
   const seller = zone.id === "vale" ? { x: 6, z: 3.5 } : { x: center.x - 7, z: center.z + 4 };
   const outward = Math.atan2(seller.x - center.x, seller.z - center.z);
   const stall = new THREE.Mesh(stallGeometry(), voxelMaterial());

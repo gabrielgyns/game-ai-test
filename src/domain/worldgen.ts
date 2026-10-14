@@ -1,8 +1,8 @@
 import { createEnemy, createPlayer, type EnemyKind } from "./factories";
-import { FOREST_BOSS_HOME, FOREST_CAMP, isWater, terrainHeight, SPAWN_FLAT_RADIUS, WORLD_HALF } from "./terrain";
+import { FOREST_BOSS_HOME, FOREST_CAMP, isIce, isWater, PEAKS_BOSS_HOME, PEAKS_CAVE, PEAKS_LAKE, PEAKS_VILLAGE, terrainHeight, SPAWN_FLAT_RADIUS, WORLD_HALF } from "./terrain";
 import { ZONES } from "./zones";
 import { World } from "./world";
-import { createAncientTreant, createGoblinKing, createScorpionEmperor, createSpiderQueen } from "./boss";
+import { createAncientTreant, createFrostGiant, createGoblinKing, createScorpionEmperor, createSpiderQueen } from "./boss";
 import { biomeAt, DESERT_BOSS_HOME, SWAMP_BOSS_HOME } from "./biomes";
 import { createNpc, npcById } from "./npc";
 import type { ClassId } from "./classes";
@@ -101,6 +101,7 @@ export function generateWorld(options: WorldGenOptions = {}): World {
   world.spawn((id) => createSpiderQueen(id, { x: SWAMP_BOSS_HOME.x, y: terrainHeight(SWAMP_BOSS_HOME.x, SWAMP_BOSS_HOME.z), z: SWAMP_BOSS_HOME.z }));
   world.spawn((id) => createScorpionEmperor(id, { x: DESERT_BOSS_HOME.x, y: terrainHeight(DESERT_BOSS_HOME.x, DESERT_BOSS_HOME.z), z: DESERT_BOSS_HOME.z }));
   populateForest(world, rand);
+  populatePeaks(world, rand);
   return world;
 }
 
@@ -150,4 +151,48 @@ function populateForest(world: World, rand: () => number): void {
     world.spawn((id) => createNpc(id, def, at(FOREST_CAMP.x + spot.x, FOREST_CAMP.z + spot.z), Math.atan2(spot.x, spot.z)));
   }
   world.spawn((id) => createAncientTreant(id, at(FOREST_BOSS_HOME.x, FOREST_BOSS_HOME.z)));
+}
+
+/**
+ * Picos Gelados: lobos das neves em matilha pelos vales, espectros no lago congelado e na encosta da
+ * caverna, yetis nas cristas do norte, a vila de Pedra-Fria ao sul e o Gigante de Gelo no platô.
+ */
+function populatePeaks(world: World, rand: () => number): void {
+  const zone = ZONES.picos;
+  const at = (lx: number, lz: number) => {
+    const x = zone.center.x + lx, z = zone.center.z + lz;
+    return { x, y: terrainHeight(x, z), z };
+  };
+  const free = (lx: number, lz: number) =>
+    Math.hypot(lx - PEAKS_VILLAGE.x, lz - PEAKS_VILLAGE.z) > 26 &&
+    Math.hypot(lx - PEAKS_BOSS_HOME.x, lz - PEAKS_BOSS_HOME.z) > 24 &&
+    Math.hypot(lx - PEAKS_CAVE.x, lz - PEAKS_CAVE.z) > 9 &&
+    Math.max(Math.abs(lx), Math.abs(lz)) < zone.half - 20;
+  const scatter = (kind: EnemyKind, count: number, area: (lx: number, lz: number) => boolean, pack = 1) => {
+    let placed = 0;
+    for (let tries = 0; placed < count && tries < count * 60; tries++) {
+      const lx = (rand() * 2 - 1) * (zone.half - 20), lz = (rand() * 2 - 1) * (zone.half - 20);
+      if (!free(lx, lz) || !area(lx, lz)) continue;
+      for (let k = 0; k < pack && placed < count; k++) {
+        const px = lx + (rand() - 0.5) * 5, pz = lz + (rand() - 0.5) * 5;
+        if (!free(px, pz)) continue;
+        world.spawn((id) => createEnemy(id, kind, at(px, pz)));
+        placed++;
+      }
+    }
+  };
+  const onLake = (lx: number, lz: number) => isIce(zone.center.x + lx, zone.center.z + lz);
+  scatter("snowWolf", 21, (lx, lz) => lz > -40 && !onLake(lx, lz), 3);
+  scatter("iceWraith", 7, (lx, lz) => Math.hypot(lx - PEAKS_LAKE.x, lz - PEAKS_LAKE.z) < 30);
+  scatter("iceWraith", 5, (lx, lz) => lx > 30 && lz < 20);
+  scatter("yeti", 10, (lx, lz) => lz < 10 && !onLake(lx, lz));
+  for (const spot of [
+    { id: "jarl", x: 5, z: -3 },
+    { id: "trader", x: -7, z: 4 },
+    { id: "hunter", x: 8, z: 6 },
+  ]) {
+    const def = npcById(spot.id)!;
+    world.spawn((id) => createNpc(id, def, at(PEAKS_VILLAGE.x + spot.x, PEAKS_VILLAGE.z + spot.z), Math.atan2(spot.x, spot.z)));
+  }
+  world.spawn((id) => createFrostGiant(id, at(PEAKS_BOSS_HOME.x, PEAKS_BOSS_HOME.z)));
 }

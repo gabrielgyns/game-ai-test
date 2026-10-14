@@ -212,6 +212,28 @@ com screenshots antes de serem considerados prontos.
     barraca do Mascate, baú e pedra; modelos do Mascate (mochila enorme, orelhas de elfo) e da Armeira
     (ombreira de casca, trança, martelo); nome da área no painel do herói; minimapa com a pedra.
     10 testes novos ou refeitos.
+31. **Picos Gelados e a Caverna de Gelo** (pedido do dono: "agora faz os Picos Gelados com vila e
+    dungeon"). Domínio: zona `picos` em 0,−840 (níveis 20 a 28), ligada à floresta por uma passagem no
+    norte dela (penhasco aberto em x local 50); relevo de cristas (ruído dobrado), vila, patamar da
+    caverna, platô do Gigante e lago congelado (`isIce`, gelo plano); gelo escorregadio
+    (`movement.slide`, D40); bioma `snow`; Lobo das Neves, Espectro Gélido (estilhaço `iceShard` que
+    deixa lento) e Yeti; Gigante de Gelo (nível 28: Punho Glacial, Tremor Gélido, Avalanche com chão
+    congelado `FROST_POOL` que fere e deixa lento, Estilhaços, Avanço, lobos na fúria) com a Armadura
+    do Inverno (2: +90 vida; 3: Pele de Geleira); Vila de Pedra-Fria com pedra, baú, Jarl Bjorn,
+    Caçadora Eira e Mercadora Sigrid (loja `trader`, nível mínimo 20); 5 quests novas. Dungeons por
+    tema (`DUNGEON_THEMES`, D39): a Caverna de Gelo na encosta leste, nível mínimo 20, lobos,
+    espectros e yetis, Guardião Glacial na escada e Rainha Gélida no fundo (escala com o nível) com a
+    Regalia da Rainha Gélida (2: +8% de velocidade; 3: Estilhaçar, +40% em alvo lento ou atordoado).
+    Sem vidas, acorda na vila da zona da entrada. Apresentação: terreno de neve, pedra nas encostas e
+    gelo com veios; capim queimado de frio; neve caindo (`snowfall.ts`); neblina branco-azulada;
+    adereços novos (cabana de toras com telhado nevado e pingentes, pedras nevadas, cristais e
+    pináculos de gelo, árvore morta nevada, boca da caverna); modelos do lobo das neves, yeti, espectro
+    translúcido, Gigante (voxels 2,4× maiores) e Rainha, Jarl, Sigrid e Eira; estilhaço de gelo e poça de
+    gelo; caverna com paleta, adereços (cristais, montes de neve, pingentes, lamparinas, ossada
+    congelada, espinhos de gelo, braseiro de chama fria), luz fria e neve; portais por tema, entrar numa
+    dungeon passa pela tela de carregamento; minimapa e lab com tudo. Medido no Chromium headless:
+    ~0,6–0,66M triângulos no quadro dos Picos (vila, lago, centro), contra ~1,1M da floresta. 11 testes
+    novos (`peaks.test.ts`).
 
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).

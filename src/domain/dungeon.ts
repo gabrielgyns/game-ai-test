@@ -1,4 +1,4 @@
-import { createSkeletonLord } from "./boss";
+import { createIceQueen, createSkeletonLord } from "./boss";
 import type { Entity, EntityId } from "./components";
 import { generateLayout, isFloorTile, roomCenter, Tile, tileOf, DUNGEON_FLOORS, type DungeonLayout, type DungeonRoom } from "./dungeonLayout";
 import { createEnemy, type EnemyKind } from "./factories";
@@ -10,7 +10,8 @@ import { DUNGEON_REGION_X, terrainHeight } from "./terrain";
 import { seededRandom } from "./worldgen";
 import { applyDamage } from "./systems/combat";
 import type { World } from "./world";
-import { zoneAt } from "./zones";
+import { ZONES, zoneAt } from "./zones";
+import { PEAKS_CAVE } from "./terrain";
 
 /**
  * Dungeons instanciadas, no estilo Minecraft Dungeons: um portal no mapa leva a uma cripta gerada na
@@ -22,18 +23,84 @@ import { zoneAt } from "./zones";
  * A cripta vive no mesmo `World`, numa região distante (x ≥ 1000), como um set de filmagem montado
  * nos fundos do estúdio: os sistemas continuam os mesmos, só passam a respeitar paredes.
  */
-export const DUNGEON_NAME = "Cripta Esquecida";
 export const DUNGEON_ORIGIN = { x: 1000, z: -64 };
-/** Portal de entrada no mapa (campina a nordeste do santuário). */
-export const DUNGEON_ENTRANCE = { x: 24, z: -30 };
+
+/**
+ * Cada dungeon é um tema sobre a mesma máquina (planta, andares, eventos, guardião, chefe e baú):
+ * muda onde fica a entrada, quem mora lá dentro, quem guarda a escada, o chefe e o desenho (que a
+ * apresentação escolhe pelo id). Como um jogo de tabuleiro com cenários: as regras são as mesmas, o
+ * mapa e as peças mudam.
+ */
+export type DungeonThemeId = "crypt" | "iceCave";
+
+export interface DungeonTheme {
+  id: DungeonThemeId;
+  name: string;
+  /** Portal de entrada, no mapa de alguma zona. */
+  entrance: { x: number; z: number };
+  /** Nível mínimo (a dungeon acompanha o herói, mas não desce abaixo disso). */
+  minLevel: number;
+  /** Nível em que os inimigos do tema têm a força do modelo (a escala parte daqui). */
+  baseLevel: number;
+  mix: { kind: EnemyKind; weight: number }[];
+  guardian: { name: string; kind: EnemyKind; health: number; damage: number; xp: number };
+  /** Escolta do guardião. */
+  escort: number;
+  bossName: string;
+  createBoss(id: EntityId, at: Vec3, level: number): Entity;
+}
+
+const peaks = (p: { x: number; z: number }) => ({ x: ZONES.picos.center.x + p.x, z: ZONES.picos.center.z + p.z });
+
+export const DUNGEON_THEMES: Record<DungeonThemeId, DungeonTheme> = {
+  crypt: {
+    id: "crypt",
+    name: "Cripta Esquecida",
+    // Campina a nordeste do santuário.
+    entrance: { x: 24, z: -30 },
+    minLevel: 1,
+    baseLevel: 3,
+    mix: [
+      { kind: "skeleton", weight: 5 },
+      { kind: "skeletonArcher", weight: 3 },
+      { kind: "spider", weight: 1.5 },
+      { kind: "bogZombie", weight: 1 },
+    ],
+    guardian: { name: "Cavaleiro Sepulcral", kind: "skeleton", health: 4.5, damage: 1.4, xp: 6 },
+    escort: 2,
+    bossName: "Lorde Esqueleto",
+    createBoss: (id, at, level) => createSkeletonLord(id, at, level),
+  },
+  iceCave: {
+    id: "iceCave",
+    name: "Caverna de Gelo",
+    // Patamar na encosta leste dos Picos Gelados.
+    entrance: peaks(PEAKS_CAVE),
+    minLevel: 20,
+    baseLevel: 22,
+    mix: [
+      { kind: "snowWolf", weight: 4 },
+      { kind: "iceWraith", weight: 3 },
+      { kind: "yeti", weight: 1.2 },
+    ],
+    guardian: { name: "Guardião Glacial", kind: "yeti", health: 3, damage: 1.25, xp: 5 },
+    escort: 2,
+    bossName: "Rainha Gélida",
+    createBoss: (id, at, level) => createIceQueen(id, at, level),
+  },
+};
+
+/** Nome e entrada da primeira dungeon (a cripta do vale). */
+export const DUNGEON_NAME = DUNGEON_THEMES.crypt.name;
+export const DUNGEON_ENTRANCE = DUNGEON_THEMES.crypt.entrance;
 export const DUNGEON_LIVES = 3;
 export const PORTAL_RANGE = 2.6;
 /** Armadilhas: ciclo, aviso e janela de dano (segundos), e quanto da vida máxima tiram. */
 export const TRAP = { cycle: 3.2, warn: 1.0, active: 0.5, damageFraction: 0.14 };
 /** Bênção do santuário: dano extra e duração. */
 export const SHRINE_BLESSING = { multiplier: 1.25, seconds: 60 };
-/** Minichefe que guarda a escada do primeiro andar. */
-export const GUARDIAN = { name: "Cavaleiro Sepulcral", health: 4.5, damage: 1.4, xp: 6 };
+/** Minichefe que guarda a escada da cripta (cada tema tem o seu, em `DUNGEON_THEMES`). */
+export const GUARDIAN = DUNGEON_THEMES.crypt.guardian;
 
 export interface DungeonChest {
   position: Vec3;
@@ -41,6 +108,7 @@ export interface DungeonChest {
 }
 
 export interface DungeonRun {
+  theme: DungeonThemeId;
   seed: number;
   level: number;
   floor: number;
@@ -141,21 +209,16 @@ export function steerToward(world: World, from: Vec3, to: Vec3): Vec2 {
   return directionXZ(from, to);
 }
 
-/** Força dos inimigos conforme o nível da cripta (nível 3 = base). */
+/** Força dos inimigos conforme o nível da dungeon (nível 3 = base). */
 export const levelScale = (level: number): number => 0.7 + 0.1 * Math.max(1, level);
 
-const ROOM_MIX: { kind: EnemyKind; weight: number }[] = [
-  { kind: "skeleton", weight: 5 },
-  { kind: "skeletonArcher", weight: 3 },
-  { kind: "spider", weight: 1.5 },
-  { kind: "bogZombie", weight: 1 },
-];
+export const themeOf = (run: DungeonRun): DungeonTheme => DUNGEON_THEMES[run.theme];
 
-function pickKind(rand: () => number): EnemyKind {
-  const total = ROOM_MIX.reduce((n, m) => n + m.weight, 0);
+function pickKind(theme: DungeonTheme, rand: () => number): EnemyKind {
+  const total = theme.mix.reduce((n, m) => n + m.weight, 0);
   let r = rand() * total;
-  for (const m of ROOM_MIX) if ((r -= m.weight) <= 0) return m.kind;
-  return "skeleton";
+  for (const m of theme.mix) if ((r -= m.weight) <= 0) return m.kind;
+  return theme.mix[0]!.kind;
 }
 
 /** Células de chão comum de uma sala, longe das bordas (onde chegam os corredores). */
@@ -166,9 +229,9 @@ function spawnCells(layout: DungeonLayout, r: DungeonRoom): { i: number; j: numb
   return out;
 }
 
-/** Cria um inimigo da cripta no nível dela. */
+/** Cria um inimigo da dungeon no nível dela (a força parte do nível-base do tema). */
 function spawnDungeonEnemy(world: World, run: DungeonRun, kind: EnemyKind, at: Vec3): Entity {
-  const scale = levelScale(run.level);
+  const scale = levelScale(run.level) / levelScale(themeOf(run).baseLevel);
   const e = world.spawn((id) => createEnemy(id, kind, at));
   e.health.baseMax = e.health.max = e.health.current = Math.round(e.health.max * scale);
   e.level = run.level; // a cripta acompanha o herói
@@ -194,7 +257,7 @@ function spawnInRoom(world: World, run: DungeonRun, room: DungeonRoom, count: nu
   const ids: EntityId[] = [];
   for (let n = 0; n < count && cells.length; n++) {
     const cell = cells.splice(Math.floor(rand() * cells.length), 1)[0]!;
-    ids.push(spawnDungeonEnemy(world, run, pickKind(rand), cellToWorld(cell.i, cell.j)).id);
+    ids.push(spawnDungeonEnemy(world, run, pickKind(themeOf(run), rand), cellToWorld(cell.i, cell.j)).id);
   }
   return ids;
 }
@@ -236,21 +299,22 @@ function populateFloor(world: World, run: DungeonRun): void {
       const si = Math.floor(c.x - DUNGEON_ORIGIN.x) + 2, sj = Math.floor(c.z - DUNGEON_ORIGIN.z) - 1;
       for (const [di, dj] of [[0, 0], [1, 0], [0, 1], [1, 1]] as const) layout.tiles[(sj + dj) * layout.width + si + di] = Tile.Pillar;
       run.stairs = { x: DUNGEON_ORIGIN.x + si + 1, y: 0, z: DUNGEON_ORIGIN.z + sj + 1 };
-      // O guardião espera no meio da sala, com dois esqueletos de escolta.
-      const g = spawnDungeonEnemy(world, run, "skeleton", { x: c.x - 1, y: 0, z: c.z });
-      g.name = GUARDIAN.name;
+      // O guardião espera no meio da sala, com a escolta.
+      const guardian = themeOf(run).guardian;
+      const g = spawnDungeonEnemy(world, run, guardian.kind, { x: c.x - 1, y: 0, z: c.z });
+      g.name = guardian.name;
       g.miniboss = true;
       g.level = run.level + 1;
-      g.health.baseMax = g.health.max = g.health.current = Math.round(g.health.max * GUARDIAN.health);
-      g.combat.baseDamage = g.combat.damage = Math.round(g.combat.damage * GUARDIAN.damage);
-      g.ai!.xpReward *= GUARDIAN.xp;
+      g.health.baseMax = g.health.max = g.health.current = Math.round(g.health.max * guardian.health);
+      g.combat.baseDamage = g.combat.damage = Math.round(g.combat.damage * guardian.damage);
+      g.ai!.xpReward *= guardian.xp;
       g.ai!.goldReward *= 4;
       g.ai!.aggroRange = 9;
       run.guardianId = g.id;
-      run.roomEnemies[room.id] = [g.id, ...spawnInRoom(world, run, room, 2, rand)];
+      run.roomEnemies[room.id] = [g.id, ...spawnInRoom(world, run, room, themeOf(run).escort, rand)];
     }
     if (room.kind === "boss") {
-      const boss = world.spawn((id) => createSkeletonLord(id, roomCenterWorld(room), run.level));
+      const boss = world.spawn((id) => themeOf(run).createBoss(id, roomCenterWorld(room), run.level));
       run.bossId = boss.id;
     }
   });
@@ -259,18 +323,21 @@ function populateFloor(world: World, run: DungeonRun): void {
   run.startPortal = { x: start.x - 3.5, y: 0, z: start.z };
 }
 
-/** Abre a cripta: gera o primeiro andar, povoa as salas e leva o herói para dentro. */
-export function enterDungeon(world: World, player: Entity, seed = Math.floor(world.random() * 1e9)): DungeonRun {
+/** Abre uma dungeon: gera o primeiro andar, povoa as salas e leva o herói para dentro. */
+export function enterDungeon(world: World, player: Entity, seed = Math.floor(world.random() * 1e9), themeId: DungeonThemeId = "crypt"): DungeonRun {
   if (world.dungeon) closeDungeon(world);
-  const level = Math.max(1, player.progression?.level ?? 1);
+  const theme = DUNGEON_THEMES[themeId];
+  const level = Math.max(theme.minLevel, player.progression?.level ?? 1);
+  const entrance = theme.entrance;
   const run: DungeonRun = {
+    theme: themeId,
     seed,
     level,
     floor: 1,
     floors: DUNGEON_FLOORS,
     layout: generateLayout(seed, 1),
     livesLeft: DUNGEON_LIVES,
-    returnPoint: { x: DUNGEON_ENTRANCE.x, y: terrainHeight(DUNGEON_ENTRANCE.x, DUNGEON_ENTRANCE.z + 3), z: DUNGEON_ENTRANCE.z + 3 },
+    returnPoint: { x: entrance.x, y: terrainHeight(entrance.x, entrance.z + 3), z: entrance.z + 3 },
     roomEnemies: {},
     clearedRooms: [],
     pending: {},
@@ -341,7 +408,7 @@ export function exitDungeon(world: World, player: Entity, reason: "complete" | "
   world.emit({ type: "dungeonExit", reason });
 }
 
-/** Onde o herói renasce: na sala inicial do andar enquanto houver vidas; sem vidas, no santuário. */
+/** Onde o herói renasce: na sala inicial do andar enquanto houver vidas; sem vidas, na vila da zona. */
 export function playerRespawnPoint(world: World, player: Entity): Vec3 {
   const run = world.dungeon;
   if (!run || !inDungeonSpace(player.transform.position.x)) {
@@ -353,7 +420,9 @@ export function playerRespawnPoint(world: World, player: Entity): Vec3 {
   world.emit({ type: "dungeonLifeLost", livesLeft: run.livesLeft });
   if (run.livesLeft > 0) return roomCenterWorld(run.layout.rooms[0]!);
   run.failed = true;
-  return { x: 0, y: 0, z: 0 };
+  // Sem vidas: acorda no ponto seguro da zona da entrada (o santuário, para a cripta).
+  const home = zoneAt(run.returnPoint.x, run.returnPoint.z).respawn;
+  return { x: home.x, y: terrainHeight(home.x, home.z), z: home.z };
 }
 
 /** Fase das armadilhas no ciclo: aviso (os espinhos tremem) e janela em que ferem. */
@@ -516,14 +585,16 @@ export function useShrine(world: World, player: Entity): boolean {
 
 export type DungeonInteraction = "enter" | "leave" | "exit" | "chest" | "sideChest" | "shrine" | "stairs" | "stairsLocked" | null;
 
+/** Entrada de dungeon ao alcance do herói (fora de uma dungeon). */
+export function dungeonNear(p: { x: number; z: number }): DungeonTheme | undefined {
+  return Object.values(DUNGEON_THEMES).find((t) => Math.hypot(p.x - t.entrance.x, p.z - t.entrance.z) <= PORTAL_RANGE);
+}
+
 /** O que o herói pode fazer com F agora, perto de portais, baús, santuários e da escada. */
 export function dungeonInteraction(world: World, player: Entity): DungeonInteraction {
   const p = player.transform.position;
   const run = world.dungeon;
-  if (!run) {
-    const portal = { x: DUNGEON_ENTRANCE.x, y: 0, z: DUNGEON_ENTRANCE.z };
-    return distanceXZ(p, portal) <= PORTAL_RANGE ? "enter" : null;
-  }
+  if (!run) return dungeonNear(p) ? "enter" : null;
   if (run.chest && !run.chest.opened && distanceXZ(p, run.chest.position) <= PORTAL_RANGE) return "chest";
   if (run.sideChests.some((c) => !c.opened && distanceXZ(p, c.position) <= PORTAL_RANGE)) return "sideChest";
   if (run.shrines.some((s) => !s.used && distanceXZ(p, s.position) <= PORTAL_RANGE)) return "shrine";

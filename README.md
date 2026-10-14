@@ -23,7 +23,7 @@ Abra `http://localhost:5173` e clique na tela para começar.
 | Q | beber poção (escolhe a menor que cobre o que falta) |
 | I | abrir a mochila (clique equipa ou usa, botão direito larga no chão) |
 | K | árvore de habilidades (um ponto por nível) |
-| F | falar com o NPC mais próximo, entrar e sair da cripta, abrir o baú |
+| F | falar com o NPC mais próximo, entrar e sair das dungeons, abrir o baú, usar a Pedra de Teleporte |
 | ESC | menu de pausa |
 
 Gosmas vivem perto do santuário central, goblins mais longe e orcs na borda do mapa.
@@ -92,6 +92,21 @@ Faelan** (loja própria, com estoque da região: mais itens, mais raros, nunca a
 **Armeira Kaia** (quests de cerne de ente, inclusive uma depois do chefe). O Ente Ancião guarda o
 conjunto **Coração da Floresta** (3 peças: quem te fere leva 30% do dano de volta). Cair na floresta
 leva ao acampamento, não ao santuário.
+
+Ao norte da floresta, depois da clareira do Ancião e um pouco a leste, a trilha sobe para os **Picos
+Gelados** (inimigos do nível 20 ao 28): cristas nevadas, neve caindo, pinheiros brancos e um **lago
+congelado** onde quem corre escorrega (a velocidade vem e vai aos poucos). Lobos das neves caçam em
+matilha, **espectros gélidos** atiram estilhaços que deixam lento e **yetis** descem das cristas. A
+**Vila de Pedra-Fria**, de cabanas de toras, tem o **Jarl Bjorn** e a **Caçadora Eira** (cinco quests),
+a **Mercadora Sigrid** (loja de nível 20 para cima) e a pedra de teleporte. No platô ao norte, cercado
+de pináculos de gelo, dorme o **Gigante de Gelo** (Punho Glacial, Tremor Gélido, Avalanche que congela o
+chão, Estilhaços, Avanço e lobos na fúria), que guarda a **Armadura do Inverno** (3 peças: num golpe
+só, o dano acima de 15% da sua vida entra pela metade). Na encosta leste fica a **Caverna de Gelo**, a
+segunda dungeon: a mesma estrutura da cripta (dois andares, eventos, três vidas), nunca abaixo do nível
+20, com paredes de blocos de gelo, neve nas frestas, pingentes, chama fria e neve caindo lá dentro. O
+**Guardião Glacial** (um yeti enorme) guarda a escada e a **Rainha Gélida** espera no fundo (Lâmina de
+Gelo, Nevasca, Prisão de Gelo, Chão Congelado, Deslize), com a **Regalia da Rainha Gélida** (3 peças:
++40% de dano em inimigos lentos ou atordoados).
 
 Toda vila tem o **baú**, o mesmo em todas e compartilhado entre os seus heróis (3 abas de 30 espaços:
 guarde num e tire no outro), e uma **Pedra de Teleporte**, como a Kafra: passar perto dela pela
@@ -206,7 +221,7 @@ src/
     npc.ts         NPCs do santuário e suas falas
     quests.ts      definições de quests, diário do jogador, aceitar/avançar/entregar
     dungeonLayout.ts planta da cripta gerada por seed (salas, corredores, pilares)
-    dungeon.ts     cripta instanciada: entrar, salas, chefe, baú, vidas, paredes e linha de visão
+    dungeon.ts     dungeons instanciadas por tema (Cripta, Caverna de Gelo): salas, chefe, baú, vidas, paredes
     skillTree.ts   árvore: 5 ranks por habilidade, talentos, pontos por nível e reinício por ouro
     status.ts      efeitos de status (atordoado, lento, vulnerável) usados pelos talentos
     affixes.ts     afixos sorteados nos equipamentos (Serpente, Águia, Vampiro, Sábio...)
@@ -231,7 +246,7 @@ src/
     dialogueUI.ts  painel de conversa com NPCs
     questTracker.ts lista de quests ativas
     storage.ts     localStorage como porta dos slots, pedido de novo jogo, exportar e importar arquivo
-    dungeonView.ts cripta desenhada da planta: piso, tijolos, pilares, tochas com luz, baú, recorte de paredes
+    dungeonView.ts dungeon desenhada da planta, com paleta e adereços por tema; tochas, baú, recorte de paredes
     portal.ts      portal de pedra com véu girando (entrada no mapa e saídas da cripta)
     skillTreeUI.ts painel da árvore de habilidades (K) e aviso de pontos sobre a barra
     shopUI.ts      painel da Mercadora (à venda, recompra, mochila que vende no clique)

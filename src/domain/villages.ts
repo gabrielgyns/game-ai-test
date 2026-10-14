@@ -1,6 +1,6 @@
 import type { Entity } from "./components";
 import { distanceXZ } from "./math";
-import { FOREST_CAMP, terrainHeight } from "./terrain";
+import { FOREST_CAMP, PEAKS_VILLAGE, terrainHeight } from "./terrain";
 import type { World } from "./world";
 import { ZONES, zoneAt, type ZoneId } from "./zones";
 
@@ -10,7 +10,7 @@ import { ZONES, zoneAt, type ZoneId } from "./zones";
  * Kafra: passar perto dela pela primeira vez a ativa, e de qualquer pedra ativada dá para ir, por um
  * pouco de ouro, a outra vila já visitada.
  */
-export type VillageId = "santuario" | "acampamento";
+export type VillageId = "santuario" | "acampamento" | "pedraFria";
 
 export interface Village {
   id: VillageId;
@@ -25,6 +25,7 @@ export interface Village {
 }
 
 const forest = (lx: number, lz: number) => ({ x: ZONES.floresta.center.x + lx, z: ZONES.floresta.center.z + lz });
+const peaks = (lx: number, lz: number) => ({ x: ZONES.picos.center.x + lx, z: ZONES.picos.center.z + lz });
 
 export const VILLAGES: Record<VillageId, Village> = {
   santuario: { id: "santuario", name: "Santuário do Vale", zone: "vale", stone: { x: 0, z: -6.2 }, stash: { x: -5.5, z: 3.5 }, arrive: { x: 0, z: -3.4 } },
@@ -35,6 +36,14 @@ export const VILLAGES: Record<VillageId, Village> = {
     stone: forest(FOREST_CAMP.x, FOREST_CAMP.z - 9),
     stash: forest(FOREST_CAMP.x - 6, FOREST_CAMP.z - 6),
     arrive: forest(FOREST_CAMP.x, FOREST_CAMP.z - 6),
+  },
+  pedraFria: {
+    id: "pedraFria",
+    name: "Vila de Pedra-Fria",
+    zone: "picos",
+    stone: peaks(PEAKS_VILLAGE.x, PEAKS_VILLAGE.z - 9),
+    stash: peaks(PEAKS_VILLAGE.x - 6, PEAKS_VILLAGE.z - 6),
+    arrive: peaks(PEAKS_VILLAGE.x, PEAKS_VILLAGE.z - 5.5),
   },
 };
 

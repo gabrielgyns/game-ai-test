@@ -19,6 +19,14 @@ export function createProjectileMesh(kind: ProjectileKind): THREE.Object3D {
       }
       return g;
     }
+    case "iceShard": {
+      // Estilhaço de gelo: losango alongado azul-claro com núcleo que brilha.
+      const g = new THREE.Group();
+      const shard = new THREE.Mesh(new THREE.OctahedronGeometry(0.22, 0).scale(0.7, 0.7, 2.2), new THREE.MeshStandardMaterial({ color: "#bfe8fa", roughness: 0.2, emissive: new THREE.Color("#3aa8e8"), emissiveIntensity: 0.6 }));
+      const glow = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.7), new THREE.MeshBasicMaterial({ color: new THREE.Color("#7ad8ff").multiplyScalar(1.6), transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false }));
+      g.add(shard, glow);
+      return g;
+    }
     case "bolt": {
       const m = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.6), new THREE.MeshBasicMaterial({ color: new THREE.Color("#8fb3ff").multiplyScalar(1.8) }));
       return m;

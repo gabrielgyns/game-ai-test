@@ -5,6 +5,7 @@ import { bones, cactus, cocoon, goblinTotem, mushrooms, obelisk, shrinePillar, s
 import { boulder, rockCluster, sandstone, slab } from "./rocks";
 import { birch, bush, deadTree, oak, pine } from "./trees";
 import { brokenColumn, campfire, elvenArch, elvenStatue, fallenLog, giantTree, tent } from "./forest";
+import { cabin, caveMouth, frozenTree, iceCrystal, iceSpire, snowRock } from "./peaks";
 
 /**
  * Catálogo do cenário. Cada modelo tem um id (que também é o nome do arquivo .vox que pode
@@ -69,6 +70,14 @@ export const PROP_MODELS = {
   tent: model("barraca", "Barraca do acampamento", () => tent(2)),
   campfire: model("fogueira", "Fogueira", () => campfire(3)),
   waystone: model("pedra-de-teleporte", "Pedra de Teleporte", () => waystone(6)),
+  // Picos Gelados.
+  snowRock1: model("pedra-nevada-1", "Pedra nevada 1", () => snowRock(5, [16, 12, 13])),
+  snowRock2: model("pedra-nevada-2", "Pedra nevada 2", () => snowRock(19, [11, 9, 14])),
+  iceCrystal: model("cristal-de-gelo", "Cristais de gelo", () => iceCrystal(7)),
+  iceSpire: model("pinaculo-de-gelo", "Pináculo de gelo", () => iceSpire(3)),
+  frozenTree: model("arvore-congelada", "Árvore morta nevada", () => frozenTree(21, 58)),
+  cabin: model("cabana", "Cabana de toras", () => cabin(4), 1 / 10),
+  caveMouth: model("boca-da-caverna", "Boca da Caverna de Gelo", () => caveMouth(8), 1 / 8),
 } satisfies Record<string, PropModel>;
 
 export type PropKind = keyof typeof PROP_MODELS;

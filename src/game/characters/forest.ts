@@ -13,7 +13,18 @@ import { PAL, V, mesh, pivot, shades, type CharacterModel } from "./common";
 
 const FUR = ["#4a4a50", "#5a5a62", "#6a6a72", "#7a7a82"];
 
-export function createWolf(): CharacterModel {
+/** Cores do lobo: pelagem (do dorso à barriga), focinho, sombra, orelha e olho. */
+export interface WolfLook {
+  fur: string[];
+  snout: string;
+  dark: string;
+  ear: string;
+  eye: string;
+}
+const GRAY_WOLF: WolfLook = { fur: FUR, snout: "#5a5a62", dark: "#3a3a40", ear: "#4a4a50", eye: "#ffd040" };
+
+export function createWolf(look: WolfLook = GRAY_WOLF): CharacterModel {
+  const FUR = look.fur;
   const fur: Paint = (x, y, z) => {
     // Dorso escuro, barriga e peito claros, manchas em ruído.
     const t = Math.min(0.999, Math.max(0, (14 - y) / 9 * 0.6 + noise3(x / 3, y / 3, z / 3, 4) * 0.4));
@@ -25,11 +36,11 @@ export function createWolf(): CharacterModel {
   // Cabeça, focinho, orelhas e olhos amarelos.
   const head = new VoxelBuilder();
   blob(head, [0, 2, -3], [3.5, 3.2, 3.5], fur, { rough: 0.08, seed: 5 });
-  head.box(-2, -1, -10, 2, 2, -5, "#5a5a62").box(-2, -1, -10, 2, 0, -5, "#3a3a40").box(-1, 1, -11, 1, 2, -10, "#1b1b1f"); // focinho e nariz
+  head.box(-2, -1, -10, 2, 2, -5, look.snout).box(-2, -1, -10, 2, 0, -5, look.dark).box(-1, 1, -11, 1, 2, -10, "#1b1b1f"); // focinho e nariz
   head.box(-1, -2, -9, 1, -1, -6, "#e8e0d0"); // presas
   for (const s of [-1, 1]) {
-    head.box(s < 0 ? -4 : 2, 4, -3, s < 0 ? -2 : 4, 8, -1, "#4a4a50").box(s < 0 ? -3 : 2, 5, -3, s < 0 ? -2 : 3, 7, -2, "#8a6a6a"); // orelhas
-    head.set(s < 0 ? -2 : 1, 3, -6, "#ffd040").set(s < 0 ? -3 : 2, 3, -6, "#1b1b1f");
+    head.box(s < 0 ? -4 : 2, 4, -3, s < 0 ? -2 : 4, 8, -1, look.ear).box(s < 0 ? -3 : 2, 5, -3, s < 0 ? -2 : 3, 7, -2, "#8a6a6a"); // orelhas
+    head.set(s < 0 ? -2 : 1, 3, -6, look.eye).set(s < 0 ? -3 : 2, 3, -6, "#1b1b1f");
   }
   // Rabo levantado em curva.
   bough(b, [[0, 15, 10], [0, 17, 14], [0, 15, 18]], 1.8, 0.9, (x, y, z) => pickTone(FUR, hash3(x, y, z) * 0.6 + 0.2));
@@ -41,7 +52,7 @@ export function createWolf(): CharacterModel {
   const legs: THREE.Object3D[] = [];
   for (const [x, z] of [[-3, -8], [3, -8], [-3, 8], [3, 8]] as const) {
     const leg = new VoxelBuilder();
-    leg.box(-1, -12, -1, 2, 0, 2, "#5a5a62").box(-1, -12, -2, 2, -10, 2, "#3a3a40"); // pata
+    leg.box(-1, -12, -1, 2, 0, 2, look.snout).box(-1, -12, -2, 2, -10, 2, look.dark); // pata
     const p = pivot(x, 12, z, mesh(leg));
     legs.push(p);
     root.add(p);

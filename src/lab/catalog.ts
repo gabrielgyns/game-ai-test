@@ -4,7 +4,7 @@ import type { Item, Rarity } from "../domain/items";
 import type { ClassId } from "../domain/classes";
 import { CLASSES, CLASS_ORDER } from "../domain/classes";
 import { ENEMY_TEMPLATES, createEnemy, createPlayer, type EnemyKind } from "../domain/factories";
-import { createAncientTreant, createGoblinKing, createScorpionEmperor, createSkeletonLord, createSpiderQueen } from "../domain/boss";
+import { createAncientTreant, createFrostGiant, createGoblinKing, createIceQueen, createScorpionEmperor, createSkeletonLord, createSpiderQueen } from "../domain/boss";
 import { NPC_DEFS, createNpc } from "../domain/npc";
 import { SKILLS, type SkillId } from "../domain/skills";
 import { RARITY_LABEL } from "../domain/items";
@@ -131,6 +131,9 @@ const ENEMY_DESCRIPTIONS: Record<EnemyKind, string> = {
   wolf: "Lobo cinzento da Floresta Ancestral: caça em matilha, trota com quatro patas e morde rápido.",
   ent: "Ente Jovem: uma árvore que anda, com pés de raiz, braços de galho e olhos verdes no tronco. Lento e devastador.",
   elvenSpirit: "Espírito élfico das ruínas de Elar: arqueiro translúcido de capuz azul, que atira de longe e foge.",
+  snowWolf: "Lobo das neves dos Picos Gelados: o lobo da floresta de pelagem branca e olhos azuis, em matilha.",
+  iceWraith: "Espectro gélido: vulto de gelo translúcido com coroa de estilhaços e cajado de cristal; atira estilhaços que deixam lento.",
+  yeti: "Yeti: corcunda de pelo branco desgrenhado, cara azulada e mãos enormes. Lento para erguer o braço, devastador quando desce.",
 };
 
 const PROJECTILE_DESCRIPTIONS: Record<string, string> = {
@@ -224,6 +227,24 @@ export function buildCatalog(): Exhibit[] {
       description: "Chefe da Floresta Ancestral (nível 20). Uma árvore gigante coberta de musgo e cogumelos que brilham. Chicote de Vinhas, Raiz Esmagadora, Nuvem de Esporos que envenena o chão, Lascas de Casca em leque e lobos na fúria.",
       size: 6.5,
       spawn: (id) => createAncientTreant(id, { x: 0, y: 0, z: 0 }),
+    },
+    {
+      kind: "character",
+      id: "boss.frostGiant",
+      group: "Chefes",
+      label: "Gigante de Gelo",
+      description: "Chefe dos Picos Gelados (nível 28). Pele azul de pedra, armadura de placas de gelo, chifres e barba de pingentes, clava de geleira. Punho Glacial, Tremor Gélido, Avalanche que congela o chão, Estilhaços em leque, Avanço do Gigante e lobos das neves na fúria.",
+      size: 7,
+      spawn: (id) => createFrostGiant(id, { x: 0, y: 0, z: 0 }),
+    },
+    {
+      kind: "character",
+      id: "boss.iceQueen",
+      group: "Chefes",
+      label: "Rainha Gélida",
+      description: "Chefe da Caverna de Gelo. Alta, de cabelo branco e coroa de gelo, vestido azul e lâmina de gelo. Lâmina de Gelo, Nevasca em leque, Prisão de Gelo, Chão Congelado, Deslize Gélido e espectros na fúria. Escala com o nível da caverna.",
+      size: 4,
+      spawn: (id) => createIceQueen(id, { x: 0, y: 0, z: 0 }),
     },
   );
 
@@ -385,6 +406,8 @@ export function buildCatalog(): Exhibit[] {
   const DECOR_LABEL: Record<DecorKind, string> = {
     coffin: "Sarcófago", barrel: "Barril", bones: "Pilha de ossos", candles: "Velas", banner: "Estandarte", cobweb: "Teia",
     rubble: "Entulho", urn: "Urna", spikes: "Espinhos da armadilha", shrine: "Santuário da cripta", brazier: "Braseiro da cripta",
+    iceCluster: "Cristais de gelo (caverna)", snowdrift: "Monte de neve (caverna)", icicles: "Pingentes do teto (caverna)", iceLamp: "Lamparina de cristal (caverna)",
+    frozenBones: "Ossada congelada (caverna)", iceSpikes: "Espinhos de gelo (caverna)", iceBrazier: "Braseiro de chama fria (caverna)",
   };
   for (const kind of Object.keys(DECOR_BUILDERS) as DecorKind[]) {
     out.push({
@@ -393,7 +416,7 @@ export function buildCatalog(): Exhibit[] {
       group: "Cripta",
       label: DECOR_LABEL[kind],
       description: "Adereço da Cripta Esquecida, esculpido em voxels de 1/12 m. Encosta nas paredes das salas, sem bloquear o caminho.",
-      size: kind === "banner" || kind === "cobweb" ? 2 : 1.4,
+      size: kind === "banner" || kind === "cobweb" || kind === "icicles" ? 2 : 1.4,
       voxels: () => DECOR_BUILDERS[kind](),
       voxel: DECOR_VOXEL,
       build: () => {

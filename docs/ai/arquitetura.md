@@ -52,10 +52,12 @@ o servidor roda `stepWorld` e o cliente roda só `src/game`.
 - **Habilidades e talentos**: `useSkill` lê `skillMods(e, id)` e combina primitivas de `status.ts`.
   A recarga efetiva é `effectiveCooldown` (ranks + afixo). `statusSystem` roda antes da IA.
 - **Dungeon**: `world.dungeon` existe só durante uma corrida e nunca é salvo. Tudo em x ≥ 1000
-  (`DUNGEON_REGION_X` = 500 separa as regiões) é da cripta: `closeDungeon` remove entidades, drops,
+  (`DUNGEON_REGION_X` = 500 separa as regiões) é da dungeon: `closeDungeon` remove entidades, drops,
   poças e projéteis de lá. Movimento, projéteis e aggro consultam `isWalkable`/`hasLineOfSight`.
-  `EntityViews.prune` tira das views o que saiu do mundo.
-- **Loja**: `world.shop` (estoque do dia e recompra) é salvo; regras só em `domain/shop.ts`.
+  `EntityViews.prune` tira das views o que saiu do mundo. Cada dungeon é um tema (`DUNGEON_THEMES`:
+  entrada, nível mínimo, mistura de inimigos, guardião, chefe) sobre a mesma máquina; `run.theme` diz
+  qual, e `dungeonView.ts` escolhe a paleta e os adereços pelo mesmo id (`STYLES`).
+- **Loja**: `world.shops` (estoque do dia e recompra, por id de loja) é salvo; regras só em `domain/shop.ts`.
 - **Poças** vivem em `world.hazards` e não são salvas (somem em segundos).
 - **Direção de mira do jogador** é `abilities.aimDirection` (câmera), escrita por `main.ts` a cada
   frame; ataques, projéteis e dashes do jogador usam ela, não o yaw suavizado do corpo.

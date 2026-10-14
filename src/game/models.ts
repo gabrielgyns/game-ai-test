@@ -6,6 +6,7 @@ import { createBandit, createBogZombie, createGoblin, createOrc, createScorpion,
 import { createGoblinKing, createScorpionEmperor, createSkeletonLord, createSpiderQueen } from "./characters/bosses";
 import { createVillager } from "./characters/npcs";
 import { createAncientTreant, createArmorer, createElvenSpirit, createEnt, createPeddler, createRanger, createWolf } from "./characters/forest";
+import { createFrostGiant, createFurTrader, createHunter, createIceQueen, createIceWraith, createJarl, createSnowWolf, createYeti } from "./characters/peaks";
 
 export type { CharacterModel } from "./characters/common";
 export { equipmentSignature, createHero, paintWeapon } from "./characters/hero";
@@ -16,8 +17,8 @@ export { createVillager } from "./characters/npcs";
 /** Todos os arquétipos conhecidos, na ordem em que aparecem no jogo. */
 export const ARCHETYPES = [
   "hero", "slime", "goblin", "goblinArcher", "orc", "spider", "bogZombie", "scorpion", "bandit", "banditArcher",
-  "goblinKing", "spiderQueen", "scorpionEmperor", "skeleton", "skeletonArcher", "skeletonLord", "wolf", "ent", "elvenSpirit", "ancientTreant",
-  "elder", "smith", "guard", "merchant", "ranger", "peddler", "armorer",
+  "goblinKing", "spiderQueen", "scorpionEmperor", "skeleton", "skeletonArcher", "skeletonLord", "wolf", "ent", "elvenSpirit", "ancientTreant", "snowWolf", "iceWraith", "yeti", "frostGiant", "iceQueen",
+  "elder", "smith", "guard", "merchant", "ranger", "peddler", "armorer", "jarl", "furTrader", "hunter",
 ] as const;
 
 export function createModel(archetype: string, equipment?: Equipment, classId?: ClassId): CharacterModel {
@@ -43,6 +44,14 @@ export function createModel(archetype: string, equipment?: Equipment, classId?: 
     case "elvenSpirit": return createElvenSpirit();
     case "ancientTreant": return createAncientTreant();
     case "ranger": return createRanger();
+    case "snowWolf": return createSnowWolf();
+    case "iceWraith": return createIceWraith();
+    case "yeti": return createYeti();
+    case "frostGiant": return createFrostGiant();
+    case "iceQueen": return createIceQueen();
+    case "jarl": return createJarl();
+    case "furTrader": return createFurTrader();
+    case "hunter": return createHunter();
     case "peddler": return createPeddler();
     case "armorer": return createArmorer();
     case "elder": return createVillager("elder");

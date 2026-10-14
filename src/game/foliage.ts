@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { biomeWeights, DESERT_BOSS_HOME, SWAMP_BOSS_HOME } from "../domain/biomes";
-import { FOREST_BOSS_HOME, FOREST_CAMP, FOREST_RUINS, isWater, terrainHeight, WATER_LEVEL, WORLD_HALF } from "../domain/terrain";
+import { FOREST_BOSS_HOME, FOREST_CAMP, FOREST_RUINS, isIce, isWater, PEAKS_BOSS_HOME, PEAKS_VILLAGE, terrainHeight, WATER_LEVEL, WORLD_HALF } from "../domain/terrain";
 import { ZONES, type ZoneDefinition } from "../domain/zones";
 import { BOSS_HOME, seededRandom } from "../domain/worldgen";
 import { VoxelBuilder, voxelMaterial } from "./voxel";
@@ -159,6 +159,30 @@ function placeForestFoliage(seed: number, zone: ZoneDefinition): Placement[] {
   return out;
 }
 
+/** Picos Gelados: capim ralo e queimado de frio, em tufos esparsos, fora do gelo e das encostas. */
+function placePeaksFoliage(seed: number, zone: ZoneDefinition): Placement[] {
+  const rand = seededRandom(seed + 191);
+  const out: Placement[] = [];
+  for (let cx = -WORLD_HALF + 1; cx < WORLD_HALF - 1; cx++) {
+    for (let cz = -WORLD_HALF + 1; cz < WORLD_HALF - 1; cz++) {
+      const lx = cx + 0.5, lz = cz + 0.5;
+      const x = zone.center.x + lx, z = zone.center.z + lz;
+      if (isIce(x, z)) continue;
+      const h = terrainHeight(x, z);
+      if (Math.abs(h - terrainHeight(x + 1, z)) >= 1 || Math.abs(h - terrainHeight(x, z + 1)) >= 1) continue;
+      if (Math.hypot(lx - PEAKS_VILLAGE.x, lz - PEAKS_VILLAGE.z) < 9 || Math.hypot(lx - PEAKS_BOSS_HOME.x, lz - PEAKS_BOSS_HOME.z) < 14) continue;
+      const patch = valueNoise(lx / 9, lz / 9, seed);
+      if (patch < 0.55 || rand() > (patch - 0.55) * 2.2) continue;
+      const count = 1 + Math.floor(rand() * 2);
+      for (let k = 0; k < count; k++) {
+        const v = 0.85 + rand() * 0.15;
+        out.push({ kind: "grass", x: x - 0.3 + rand() * 0.6, y: h, z: z - 0.3 + rand() * 0.6, yaw: Math.floor(rand() * 4) * (Math.PI / 2), scale: 0.55 + rand() * 0.35, tint: new THREE.Color(v * 1.55, v * 1.0, v * 0.7) }); // capim queimado de frio
+      }
+    }
+  }
+  return out;
+}
+
 /** Decide o que cresce em cada metro quadrado do mapa. Determinístico pela seed. */
 function placeFoliage(seed: number): Placement[] {
   const rand = seededRandom(seed);
@@ -251,7 +275,8 @@ export class Foliage {
     const material = foliageMaterial(this.uniforms);
     const geometries = new Map<Kind, THREE.BufferGeometry>();
     const buckets = new Map<string, Placement[]>();
-    for (const p of zone.id === "floresta" ? placeForestFoliage(seed, zone) : placeFoliage(seed)) {
+    const placements = zone.id === "floresta" ? placeForestFoliage(seed, zone) : zone.id === "picos" ? placePeaksFoliage(seed, zone) : placeFoliage(seed);
+    for (const p of placements) {
       const key = `${p.kind}|${Math.floor(p.x / CHUNK)}|${Math.floor(p.z / CHUNK)}`;
       let list = buckets.get(key);
       if (!list) buckets.set(key, (list = []));
