@@ -49,6 +49,8 @@ o servidor roda `stepWorld` e o cliente roda só `src/game`.
 - **Ids de item** são globais (`items.ts`); ao carregar um save, `resetItemIds(max + 1)`.
 - **Save**: só o que muda é salvo; o mundo é regenerado pela seed. Mudar a geração do mundo não
   quebra saves antigos, mas mudar o formato de `SaveData` exige subir `SAVE_VERSION` e migrar.
+  Campos novos opcionais (como `heroName`) não exigem. Os saves vivem em 5 slots (`saveSlots.ts`,
+  chaves `vale.save.N` e `vale.activeSlot`); só o `main.ts` decide em qual slot o jogo salva.
 
 ## Apresentação: peças principais
 

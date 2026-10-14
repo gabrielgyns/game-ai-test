@@ -52,6 +52,13 @@ com screenshots antes de serem considerados prontos.
     na `main`. Bug reportado no teste dele: depois do Golpe Giratório o braço da arma ficava
     esticado no herói, porque o reset só rodava em modelos sem braço livre; agora os dois braços
     voltam e um teste em `src/game/entityViews.test.ts` cobre isso.
+17. **Saves em slots** (pedido do dono: "mais de 1 save, localmente"). Domínio em `saveSlots.ts`:
+    `SaveSlots` sobre uma porta `KeyValueStore` (5 slots, slot ativo, resumo por slot, migração do
+    save único antigo `vale.save` para o primeiro slot livre), nome do herói opcional no `SaveData`
+    (sem subir a versão) e nomes sugeridos por classe. Apresentação: tela de saves (`slotsUI.ts`) que
+    substitui a escolha de classe do overlay e os botões de exportar/importar/novo jogo do menu.
+    Trocar de slot salva o atual e recarrega a página (o mundo nasce uma vez no boot). Verificado com
+    11 testes de domínio e um roteiro headless de 15 checagens (criar, trocar, apagar, migrar).
 
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).

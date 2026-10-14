@@ -45,9 +45,12 @@ onde você estava quando ela começou a tecer. No platô ao norte, cercado de to
 Investida Real em linha, três fases que aceleram os avisos, lacaios na fúria final e loot épico garantido. Subir de nível cura por completo e aumenta vida e dano.
 Se cair, você renasce no santuário depois de alguns segundos. Inimigos renascem em casa.
 
-O progresso é salvo automaticamente no navegador (a cada 45 s, ao concluir quests, subir de nível e ao
-sair da aba). Ao abrir o jogo de novo, ele continua de onde parou. No menu (ESC) dá para salvar na hora,
-exportar o save como arquivo `.json`, importar um arquivo e começar um novo jogo.
+O jogo tem **5 slots de save** no navegador, cada um com um herói (classe e nome escolhidos na criação).
+O slot em uso é salvo automaticamente (a cada 45 s, ao concluir quests, subir de nível e ao sair da aba),
+e ao abrir o jogo de novo ele oferece continuar o último slot. A tela de saves (no início, ou em
+ESC → Saves) mostra herói, classe, nível, ouro, quests e tempo de jogo de cada slot, e permite jogar,
+criar um herói novo, apagar, exportar o slot como `.json` e importar um arquivo num slot vazio.
+Saves antigos, de antes dos slots, migram sozinhos para o slot 1.
 
 Todo o áudio é sintetizado em tempo real com Web Audio, sem arquivos: efeitos de golpe, dano, passos,
 esquiva, coleta (acorde por raridade), poção, nível, quests e habilidades, mais uma trilha ambiente
@@ -106,6 +109,7 @@ src/
     npc.ts         NPCs do santuário e suas falas
     quests.ts      definições de quests, diário do jogador, aceitar/avançar/entregar
     save.ts        snapshot serializável do progresso e reconstrução do mundo a partir dele
+    saveSlots.ts   slots de save sobre uma porta chave-valor (localStorage no jogo, Map nos testes)
     terrain.ts     função de altura do terreno (compartilhada com a malha visual), água do pântano
     biomes.ts      biomas por região (campina, pântano, deserto) e pesos de transição
     worldgen.ts    geração determinística do mundo por anéis de dificuldade
@@ -121,7 +125,8 @@ src/
     skillBar.ts    barra de habilidades com recarga
     dialogueUI.ts  painel de conversa com NPCs
     questTracker.ts lista de quests ativas
-    storage.ts     localStorage, exportar e importar arquivo de save
+    storage.ts     localStorage como porta dos slots, pedido de novo jogo, exportar e importar arquivo
+    slotsUI.ts     tela de saves (lista, criar herói, apagar, exportar, importar)
     audio.ts       sintetizador de efeitos e música generativa (Web Audio)
     itemIcons.ts   ícones de itens em pixel art (usados na UI e nos drops 3D)
     dropViews.ts   itens caídos no chão: ícone extrudado em voxel, anel e feixe por raridade

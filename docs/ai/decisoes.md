@@ -81,3 +81,11 @@ congelada em `src/lab/legacyModels.ts` só para comparação.
 ## D19. Trabalho visual em branch separada (`design/lab`)
 A pedido do dono: mudanças de design ficam em `design/lab` até ele aprovar, e só então vão para a
 `main`. Os marcos de gameplay continuam indo direto para a `main`.
+
+## D20. Slots de save com porta chave-valor e recarga ao trocar
+`SaveSlots` (domínio) recebe um `KeyValueStore` em vez de tocar no `localStorage`: os testes usam um
+Map e o jogo usa o navegador, com queda para memória se o armazenamento estiver bloqueado. Trocar de
+slot ou criar um herói recarrega a página com o pedido na `sessionStorage`, como a escolha de classe
+já fazia; refazer o `main.ts` para trocar o mundo em memória custaria mais do que um recarregamento
+de meio segundo. O pedido de novo jogo só some quando o jogo começa (o primeiro save ocupa o slot).
+O nome do herói é opcional no `SaveData`, então a versão do save não mudou.

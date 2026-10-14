@@ -17,6 +17,8 @@ export interface SaveData {
   time: number;
   player: {
     classId?: ClassId;
+    /** Nome escolhido na criação do slot (opcional: saves antigos não têm). */
+    heroName?: string;
     position: Vec3;
     yaw: number;
     health: number;
@@ -44,6 +46,7 @@ export function serializeGame(world: World, seed: number): SaveData {
     time: world.time,
     player: {
       classId: p.classId ?? "warrior",
+      heroName: p.name,
       position: { ...p.transform.position },
       yaw: p.transform.yaw,
       health: p.health.current,
@@ -76,6 +79,7 @@ export function restoreGame(save: SaveData): World {
   const p = world.player!;
   const s = save.player;
 
+  if (s.heroName?.trim()) p.name = s.heroName.trim();
   p.transform.position = { ...s.position };
   p.transform.yaw = s.yaw;
   if (p.progression) {

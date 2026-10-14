@@ -29,6 +29,7 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 - [x] 3 quests novas (Rainha, escorpiões, salteadores); o Guarda passa a dar quest
 - [x] Classes: Guerreiro, Arqueiro (flechas, ajuda de mira) e Mago (raios, Bola de Fogo, Escudo Arcano), cada uma com 4 habilidades
 - [x] Voxel rico: personagens em 16 voxels/m com rosto, roupa, armas e acessórios detalhados, AO e grão; membros articulados com ciclo de caminhada
+- [x] Saves em 5 slots locais, com nome do herói, resumo de progresso, exportar/importar por slot e migração do save antigo
 - [x] Lab de modelos (`/lab.html`): vitrine de tudo que aparece no jogo, luz, animações e comparação com a versão anterior
 
 ## Próximos
@@ -41,7 +42,7 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 3. **Chefe do deserto** e mecânicas novas de padrão (projéteis, poças que ficam, escudos).
 4. **Lock-on.** Travar a câmera num alvo (Zelda) como alternativa ao modo livre.
 5. **Mais quests.** Objetivos de coleta e exploração, quests repetíveis diárias, e um mercador para vender loot.
-6. **Vários slots de save** e save na nuvem (quando houver servidor).
+6. **Save na nuvem** (quando houver servidor); os slots locais já existem.
 7. **Áudio com assets.** Trocar a síntese por samples e trilha composta quando houver arte sonora.
 8. **Árvore de habilidades** por classe e pontos ao subir de nível.
 9. **Dungeons.** Áreas instanciadas com chefes e loot garantido (Minecraft Dungeons).

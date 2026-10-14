@@ -60,3 +60,8 @@
 - No headless, o `requestAnimationFrame` continua rodando enquanto o script chama `__lab.step`, então
   animações cíclicas podem estar em outra fase na hora do screenshot. Para checar estado, leia a
   cena por `evaluate` em vez de confiar só na imagem.
+- No headless, o clique que começa o jogo às vezes consegue o pointer lock de verdade; com o mouse
+  preso, cliques em botões do menu vão para o canvas. Para abrir o menu num teste, chame
+  `document.exitPointerLock()` (o mesmo caminho do ESC) em vez de só mostrar o painel.
+- Campos de texto em painéis precisam parar a propagação do `keydown`, senão digitar "Iva" no nome
+  do herói abre a mochila (I) e bebe poção (Q).

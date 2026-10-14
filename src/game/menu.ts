@@ -14,9 +14,7 @@ export class PauseMenu {
   sensitivity = 1;
   onResume: () => void = () => {};
   onSave: () => void = () => {};
-  onExport: () => void = () => {};
-  onImport: () => void = () => {};
-  onNewGame: () => void = () => {};
+  onSlots: () => void = () => {};
   onVolume: (music: number, sfx: number) => void = () => {};
   private readonly music = el<HTMLInputElement>("menu-music");
   private readonly sfx = el<HTMLInputElement>("menu-sfx");
@@ -41,9 +39,7 @@ export class PauseMenu {
     this.music.addEventListener("input", volumeChanged);
     this.sfx.addEventListener("input", volumeChanged);
     el("menu-save").addEventListener("click", () => this.onSave());
-    el("menu-export").addEventListener("click", () => this.onExport());
-    el("menu-import").addEventListener("click", () => this.onImport());
-    el("menu-restart").addEventListener("click", () => this.onNewGame());
+    el("menu-slots").addEventListener("click", () => this.onSlots());
     this.sens.addEventListener("input", () => {
       this.sensitivity = Number(this.sens.value);
       this.sensValue.textContent = this.sensitivity.toFixed(1);

@@ -78,21 +78,26 @@
         <h1>Vale das Gosmas</h1>
         <p>Um RPG 3D. Fale com a Anciã Mira no santuário para começar sua jornada.</p>
         <p id="overlay-save" class="save-info hidden"></p>
-        <div id="class-picker" class="hidden"></div>
-        <p class="hint" id="overlay-hint">Clique para jogar</p>
-        <button id="overlay-new" class="hidden">Começar um novo jogo</button>
+        <p class="hint hidden" id="overlay-hint">Clique para jogar</p>
+        <button id="overlay-slots" class="hidden">Trocar de save</button>
+      </div>
+
+      <div id="slots" class="hidden">
+        <div class="panel">
+          <div class="slots-header"><h1>Saves</h1><button id="slots-back" class="hidden">Voltar</button></div>
+          <p class="slots-hint">Cada slot guarda um herói. O jogo salva sozinho no slot em uso.</p>
+          <div id="slots-list"></div>
+        </div>
       </div>
 
       <div id="menu" class="hidden">
         <div class="panel">
           <h1>Pausado</h1>
           <button id="menu-resume" class="primary">Continuar</button>
-          <button id="menu-save">Salvar agora</button>
           <div class="menu-row">
-            <button id="menu-export">Exportar save</button>
-            <button id="menu-import">Importar save</button>
+            <button id="menu-save">Salvar agora</button>
+            <button id="menu-slots">Saves</button>
           </div>
-          <button id="menu-restart" class="danger">Novo jogo</button>
           <div id="menu-save-info" class="save-info"></div>
           <label class="slider">
             <span>Sensibilidade do mouse <b id="menu-sens-value">1.0</b></span>

@@ -1,30 +1,50 @@
 import { isSaveData, type SaveData } from "../domain/save";
+import { heroNameOf, isValidSlot, SaveSlots, type KeyValueStore } from "../domain/saveSlots";
+import { isClassId, type ClassId } from "../domain/classes";
 
-const KEY = "vale.save";
-
-export function loadSave(): SaveData | null {
+/** localStorage como porta do domínio; se o navegador bloquear, vira um armazenamento só da sessão. */
+function browserStore(): KeyValueStore {
   try {
-    const raw = localStorage.getItem(KEY);
+    const probe = "vale.probe";
+    localStorage.setItem(probe, "1");
+    localStorage.removeItem(probe);
+    return localStorage;
+  } catch {
+    const mem = new Map<string, string>();
+    return { getItem: (k) => mem.get(k) ?? null, setItem: (k, v) => void mem.set(k, v), removeItem: (k) => void mem.delete(k) };
+  }
+}
+
+export const saveSlots = new SaveSlots(browserStore());
+
+/**
+ * Pedido de "novo jogo" num slot, guardado na sessão enquanto a página recarrega com a classe
+ * escolhida. Só some quando o jogo começa de fato (o primeiro save ocupa o slot).
+ */
+export interface NewGameIntent {
+  slot: number;
+  classId: ClassId;
+  heroName: string;
+}
+
+const NEW_GAME_KEY = "vale.newGame";
+
+export function readNewGameIntent(): NewGameIntent | null {
+  try {
+    const raw = sessionStorage.getItem(NEW_GAME_KEY);
     if (!raw) return null;
-    const parsed: unknown = JSON.parse(raw);
-    return isSaveData(parsed) ? parsed : null;
+    const v = JSON.parse(raw) as Partial<NewGameIntent>;
+    if (!isValidSlot(v.slot) || !isClassId(v.classId) || typeof v.heroName !== "string") return null;
+    return { slot: v.slot, classId: v.classId, heroName: v.heroName };
   } catch {
     return null;
   }
 }
 
-export function writeSave(save: SaveData): boolean {
+export function writeNewGameIntent(intent: NewGameIntent | null): void {
   try {
-    localStorage.setItem(KEY, JSON.stringify(save));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export function clearSave(): void {
-  try {
-    localStorage.removeItem(KEY);
+    if (intent) sessionStorage.setItem(NEW_GAME_KEY, JSON.stringify(intent));
+    else sessionStorage.removeItem(NEW_GAME_KEY);
   } catch {
     /* ignora */
   }
@@ -36,8 +56,9 @@ export function exportSave(save: SaveData): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   const stamp = new Date(save.savedAt).toISOString().slice(0, 19).replace(/[:T]/g, "-");
+  const name = heroNameOf(save).normalize("NFD").replace(/[^\w-]+/g, "").toLowerCase() || "heroi";
   a.href = url;
-  a.download = `vale-das-gosmas-${stamp}.json`;
+  a.download = `vale-das-gosmas-${name}-${stamp}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
