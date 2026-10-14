@@ -126,6 +126,13 @@ com screenshots antes de serem considerados prontos.
     arrastar `.vox` para a cena, comparação com os adereços antigos (`legacyProps.ts`). Custo: ~1,1M
     triângulos no vale (antes ~870k), ~400k no pântano e no deserto, ~1,5M no platô do Rei Goblin,
     que vê o mapa inteiro; boot ~1,3 s mais lento no headless. 16 testes novos.
+24. **Nível dos inimigos** (pedido do dono: "o level dos mobs ao lado do nome e hp"). Domínio:
+    `levels.ts` (`entityLevel`: herói pela progressão, inimigos e chefes pelo campo `level`;
+    `levelDifficulty` em 5 faixas pela diferença de nível), nível em cada `EnemyTemplate` (Gosma 1
+    a Salteador 9), chefes (Rei Goblin 6, Rainha 10, Imperador 12, Lorde Esqueleto = cripta + 2),
+    esqueletos da cripta no nível dela. Apresentação: selo com o número à esquerda da barra de vida
+    flutuante, "Nv N" ao lado do nome no painel do alvo e na barra do chefe, na cor da dificuldade
+    (cinza, verde, amarelo, laranja, vermelho). 5 testes novos.
 
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).

@@ -37,6 +37,8 @@ export function createPlayer(id: EntityId, position: Vec3, classId: ClassId = "w
 export interface EnemyTemplate {
   name: string;
   archetype: string;
+  /** Nível mostrado ao lado do nome; acompanha a força do tipo (vida, dano, XP). */
+  level: number;
   maxHealth: number;
   damage: number;
   speed: number;
@@ -53,6 +55,7 @@ export interface EnemyTemplate {
 
 export const ENEMY_TEMPLATES = {
   slime: {
+    level: 1,
     name: "Gosma",
     archetype: "slime",
     maxHealth: 30,
@@ -66,6 +69,7 @@ export const ENEMY_TEMPLATES = {
     goldReward: 3,
   },
   goblin: {
+    level: 3,
     name: "Goblin",
     archetype: "goblin",
     maxHealth: 55,
@@ -79,6 +83,7 @@ export const ENEMY_TEMPLATES = {
     goldReward: 7,
   },
   orc: {
+    level: 7,
     name: "Orc",
     archetype: "orc",
     maxHealth: 140,
@@ -92,6 +97,7 @@ export const ENEMY_TEMPLATES = {
     goldReward: 20,
   },
   spider: {
+    level: 5,
     name: "Aranha",
     archetype: "spider",
     maxHealth: 70,
@@ -105,6 +111,7 @@ export const ENEMY_TEMPLATES = {
     goldReward: 9,
   },
   bogZombie: {
+    level: 8,
     name: "Zumbi do Lodo",
     archetype: "bogZombie",
     maxHealth: 220,
@@ -118,6 +125,7 @@ export const ENEMY_TEMPLATES = {
     goldReward: 24,
   },
   scorpion: {
+    level: 7,
     name: "Escorpião",
     archetype: "scorpion",
     maxHealth: 120,
@@ -131,6 +139,7 @@ export const ENEMY_TEMPLATES = {
     goldReward: 20,
   },
   bandit: {
+    level: 9,
     name: "Salteador",
     archetype: "bandit",
     maxHealth: 160,
@@ -144,6 +153,7 @@ export const ENEMY_TEMPLATES = {
     goldReward: 40,
   },
   skeleton: {
+    level: 5,
     name: "Esqueleto",
     archetype: "skeleton",
     maxHealth: 90,
@@ -157,6 +167,7 @@ export const ENEMY_TEMPLATES = {
     goldReward: 12,
   },
   skeletonArcher: {
+    level: 5,
     name: "Esqueleto Arqueiro",
     archetype: "skeletonArcher",
     maxHealth: 65,
@@ -171,6 +182,7 @@ export const ENEMY_TEMPLATES = {
     ranged: { projectile: "arrow", keepDistance: 7 },
   },
   goblinArcher: {
+    level: 3,
     name: "Goblin Arqueiro",
     archetype: "goblinArcher",
     maxHealth: 42,
@@ -185,6 +197,7 @@ export const ENEMY_TEMPLATES = {
     ranged: { projectile: "arrow", keepDistance: 7 },
   },
   banditArcher: {
+    level: 9,
     name: "Salteador Arqueiro",
     archetype: "banditArcher",
     maxHealth: 120,
@@ -209,6 +222,7 @@ export function createEnemy(id: EntityId, kind: EnemyKind, position: Vec3): Enti
     kind: "enemy",
     name: t.name,
     archetype: t.archetype,
+    level: t.level,
     transform: { position: { ...position }, yaw: Math.random() * Math.PI * 2 },
     movement: { speed: t.speed, speedMultiplier: 1, intent: { x: 0, z: 0 } },
     health: { current: t.maxHealth, max: t.maxHealth, baseMax: t.maxHealth, regenPerSecond: 2, lastDamagedAt: -Infinity },

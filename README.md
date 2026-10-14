@@ -75,6 +75,8 @@ Grito deixa todos lentos, o Segundo Fôlego dispara sozinho quando a vida fica c
 vira uma rajada de três flechas que atordoam, a Chuva de Flechas vira tempestade, a Bola de Fogo dobra e
 deixa o chão em chamas, a Nova Gélida congela, o Teleporte explode na partida e o Escudo Arcano explode
 ao acabar. Chefes resistem a atordoamento e lentidão (metade do tempo). Reiniciar a árvore custa ouro.
+Todo inimigo mostra o **nível** ao lado da barra de vida e do nome, na cor da dificuldade para o seu
+herói: cinza (bem abaixo), verde (fácil), amarelo (páreo), laranja (difícil) e vermelho (perigoso).
 Se cair, você renasce no santuário depois de alguns segundos. Inimigos renascem em casa.
 
 O jogo tem **5 slots de save** no navegador, cada um com um herói (classe e nome escolhidos na criação).

@@ -38,6 +38,7 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 - [x] Saves em 5 slots locais, com nome do herói, resumo de progresso, exportar/importar por slot e migração do save antigo
 - [x] Cenário em alta resolução: 25 modelos esculpidos em 12 voxels/m (carvalhos com galhos, bétulas, pinheiros em camadas e nevados, arbustos, pedras com musgo e líquen, arenitos, árvores mortas com barba-de-velho, cogumelos, cactos, ossadas e os marcos das arenas), três níveis de detalhe com sombra barata e recorte pela câmera
 - [x] Modelos `.vox` do MagicaVoxel: `assets/vox/<id>.vox` substitui a escultura; o lab exporta qualquer adereço como `.vox` e mostra um arquivo arrastado para a cena
+- [x] Nível de inimigos e chefes ao lado do nome e da vida, na cor da dificuldade para o herói
 - [x] Lab de modelos (`/lab.html`): vitrine de tudo que aparece no jogo, luz, animações e comparação com a versão anterior
 
 ## Próximos

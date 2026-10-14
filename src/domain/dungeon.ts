@@ -125,6 +125,7 @@ export function enterDungeon(world: World, player: Entity, seed = Math.floor(wor
       const at = cellToWorld(cell.i, cell.j);
       const e = world.spawn((id) => createEnemy(id, pickKind(rand), at));
       e.health.baseMax = e.health.max = e.health.current = Math.round(e.health.max * scale);
+      e.level = level; // a cripta acompanha o herói
       e.combat.baseDamage = e.combat.damage = Math.round(e.combat.damage * scale);
       const ai = e.ai!;
       ai.xpReward = Math.round(ai.xpReward * scale);

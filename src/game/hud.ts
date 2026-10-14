@@ -2,6 +2,8 @@ import type { Entity } from "../domain/components";
 import { countItems } from "../domain/inventory";
 import { isAlive } from "../domain/components";
 import type { World } from "../domain/world";
+import { entityLevel, levelDifficulty, type LevelDifficulty } from "../domain/levels";
+import { DIFFICULTY_COLOR } from "./levelBadge";
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -27,6 +29,8 @@ export class Hud {
   private readonly bossFill = el("boss-hp-fill");
   private readonly bossText = el("boss-hp-text");
   private readonly targetName = el("target-name");
+  private readonly targetLevel = el("target-level");
+  private readonly bossLevel = el("boss-level");
   private readonly targetHpFill = el("target-hp-fill");
   private readonly targetHpText = el("target-hp-text");
   private readonly log = el("log");
@@ -85,6 +89,7 @@ export class Hud {
     if (!boss) return;
     this.target.classList.add("hidden");
     this.bossName.textContent = boss.boss!.title;
+    if (world.player) showLevel(this.bossLevel, world.player, boss);
     const phases = boss.boss!.phaseThresholds.length + 1;
     this.bossPhase.textContent = `Fase ${boss.boss!.phase} / ${phases}`;
     this.bossFill.style.width = `${(boss.health.current / boss.health.max) * 100}%`;
@@ -121,6 +126,7 @@ export class Hud {
     if (target) {
       this.target.classList.remove("hidden");
       this.targetName.textContent = target.name;
+      showLevel(this.targetLevel, player, target);
       this.targetHpFill.style.width = `${(target.health.current / target.health.max) * 100}%`;
       this.targetHpText.textContent = `${Math.ceil(target.health.current)} / ${target.health.max}`;
     } else {
@@ -135,3 +141,21 @@ export class Hud {
     }
   }
 }
+
+/** "Nv 7" ao lado do nome, na cor da dificuldade para o herói. */
+function showLevel(node: HTMLElement, hero: Entity, mob: Entity): void {
+  const level = entityLevel(mob);
+  const difficulty = levelDifficulty(entityLevel(hero), level);
+  node.textContent = `Nv ${level}`;
+  node.style.color = DIFFICULTY_COLOR[difficulty];
+  node.style.borderColor = DIFFICULTY_COLOR[difficulty];
+  node.title = DIFFICULTY_LABEL[difficulty];
+}
+
+const DIFFICULTY_LABEL: Record<LevelDifficulty, string> = {
+  trivial: "Bem abaixo do seu nível",
+  easy: "Fácil",
+  even: "No seu nível",
+  hard: "Difícil",
+  deadly: "Perigoso",
+};

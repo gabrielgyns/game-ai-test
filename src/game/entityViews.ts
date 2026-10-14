@@ -6,6 +6,8 @@ import { VoxelBuilder } from "./voxel";
 import type { TelegraphShape } from "../domain/boss";
 import { questsForNpc } from "../domain/quests";
 import { clamp } from "../domain/math";
+import { entityLevel, levelDifficulty } from "../domain/levels";
+import { levelBadgeTexture } from "./levelBadge";
 
 const FLASH_TIME = 0.14;
 const SLOW_TINT = new THREE.Color("#3a6ad8");
@@ -18,6 +20,9 @@ class EntityView {
   private modelSignature: string;
   readonly healthBar: THREE.Group;
   private readonly healthFill: THREE.Mesh;
+  /** Selo com o nível, à esquerda da barra (cor pela dificuldade para o herói). */
+  private readonly levelBadge: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
+  private badgeKey = "";
   private readonly targetRing: THREE.Mesh;
   private swingTime = Infinity;
   private walkPhase = 0;
@@ -71,7 +76,9 @@ class EntityView {
       new THREE.MeshBasicMaterial({ color: entity.kind === "player" ? "#4cd964" : "#e5484d", depthTest: false }),
     );
     this.healthFill.position.z = 0.001;
-    this.healthBar.add(back, this.healthFill);
+    this.levelBadge = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.25), new THREE.MeshBasicMaterial({ transparent: true, depthTest: false }));
+    this.levelBadge.position.set(-0.84, 0, 0.002);
+    this.healthBar.add(back, this.healthFill, this.levelBadge);
     this.healthBar.renderOrder = 10;
     this.healthBar.visible = entity.kind === "enemy";
     scene.add(this.healthBar);
@@ -405,6 +412,14 @@ class EntityView {
       const ratio = e.health.current / e.health.max;
       this.healthFill.scale.x = Math.max(ratio, 0.001);
       this.healthFill.position.x = -(1 - ratio) * 0.6;
+      const level = entityLevel(e);
+      const difficulty = levelDifficulty(player ? entityLevel(player) : level, level);
+      const key = `${level}|${difficulty}`;
+      if (key !== this.badgeKey) {
+        this.badgeKey = key;
+        this.levelBadge.material.map = levelBadgeTexture(level, difficulty);
+        this.levelBadge.material.needsUpdate = true;
+      }
     }
 
     this.targetRing.visible = isTarget;
@@ -463,6 +478,8 @@ class EntityView {
   }
 
   dispose(scene: THREE.Scene): void {
+    this.levelBadge.geometry.dispose();
+    this.levelBadge.material.dispose();
     scene.remove(this.model.root, this.healthBar, this.targetRing, this.telegraph, this.shieldMesh);
     if (this.carapaceMesh) scene.remove(this.carapaceMesh);
     if (this.stunStars) scene.remove(this.stunStars);

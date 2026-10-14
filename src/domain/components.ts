@@ -129,6 +129,8 @@ export interface Entity {
   health: Health;
   combat: Combat;
   progression?: Progression;
+  /** Nível de inimigos e chefes (o herói usa `progression.level`). Ver `entityLevel`. */
+  level?: number;
   ai?: EnemyAI;
   wallet?: Wallet;
   respawn?: Respawn;
