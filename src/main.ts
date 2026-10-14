@@ -9,6 +9,7 @@ import { stepWorld } from "./domain/simulation";
 import { DEFAULT_SEED, generateWorld } from "./domain/worldgen";
 import { describeSave, restoreGame, serializeGame } from "./domain/save";
 import { clearSave, exportSave, importSave, loadSave, writeSave } from "./game/storage";
+import { GameAudio } from "./game/audio";
 import { ThirdPersonCamera } from "./game/camera";
 import { EntityViews } from "./game/entityViews";
 import { createEnvironment } from "./game/environment";
@@ -88,6 +89,20 @@ const cam = new ThirdPersonCamera(window.innerWidth / window.innerHeight);
 const hud = new Hud();
 const floats = new FloatingTexts(scene);
 const menu = new PauseMenu();
+const audio = new GameAudio();
+menu.setVolumes(audio.volumes.music, audio.volumes.sfx);
+menu.onVolume = (music, sfx) => audio.setVolumes({ music, sfx });
+
+/** Pan e distância de um ponto do mundo em relação ao herói e à câmera. */
+function spatial(pos: { x: number; z: number }): { pan: number; distance: number } {
+  const dx = pos.x - player.transform.position.x;
+  const dz = pos.z - player.transform.position.z;
+  const distance = Math.hypot(dx, dz);
+  // Eixo "direita" da câmera no plano XZ.
+  const rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw);
+  const pan = distance < 0.5 ? 0 : (dx * rx + dz * rz) / distance;
+  return { pan, distance };
+}
 const inventoryUI = new InventoryUI(world, player);
 const dropViews = new DropViews(scene);
 const skillBar = new SkillBar();
@@ -146,7 +161,9 @@ function closeInventory(): void {
 input.onFirstInteraction = () => {
   hud.hideIntro();
   started = true;
+  audio.unlock();
 };
+canvas.addEventListener("mousedown", () => audio.unlock());
 // ESC solta o pointer lock: pausa e abre o menu. Voltar ao jogo recaptura o mouse.
 input.onPointerLockChange = (locked) => {
   if (!started) return;
@@ -261,24 +278,30 @@ function currentTarget(): Entity | undefined {
 function handleEvents(events: ReturnType<typeof stepWorld>): void {
   for (const ev of events) {
     switch (ev.type) {
-      case "attack":
+      case "attack": {
         views.get(ev.source)?.triggerSwing();
+        const src = world.get(ev.source);
+        if (src) audio.play("swing", { ...spatial(src.transform.position), pitch: src.boss ? 0.6 : src.kind === "player" ? 1.1 : 0.85 });
         break;
-      case "windup":
+      }
+      case "windup": {
         views.get(ev.source)?.triggerWindup(ev.duration, ev.shape);
-        if (ev.patternName) {
-          const src = world.get(ev.source);
-          if (src) floats.spawn(src.transform.position, ev.patternName, "#ff6b6b", 1.1);
-        }
+        const src = world.get(ev.source);
+        if (src) audio.play("windup", { ...spatial(src.transform.position), pitch: src.boss ? 0.6 : 1 });
+        if (ev.patternName && src) floats.spawn(src.transform.position, ev.patternName, "#ff6b6b", 1.1);
         break;
+      }
       case "bossEngage": {
         const boss = world.get(ev.entity);
         if (boss) hud.pushLog(`${boss.name} entrou em combate!`, "level");
+        audio.play("bossRoar");
+        audio.setBossMode(true);
         break;
       }
       case "bossPhase": {
         const boss = world.get(ev.entity);
         if (boss) {
+          audio.play(ev.phase === 3 ? "bossRoar" : "bossPhase");
           floats.spawn(boss.transform.position, ev.phase === 3 ? "FÚRIA!" : `FASE ${ev.phase}`, "#ff9f43", 1.5);
           hud.pushLog(ev.phase === 3 ? `${boss.name} está furioso: mais dano e lacaios!` : `${boss.name} entrou na fase ${ev.phase}: golpes mais rápidos.`, "dmg-in");
         }
@@ -289,6 +312,7 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         hud.pushLog("Goblins foram convocados!", "dmg-in");
         break;
       case "questAccepted":
+        audio.play("questAccept");
         hud.pushLog(`Quest aceita: ${questById(ev.questId)?.title ?? ev.questId}`, "level");
         break;
       case "questProgress": {
@@ -308,6 +332,7 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         const q = questById(ev.questId);
         hud.pushLog(`Quest concluída: ${q?.title ?? ev.questId} (+${ev.xp} XP, +${ev.gold} ouro${ev.itemNames.length ? ", " + ev.itemNames.join(", ") : ""})`, "level");
         floats.spawn(player.transform.position, "QUEST CONCLUÍDA!", "#ffe57a", 1.3);
+        audio.play("questComplete");
         saveGame("auto");
         break;
       }
@@ -316,6 +341,7 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         const source = world.get(ev.source);
         if (!target || !source) break;
         const toPlayer = ev.target === player.id;
+        audio.play(toPlayer ? "hurt" : "hit", { ...spatial(target.transform.position), pitch: target.boss ? 0.7 : 1 });
         floats.spawn(target.transform.position, `${ev.amount}`, toPlayer ? "#ff7b7b" : "#ffd37a", toPlayer ? 1 : 0.9);
         hud.pushLog(toPlayer ? `${source.name} te acertou por ${ev.amount}` : `Você acertou ${target.name} por ${ev.amount}`, toPlayer ? "dmg-in" : "dmg-out");
         break;
@@ -325,8 +351,11 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         if (!victim) break;
         if (ev.entity === player.id) {
           hud.pushLog("Você caiu em combate…", "dmg-in");
+          audio.play("playerDeath");
         } else {
           hud.pushLog(`${victim.name} derrotado!`, "gain");
+          audio.play("enemyDeath", { ...spatial(victim.transform.position), pitch: victim.boss ? 0.5 : victim.archetype === "orc" ? 0.7 : victim.archetype === "slime" ? 1.3 : 1 });
+          if (victim.boss) audio.setBossMode(false);
         }
         break;
       }
@@ -337,6 +366,7 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         hud.pushLog(`+${ev.gold} ouro`, "gain");
         break;
       case "levelUp":
+        audio.play("levelUp");
         floats.spawn(player.transform.position, `NÍVEL ${ev.level}!`, "#ffe57a", 1.4);
         hud.pushLog(`Você alcançou o nível ${ev.level}!`, "level");
         saveGame("auto");
@@ -347,6 +377,7 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
       case "pickup": {
         const item = player.inventory?.items.find((i) => i?.id === ev.itemId);
         if (item) {
+          audio.play(item.rarity === "common" ? "pickupCommon" : "pickupRare", { pitch: item.rarity === "epic" ? 1.25 : item.rarity === "rare" ? 1.1 : 1 });
           hud.pushLog(`Você pegou ${item.name}`, `loot-${item.rarity}`);
           floats.spawn(player.transform.position, item.name, RARITY_FLOAT[item.rarity], item.rarity === "common" ? 0.7 : 0.9);
         }
@@ -356,6 +387,7 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         hud.pushLog("Mochila cheia!", "dmg-in");
         break;
       case "heal":
+        audio.play("potion");
         floats.spawn(player.transform.position, `+${ev.amount}`, "#9ce39c", 0.9);
         hud.pushLog(`Você recuperou ${ev.amount} de vida.`, "gain");
         break;
@@ -366,6 +398,7 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
       }
       case "skill": {
         const def = SKILLS[ev.skill];
+        audio.play(ev.skill);
         if (ev.skill === "whirlwind") {
           views.get(ev.entity)?.triggerSpin();
           hud.pushLog(ev.hits > 0 ? `${def.name} acertou ${ev.hits} inimigo${ev.hits > 1 ? "s" : ""}!` : `${def.name} não acertou ninguém.`, ev.hits > 0 ? "dmg-out" : "gain");
@@ -378,8 +411,19 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         break;
       }
       case "dodge":
-        if (ev.entity === player.id) floats.spawn(player.transform.position, "Esquivou!", "#d0f0ff", 0.8);
+        if (ev.entity === player.id) {
+          audio.play("dodge");
+          floats.spawn(player.transform.position, "Esquivou!", "#d0f0ff", 0.8);
+        }
         break;
+      case "roll":
+        if (ev.entity === player.id) audio.play("roll");
+        break;
+      case "drop": {
+        const d = world.drops.get(ev.dropId);
+        if (d) audio.play("drop", spatial(d.position));
+        break;
+      }
       case "buffEnd":
         hud.pushLog("Grito de Guerra acabou.", "dmg-out");
         break;
@@ -455,6 +499,15 @@ function frame(): void {
     accumulator -= FIXED_DT;
   }
 
+  // Passos enquanto anda no chão (sem dash).
+  if (isAlive(player) && !player.abilities?.dash && (player.movement.intent.x !== 0 || player.movement.intent.z !== 0)) {
+    audio.footstep(world.time, input.running);
+  }
+  // Música de chefe segue o estado de engajamento (ele pode desistir e voltar para casa).
+  let bossEngaged = false;
+  for (const e of world.enemies()) if (e.boss?.engaged && isAlive(e)) bossEngaged = true;
+  audio.setBossMode(bossEngaged);
+
   // Apresentação.
   const target = currentTarget();
   const p = player.transform.position;
@@ -487,6 +540,8 @@ if (import.meta.env.DEV) {
       menu.open();
     },
     save: () => saveGame("manual"),
+    audioState: () => (audio.ready ? "running" : "locked"),
+    audioLevel: () => audio.measureLevel(),
     setPaused: (v: boolean) => {
       paused = v;
     },

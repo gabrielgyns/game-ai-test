@@ -259,3 +259,5 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0d12; col
   padding: 6px 14px; font-size: 13px; color: var(--text); opacity: 0; transition: opacity 200ms;
 }
 #toast.show { opacity: 1; }
+
+.menu-row.sliders .slider { flex: 1; }

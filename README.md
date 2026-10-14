@@ -41,6 +41,10 @@ O progresso é salvo automaticamente no navegador (a cada 45 s, ao concluir ques
 sair da aba). Ao abrir o jogo de novo, ele continua de onde parou. No menu (ESC) dá para salvar na hora,
 exportar o save como arquivo `.json`, importar um arquivo e começar um novo jogo.
 
+Todo o áudio é sintetizado em tempo real com Web Audio, sem arquivos: efeitos de golpe, dano, passos,
+esquiva, coleta (acorde por raridade), poção, nível, quests e habilidades, mais uma trilha ambiente
+generativa que vira um tema pulsante quando um chefe entra em combate. Volumes no menu (ESC).
+
 Veja o [ROADMAP](ROADMAP.md) para a visão e os próximos marcos.
 
 ## Comandos
@@ -89,6 +93,7 @@ src/
     dialogueUI.ts  painel de conversa com NPCs
     questTracker.ts lista de quests ativas
     storage.ts     localStorage, exportar e importar arquivo de save
+    audio.ts       sintetizador de efeitos e música generativa (Web Audio)
     itemIcons.ts   ícones de itens em pixel art (usados na UI e nos drops 3D)
     dropViews.ts   itens caídos no chão: ícone extrudado em voxel, anel e feixe por raridade
     terrainMesh.ts terreno em blocos (colunas por célula, degraus de 0,5 m)

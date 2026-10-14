@@ -23,6 +23,7 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 - [x] Chefe: Rei Goblin na arena ao norte, com três golpes telegrafados, três fases, lacaios e loot épico garantido
 - [x] NPCs no santuário (Anciã, Ferreiro, Guarda) com diálogo (F), 4 quests encadeadas, rastreador e marcadores ! e ?
 - [x] Salvar e carregar: autosave, continuar ao abrir, exportar/importar arquivo .json, novo jogo
+- [x] Som sintetizado: efeitos para combate, loot, habilidades e quests; trilha ambiente generativa e tema de chefe
 
 ## Próximos
 
@@ -34,7 +35,7 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 4. **Lock-on.** Travar a câmera num alvo (Zelda) como alternativa ao modo livre.
 5. **Mais quests.** Objetivos de coleta e exploração, quests repetíveis diárias, e um mercador para vender loot.
 6. **Vários slots de save** e save na nuvem (quando houver servidor).
-7. **Áudio.** Efeitos de golpe, passos, música ambiente.
+7. **Áudio com assets.** Trocar a síntese por samples e trilha composta quando houver arte sonora.
 8. **Classes.** Guerreiro, arqueiro, mago (Perfect World), com árvore de habilidades.
 9. **Dungeons.** Áreas instanciadas com chefes e loot garantido (Minecraft Dungeons).
 10. **Multiplayer.** Servidor rodando o mesmo domínio; cliente só renderiza.
