@@ -1,4 +1,5 @@
 import type { Vec2, Vec3 } from "./math";
+import type { Equipment, Inventory } from "./inventory";
 
 export type EntityId = number;
 export type EntityKind = "player" | "enemy";
@@ -10,8 +11,10 @@ export interface Transform {
 }
 
 export interface Movement {
-  /** Metros por segundo. */
+  /** Metros por segundo (antes do multiplicador). */
   speed: number;
+  /** Multiplicador vindo de equipamento (1 = sem bônus). */
+  speedMultiplier: number;
   /** Direção desejada no plano XZ (normalizada ou zero). Preenchida por input ou IA. */
   intent: Vec2;
   /**
@@ -23,7 +26,10 @@ export interface Movement {
 
 export interface Health {
   current: number;
+  /** Máximo efetivo (base + equipamento). Recalculado por recomputeStats. */
   max: number;
+  /** Máximo base, alterado pelo nível. */
+  baseMax: number;
   /** Pontos por segundo regenerados fora de combate. */
   regenPerSecond: number;
   /** Instante (world.time) do último dano sofrido. */
@@ -31,7 +37,10 @@ export interface Health {
 }
 
 export interface Combat {
+  /** Dano efetivo (base + equipamento). Recalculado por recomputeStats. */
   damage: number;
+  /** Dano base, alterado pelo nível. */
+  baseDamage: number;
   /** Alcance do ataque em metros. */
   range: number;
   /** Segundos entre ataques. */
@@ -86,6 +95,8 @@ export interface Entity {
   ai?: EnemyAI;
   wallet?: Wallet;
   respawn?: Respawn;
+  inventory?: Inventory;
+  equipment?: Equipment;
 }
 
 export function isAlive(e: Entity): boolean {

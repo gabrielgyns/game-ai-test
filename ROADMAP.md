@@ -14,12 +14,14 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 - [x] Andar de ré (S) e de lado (A/D) mantendo o alvo à frente
 - [x] Menu de pausa com ESC (continuar, reiniciar, sensibilidade do mouse)
 - [x] Estilo voxel: personagens, árvores, pedras e terreno em blocos, com greedy meshing
+- [x] Inventário e equipamento: drops por tier e raridade, coleta automática, mochila (I), poções (Q)
 
 ## Próximos
 
 1. **Mais vida no mundo voxel.** Água, flores e grama alta, variação de biomas, ciclo de dia e noite,
    e suporte a modelos `.vox` (MagicaVoxel) para quem quiser desenhar personagens num editor.
-2. **Inventário e equipamento.** Drops de itens, slots (arma, armadura, acessório), raridades.
+2. **Loot mais rico.** Afixos aleatórios (ex.: "da Serpente": +regeneração), conjuntos, venda de itens
+   por ouro num mercador, e a arma equipada aparecendo no modelo do herói.
 3. **Habilidades.** Barra de 4 skills com cooldown; esquiva com rolamento (Zelda).
 4. **Lock-on.** Travar a câmera num alvo (Zelda) como alternativa ao modo livre.
 5. **NPCs e quests.** Vila no santuário, diálogo, quests de caça e entrega.

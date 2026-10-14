@@ -25,6 +25,7 @@ export interface WorldGenOptions {
 export function generateWorld(options: WorldGenOptions = {}): World {
   const rand = seededRandom(options.seed ?? 1337);
   const world = new World();
+  world.random = seededRandom((options.seed ?? 1337) * 7919 + 17);
   world.spawn((id) => createPlayer(id, { x: 0, y: terrainHeight(0, 0), z: 0 }));
 
   const rings: { kind: EnemyKind; min: number; max: number; count: number }[] = [

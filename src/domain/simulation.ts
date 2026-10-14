@@ -2,6 +2,7 @@ import type { GameEvent } from "./events";
 import { aiSystem } from "./systems/ai";
 import { combatSystem } from "./systems/combat";
 import { movementSystem } from "./systems/movement";
+import { pickupSystem } from "./systems/pickup";
 import { respawnSystem } from "./systems/respawn";
 import type { World } from "./world";
 
@@ -12,5 +13,6 @@ export function stepWorld(world: World, dt: number): GameEvent[] {
   aiSystem(world, dt);
   movementSystem(world, dt);
   combatSystem(world, dt);
+  pickupSystem(world, dt);
   return world.drainEvents();
 }

@@ -1,5 +1,6 @@
 import type { Entity } from "./components";
 import type { World } from "./world";
+import { recomputeStats } from "./inventory";
 
 /** XP necessária para sair do nível `level`. Curva suave, cresce ~35% por nível. */
 export function xpForLevel(level: number): number {
@@ -23,7 +24,8 @@ export function grantXp(world: World, entity: Entity, amount: number): void {
 
 /** Cada nível fortalece o personagem e cura por completo. */
 function applyLevelUp(entity: Entity): void {
-  entity.health.max = Math.round(entity.health.max * 1.12 + 8);
+  entity.health.baseMax = Math.round(entity.health.baseMax * 1.12 + 8);
+  entity.combat.baseDamage = Math.round(entity.combat.baseDamage * 1.1 + 1);
+  recomputeStats(entity);
   entity.health.current = entity.health.max;
-  entity.combat.damage = Math.round(entity.combat.damage * 1.1 + 1);
 }

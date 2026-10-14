@@ -14,6 +14,8 @@ export class Hud {
   private readonly xpFill = el("hud-xp-fill");
   private readonly gold = el("hud-gold");
   private readonly kills = el("hud-kills");
+  private readonly potions = el("hud-potions");
+  private readonly bag = el("hud-bag");
   private readonly target = el("target");
   private readonly targetName = el("target-name");
   private readonly targetHpFill = el("target-hp-fill");
@@ -50,6 +52,11 @@ export class Hud {
     if (prog) this.xpFill.style.width = `${(prog.xp / prog.xpToNext) * 100}%`;
     this.gold.textContent = `${player.wallet?.gold ?? 0} ouro`;
     this.kills.textContent = `${this.killCount} abates`;
+    const inv = player.inventory;
+    if (inv) {
+      this.potions.textContent = `${inv.items.filter((i) => i?.kind === "consumable").length}`;
+      this.bag.textContent = `${inv.items.filter((i) => i !== null).length}/${inv.capacity}`;
+    }
 
     if (target) {
       this.target.classList.remove("hidden");

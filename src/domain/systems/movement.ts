@@ -6,7 +6,8 @@ const TURN_SPEED = 14; // quão rápido a entidade gira para a direção de movi
 
 export function movementSystem(world: World, dt: number): void {
   for (const e of world.alive()) {
-    const { intent, speed } = e.movement;
+    const { intent } = e.movement;
+    const speed = e.movement.speed * e.movement.speedMultiplier;
     const pos = e.transform.position;
     const moving = intent.x !== 0 || intent.z !== 0;
 

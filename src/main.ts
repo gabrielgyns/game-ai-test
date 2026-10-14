@@ -10,6 +10,9 @@ import { FloatingTexts } from "./game/effects";
 import { Hud } from "./game/hud";
 import { Input } from "./game/input";
 import { PauseMenu } from "./game/menu";
+import { InventoryUI } from "./game/inventoryUI";
+import { DropViews } from "./game/dropViews";
+import { useFirstPotion } from "./domain/inventory";
 import { createTerrainMesh } from "./game/terrainMesh";
 
 const canvas = document.getElementById("game") as HTMLCanvasElement;
@@ -53,8 +56,29 @@ const cam = new ThirdPersonCamera(window.innerWidth / window.innerHeight);
 const hud = new Hud();
 const floats = new FloatingTexts(scene);
 const menu = new PauseMenu();
+const inventoryUI = new InventoryUI(world, player);
+const dropViews = new DropViews(scene);
 let started = false;
 let paused = false;
+
+// Largar um item pela mochila o devolve ao chão, na frente do herói.
+inventoryUI.onDiscard = (item) => {
+  const p = player.transform.position;
+  const yaw = player.transform.yaw;
+  world.addDrop(item, { x: p.x - Math.sin(yaw) * 1.2, y: p.y, z: p.z - Math.cos(yaw) * 1.2 });
+  hud.pushLog(`Você largou ${item.name}.`, "dmg-out");
+};
+
+function openInventory(): void {
+  inventoryUI.open();
+  paused = true;
+  document.exitPointerLock();
+}
+function closeInventory(): void {
+  inventoryUI.close();
+  paused = false;
+  input.requestLock();
+}
 
 input.onFirstInteraction = () => {
   hud.hideIntro();
@@ -63,6 +87,11 @@ input.onFirstInteraction = () => {
 // ESC solta o pointer lock: pausa e abre o menu. Voltar ao jogo recaptura o mouse.
 input.onPointerLockChange = (locked) => {
   if (!started) return;
+  if (inventoryUI.isOpen) {
+    // A mochila soltou o mouse de propósito; não é pausa.
+    if (locked) closeInventory();
+    return;
+  }
   paused = !locked;
   if (locked) menu.close();
   else menu.open();
@@ -75,7 +104,9 @@ function resume(): void {
 }
 menu.onResume = resume;
 input.onEscape = () => {
-  if (started && menu.isOpen) resume();
+  if (!started) return;
+  if (inventoryUI.isOpen) closeInventory();
+  else if (menu.isOpen) resume();
 };
 
 window.addEventListener("resize", () => {
@@ -138,9 +169,31 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
       case "respawn":
         if (ev.entity === player.id) hud.pushLog("Você renasceu no santuário.", "level");
         break;
+      case "pickup": {
+        const item = player.inventory?.items.find((i) => i?.id === ev.itemId);
+        if (item) {
+          hud.pushLog(`Você pegou ${item.name}`, `loot-${item.rarity}`);
+          floats.spawn(player.transform.position, item.name, RARITY_FLOAT[item.rarity], item.rarity === "common" ? 0.7 : 0.9);
+        }
+        break;
+      }
+      case "inventoryFull":
+        hud.pushLog("Mochila cheia!", "dmg-in");
+        break;
+      case "heal":
+        floats.spawn(player.transform.position, `+${ev.amount}`, "#9ce39c", 0.9);
+        hud.pushLog(`Você recuperou ${ev.amount} de vida.`, "gain");
+        break;
+      case "equip": {
+        const item = player.equipment?.[ev.slot];
+        if (item) hud.pushLog(`Equipado: ${item.name}`, `loot-${item.rarity}`);
+        break;
+      }
     }
   }
 }
+
+const RARITY_FLOAT = { common: "#e8e8e8", uncommon: "#7fe58a", rare: "#8fb3ff", epic: "#d29bff" } as const;
 
 const timer = new THREE.Timer();
 const FIXED_DT = 1 / 60;
@@ -152,10 +205,18 @@ function frame(): void {
   const frameDt = Math.min(timer.getDelta(), 0.1);
 
   // Input → intenções no domínio.
-  const { lookX, lookY, zoom, attack } = input.flush();
+  const { lookX, lookY, zoom, attack, inventory, potion } = input.flush();
+  if (inventory && started && !menu.isOpen) {
+    if (inventoryUI.isOpen) closeInventory();
+    else openInventory();
+  }
   if (paused) {
+    hud.update(player, currentTarget());
     renderer.render(scene, cam.camera);
     return;
+  }
+  if (potion && isAlive(player)) {
+    if (!useFirstPotion(world, player)) hud.pushLog("Nenhuma poção para beber (ou vida cheia).", "dmg-out");
   }
   cam.applyLook(lookX * menu.sensitivity, lookY * menu.sensitivity, zoom);
   if (isAlive(player)) {
@@ -184,6 +245,7 @@ function frame(): void {
   sun.position.set(p.x + 40, p.y + 70, p.z + 30);
   sun.target.position.set(p.x, p.y, p.z);
   views.update(frameDt, cam.camera, target?.id, world.time);
+  dropViews.update(world, world.time);
   floats.update(frameDt);
   hud.update(player, target);
   renderer.render(scene, cam.camera);

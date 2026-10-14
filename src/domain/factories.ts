@@ -1,20 +1,35 @@
 import type { Entity, EntityId } from "./components";
 import { vec3, type Vec3 } from "./math";
 import { xpForLevel } from "./progression";
+import { createEquipment as createEquipmentSlots, createInventory, recomputeStats } from "./inventory";
+import { createPotion, type Item } from "./items";
+
+/** Espada inicial do herói: fixa, sem id de loot. */
+function starterSword(): Item {
+  return { id: 0, name: "Espada Velha", kind: "equipment", slot: "weapon", rarity: "common", stats: { damage: 4 }, icon: "sword", value: 1 };
+}
 
 export function createPlayer(id: EntityId, position: Vec3): Entity {
-  return {
+  const player: Entity = {
     id,
     kind: "player",
     name: "Herói",
     archetype: "hero",
     transform: { position: { ...position }, yaw: 0 },
-    movement: { speed: 7, intent: { x: 0, z: 0 } },
-    health: { current: 100, max: 100, regenPerSecond: 4, lastDamagedAt: -Infinity },
-    combat: { damage: 14, range: 2.4, cooldown: 0.55, cooldownLeft: 0, wantsAttack: false },
+    movement: { speed: 7, speedMultiplier: 1, intent: { x: 0, z: 0 } },
+    health: { current: 100, max: 100, baseMax: 100, regenPerSecond: 4, lastDamagedAt: -Infinity },
+    combat: { damage: 10, baseDamage: 10, range: 2.4, cooldown: 0.55, cooldownLeft: 0, wantsAttack: false },
     progression: { level: 1, xp: 0, xpToNext: xpForLevel(1) },
     wallet: { gold: 0 },
+    inventory: createInventory(20),
+    equipment: createEquipmentSlots(),
   };
+  player.equipment!.weapon = starterSword();
+  player.inventory!.items[0] = createPotion();
+  player.inventory!.items[1] = createPotion();
+  recomputeStats(player);
+  player.health.current = player.health.max;
+  return player;
 }
 
 export interface EnemyTemplate {
@@ -79,9 +94,9 @@ export function createEnemy(id: EntityId, kind: EnemyKind, position: Vec3): Enti
     name: t.name,
     archetype: t.archetype,
     transform: { position: { ...position }, yaw: Math.random() * Math.PI * 2 },
-    movement: { speed: t.speed, intent: { x: 0, z: 0 } },
-    health: { current: t.maxHealth, max: t.maxHealth, regenPerSecond: 2, lastDamagedAt: -Infinity },
-    combat: { damage: t.damage, range: t.range, cooldown: t.cooldown, cooldownLeft: 0, wantsAttack: false },
+    movement: { speed: t.speed, speedMultiplier: 1, intent: { x: 0, z: 0 } },
+    health: { current: t.maxHealth, max: t.maxHealth, baseMax: t.maxHealth, regenPerSecond: 2, lastDamagedAt: -Infinity },
+    combat: { damage: t.damage, baseDamage: t.damage, range: t.range, cooldown: t.cooldown, cooldownLeft: 0, wantsAttack: false },
     ai: {
       state: "idle",
       home: vec3(position.x, position.y, position.z),

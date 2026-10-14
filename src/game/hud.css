@@ -93,3 +93,58 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0d12; col
 #menu input[type="range"] { width: 100%; }
 #menu .controls-list { margin-top: 8px; font-size: 13px; color: var(--muted); display: grid; gap: 4px; }
 #menu .controls-list b { color: var(--text); }
+
+.row.quick { margin-top: 8px; color: var(--text); }
+.row.quick b { background: rgba(255,255,255,0.12); border-radius: 4px; padding: 0 5px; margin-right: 4px; }
+
+:root {
+  --r-common: #d0d0d0; --r-uncommon: #5fd36b; --r-rare: #5b8def; --r-epic: #b06cf0;
+}
+#inventory {
+  position: absolute; inset: 0; display: flex; justify-content: center; align-items: center;
+  background: rgba(5, 6, 10, 0.5); pointer-events: auto;
+}
+#inventory .panel {
+  width: 640px; background: var(--panel); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px; padding: 18px 20px; backdrop-filter: blur(6px);
+}
+.inv-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.inv-header h2 { margin: 0; font-size: 22px; }
+.inv-header .hint { font-size: 11px; color: var(--muted); }
+.inv-body { display: grid; grid-template-columns: 170px 1fr; gap: 18px; }
+.equip { display: flex; flex-direction: column; gap: 10px; }
+.equip-slot .label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+.cell {
+  width: 64px; height: 64px; border-radius: 8px; background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; position: relative; font-size: 28px; user-select: none;
+}
+.cell:hover { background: rgba(255,255,255,0.14); }
+.cell.empty { cursor: default; }
+.cell[data-rarity="common"] { border-color: var(--r-common); }
+.cell[data-rarity="uncommon"] { border-color: var(--r-uncommon); box-shadow: 0 0 8px rgba(95,211,107,0.35); }
+.cell[data-rarity="rare"] { border-color: var(--r-rare); box-shadow: 0 0 10px rgba(91,141,239,0.45); }
+.cell[data-rarity="epic"] { border-color: var(--r-epic); box-shadow: 0 0 12px rgba(176,108,240,0.55); }
+.cell .icon { width: 44px; height: 44px; image-rendering: pixelated; }
+.stats { margin-top: 6px; font-size: 13px; color: var(--muted); display: grid; gap: 4px; }
+.stats b { color: var(--text); float: right; }
+.grid { display: grid; grid-template-columns: repeat(5, 64px); gap: 8px; align-content: start; }
+#tooltip {
+  position: fixed; pointer-events: none; z-index: 10; min-width: 180px; max-width: 260px;
+  background: rgba(10, 12, 18, 0.95); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+  padding: 8px 10px; font-size: 13px;
+}
+#tooltip .name { font-weight: 700; margin-bottom: 2px; }
+#tooltip .rarity { font-size: 11px; margin-bottom: 6px; }
+#tooltip .stat { color: #9ce39c; }
+#tooltip .cmp { color: var(--muted); font-size: 11px; margin-top: 4px; }
+#tooltip .worse { color: #ff8a8a; }
+#tooltip .better { color: #9ce39c; }
+#tooltip[data-rarity="common"] .name, #tooltip[data-rarity="common"] .rarity { color: var(--r-common); }
+#tooltip[data-rarity="uncommon"] .name, #tooltip[data-rarity="uncommon"] .rarity { color: var(--r-uncommon); }
+#tooltip[data-rarity="rare"] .name, #tooltip[data-rarity="rare"] .rarity { color: var(--r-rare); }
+#tooltip[data-rarity="epic"] .name, #tooltip[data-rarity="epic"] .rarity { color: var(--r-epic); }
+#log .loot-common { color: var(--r-common); }
+#log .loot-uncommon { color: var(--r-uncommon); }
+#log .loot-rare { color: var(--r-rare); }
+#log .loot-epic { color: var(--r-epic); font-weight: 600; }

@@ -1,6 +1,7 @@
 import { isAlive, type Entity } from "../components";
 import { distanceXZ } from "../math";
 import { grantXp } from "../progression";
+import { rollLoot } from "../loot";
 import type { World } from "../world";
 
 export function combatSystem(world: World, dt: number): void {
@@ -59,6 +60,7 @@ function kill(world: World, victim: Entity, killer: Entity): void {
     victim.ai.state = "idle";
     victim.respawn = { timeLeft: victim.ai.respawnSeconds, at: { ...victim.ai.home } };
     if (killer.kind === "player") {
+      rollLoot(world, victim);
       grantXp(world, killer, victim.ai.xpReward);
       if (killer.wallet) {
         killer.wallet.gold += victim.ai.goldReward;

@@ -5,6 +5,8 @@ export class Input {
   lookDeltaY = 0;
   zoomDelta = 0;
   attackQueued = false;
+  inventoryToggled = false;
+  potionQueued = false;
   pointerLocked = false;
   onFirstInteraction: (() => void) | null = null;
   /** Chamado quando o pointer lock é perdido (ESC) ou obtido. */
@@ -24,6 +26,8 @@ export class Input {
         this.attackQueued = true;
         e.preventDefault();
       }
+      if (e.code === "KeyI") this.inventoryToggled = true;
+      if (e.code === "KeyQ") this.potionQueued = true;
     });
     window.addEventListener("keyup", (e) => this.keys.delete(e.code));
     window.addEventListener("blur", () => this.keys.clear());
@@ -75,12 +79,21 @@ export class Input {
   }
 
   /** Consome os acumuladores de frame. */
-  flush(): { lookX: number; lookY: number; zoom: number; attack: boolean } {
-    const out = { lookX: this.lookDeltaX, lookY: this.lookDeltaY, zoom: this.zoomDelta, attack: this.attackQueued };
+  flush(): { lookX: number; lookY: number; zoom: number; attack: boolean; inventory: boolean; potion: boolean } {
+    const out = {
+      lookX: this.lookDeltaX,
+      lookY: this.lookDeltaY,
+      zoom: this.zoomDelta,
+      attack: this.attackQueued,
+      inventory: this.inventoryToggled,
+      potion: this.potionQueued,
+    };
     this.lookDeltaX = 0;
     this.lookDeltaY = 0;
     this.zoomDelta = 0;
     this.attackQueued = false;
+    this.inventoryToggled = false;
+    this.potionQueued = false;
     return out;
   }
 }
