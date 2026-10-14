@@ -1,4 +1,4 @@
-import { createElvenOracle, createIceQueen, createSkeletonLord } from "./boss";
+import { createElvenOracle, createForgeMaster, createIceQueen, createSkeletonLord } from "./boss";
 import type { Entity, EntityId } from "./components";
 import { generateLayout, isFloorTile, roomCenter, Tile, tileOf, DUNGEON_FLOORS, type DungeonLayout, type DungeonRoom } from "./dungeonLayout";
 import { createEnemy, type EnemyKind } from "./factories";
@@ -11,7 +11,7 @@ import { seededRandom } from "./worldgen";
 import { applyDamage } from "./systems/combat";
 import type { World } from "./world";
 import { ZONES, zoneAt } from "./zones";
-import { FOREST_SANCTUM, PEAKS_CAVE } from "./terrain";
+import { FOREST_SANCTUM, PEAKS_CAVE, VOLCANO_FORGE } from "./terrain";
 
 /**
  * Dungeons instanciadas, no estilo Minecraft Dungeons: um portal no mapa leva a uma cripta gerada na
@@ -31,7 +31,7 @@ export const DUNGEON_ORIGIN = { x: 1000, z: -64 };
  * apresentação escolhe pelo id). Como um jogo de tabuleiro com cenários: as regras são as mesmas, o
  * mapa e as peças mudam.
  */
-export type DungeonThemeId = "crypt" | "elvenSanctum" | "iceCave";
+export type DungeonThemeId = "crypt" | "elvenSanctum" | "iceCave" | "volcanicForge";
 
 export interface DungeonTheme {
   id: DungeonThemeId;
@@ -53,6 +53,7 @@ export interface DungeonTheme {
 }
 
 const peaks = (p: { x: number; z: number }) => ({ x: ZONES.picos.center.x + p.x, z: ZONES.picos.center.z + p.z });
+const volcano = (p: { x: number; z: number }) => ({ x: ZONES.vulcao.center.x + p.x, z: ZONES.vulcao.center.z + p.z });
 const forest = (p: { x: number; z: number }) => ({ x: ZONES.floresta.center.x + p.x, z: ZONES.floresta.center.z + p.z });
 
 export const DUNGEON_THEMES: Record<DungeonThemeId, DungeonTheme> = {
@@ -110,6 +111,24 @@ export const DUNGEON_THEMES: Record<DungeonThemeId, DungeonTheme> = {
     escort: 2,
     bossName: "Rainha Gélida",
     createBoss: (id, at, level) => createIceQueen(id, at, level),
+  },
+  volcanicForge: {
+    id: "volcanicForge",
+    name: "Forja Vulcânica",
+    feminine: true,
+    // Patamar de basalto a oeste das Terras Vulcânicas.
+    entrance: volcano(VOLCANO_FORGE),
+    minLevel: 28,
+    baseLevel: 30,
+    mix: [
+      { kind: "lavaHound", weight: 4 },
+      { kind: "flameCaster", weight: 3 },
+      { kind: "magmaGolem", weight: 1 },
+    ],
+    guardian: { name: "Guarda da Forja", kind: "magmaGolem", health: 2.5, damage: 1.2, xp: 4 },
+    escort: 2,
+    bossName: "Mestre da Forja",
+    createBoss: (id, at, level) => createForgeMaster(id, at, level),
   },
 };
 

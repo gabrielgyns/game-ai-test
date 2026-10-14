@@ -220,3 +220,9 @@ Sem vidas, o herói acorda no ponto seguro da zona da entrada, não sempre no sa
 se aproxima da desejada aos poucos (`ICE_GRIP`). Assim quem entra correndo no lago entra embalado, e
 parar ou virar leva tempo, sem física nova. Vale para inimigos também.
 
+## D41. Lava só fere o herói
+A lava é chão proibido: `lavaSystem` tira 7% da vida máxima do herói a cada meio segundo em cima dela
+(rolar por cima não queima). Inimigos não se ferem: eles perseguem em linha reta e morreriam na lava
+sem pathfinding no mundo aberto, e "bichos de fogo não se importam" combina com a zona. Ninguém nasce
+na lava (`populateVolcano` e o cenário evitam), e a caldeira tem uma entrada sem lava ao sul.
+

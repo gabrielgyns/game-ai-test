@@ -3,9 +3,9 @@ import type { Entity } from "../domain/components";
 import { DUNGEON_ORIGIN, DUNGEON_THEMES, type DungeonRun } from "../domain/dungeon";
 import { Tile, tileOf } from "../domain/dungeonLayout";
 import { mapMarkers, type MapMarker } from "../domain/mapMarkers";
-import { DUNGEON_REGION_X, FOREST_RUINS, isIce, isWater, PEAKS_VILLAGE, terrainHeight, WORLD_HALF } from "../domain/terrain";
+import { DUNGEON_REGION_X, FOREST_RUINS, isIce, isLava, isWater, PEAKS_VILLAGE, terrainHeight, WORLD_HALF } from "../domain/terrain";
 import type { World } from "../domain/world";
-import { placeForestProps, placePeaksProps, placeProps } from "./environment";
+import { placeForestProps, placePeaksProps, placeProps, placeVolcanoProps } from "./environment";
 import { zoneAt, type ZoneDefinition } from "../domain/zones";
 
 /** Uma imagem de fundo do mapa e o retângulo do mundo que ela cobre. */
@@ -54,6 +54,7 @@ function overworldBase(zone: ZoneDefinition): MapBase {
     meadow: rgb("#5f9a46"), swamp: rgb("#4a5e3a"), desert: rgb("#d4b47a"), forest: rgb("#2f5a2c"), ruins: rgb("#3a6232"),
     water: rgb("#3c6b86"), rock: rgb("#8a8a84"), snow: rgb("#e8ecf0"), plaza: rgb("#cdb88a"),
     ice: rgb("#9fd4ec"), slate: rgb("#6a7280"), packed: rgb("#b8b0a4"),
+    volcano: rgb("#3e3a3c"), lava: rgb("#ff7a1a"), ash: rgb("#5e5856"),
   };
   const ox = zone.center.x, oz = zone.center.z;
   for (let py = 0; py < canvas.height; py++)
@@ -61,6 +62,7 @@ function overworldBase(zone: ZoneDefinition): MapBase {
       const x = ox - WORLD_HALF + (px + 0.5) / ppm, z = oz - WORLD_HALF + (py + 0.5) / ppm;
       const h = terrainHeight(x, z);
       let c = isWater(x, z) ? COLORS.water : h > 10 ? COLORS.snow : h > 7 ? COLORS.rock : COLORS[biomeAt(x, z)];
+      if (zone.id === "vulcao") c = isLava(x, z) ? COLORS.lava : Math.hypot(x - ox, z - oz - 76) < 9 ? COLORS.plaza : h > 6 ? COLORS.ash : COLORS.volcano;
       if (zone.id === "picos") {
         const steep = Math.max(Math.abs(h - terrainHeight(x + 1, z)), Math.abs(h - terrainHeight(x, z + 1)));
         c = isIce(x, z) ? COLORS.ice : steep >= 1.5 ? COLORS.slate : Math.hypot(x - ox - PEAKS_VILLAGE.x, z - oz - PEAKS_VILLAGE.z) < 9 ? COLORS.packed : COLORS.snow;
@@ -78,10 +80,10 @@ function overworldBase(zone: ZoneDefinition): MapBase {
     }
   ctx.putImageData(img, 0, 0);
   // Árvores e pedras grandes: pontos escuros (dão textura e ajudam a se orientar).
-  for (const p of zone.id === "floresta" ? placeForestProps() : zone.id === "picos" ? placePeaksProps() : placeProps()) {
-    const big = /oak|Oak|birch|pine|deadTree|mushrooms|Mushrooms|cactus|boulder|rocks|sandstone|slab|giantTree|elven|Column|frozenTree|snowRock|cabin|iceSpire/.test(p.kind);
+  for (const p of zone.id === "floresta" ? placeForestProps() : zone.id === "picos" ? placePeaksProps() : zone.id === "vulcao" ? placeVolcanoProps() : placeProps()) {
+    const big = /oak|Oak|birch|pine|deadTree|mushrooms|Mushrooms|cactus|boulder|rocks|sandstone|slab|giantTree|elven|Column|frozenTree|snowRock|cabin|iceSpire|basalt|obsidian|charred|stoneHut/.test(p.kind);
     if (!big) continue;
-    ctx.fillStyle = /cabin/.test(p.kind) ? "rgba(90, 64, 40, 0.9)" : /iceSpire/.test(p.kind) ? "rgba(90, 160, 210, 0.8)" : /pine/.test(p.kind) ? "rgba(20, 50, 30, 0.55)" : /boulder|rocks|sandstone|slab|snowRock/.test(p.kind) ? "rgba(70, 66, 60, 0.5)" : "rgba(25, 55, 25, 0.45)";
+    ctx.fillStyle = /cabin|stoneHut/.test(p.kind) ? "rgba(90, 64, 40, 0.9)" : /iceSpire/.test(p.kind) ? "rgba(90, 160, 210, 0.8)" : /pine/.test(p.kind) ? "rgba(20, 50, 30, 0.55)" : /boulder|rocks|sandstone|slab|snowRock/.test(p.kind) ? "rgba(70, 66, 60, 0.5)" : "rgba(25, 55, 25, 0.45)";
     ctx.beginPath();
     ctx.arc((p.x - ox + WORLD_HALF) * ppm, (p.z - oz + WORLD_HALF) * ppm, /giantTree/.test(p.kind) ? 4 : /pine|oak|Oak|birch|deadTree/.test(p.kind) ? 2.6 : 1.6, 0, Math.PI * 2);
     ctx.fill();

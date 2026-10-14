@@ -35,6 +35,8 @@ export class World {
   readonly hazards = new Map<number, Hazard>();
   /** Estoque e recompra de cada loja, pelo id (montado na primeira visita de cada dia). */
   shops: Record<string, ShopState> = {};
+  /** Tempo do herói em cima da lava (para os pulsos de queimadura). */
+  lavaClock = 0;
   /** Dungeon em andamento (instanciada; não vai para o save). */
   dungeon?: DungeonRun;
   private nextHazardId = 1;

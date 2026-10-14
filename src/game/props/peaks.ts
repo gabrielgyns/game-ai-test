@@ -81,13 +81,24 @@ export function frozenTree(seed: number, height: number): VoxelBuilder {
  * Cabana de toras da vila: paredes de troncos deitados com as pontas cruzadas nos cantos, telhado de
  * duas águas coberto de neve, porta na frente (-Z), janela acesa e chaminé de pedra.
  */
-export function cabin(seed: number): VoxelBuilder {
+/** Cores de uma casa: paredes (toras ou pedra), madeira escura, telhado, cobertura, pingente e chaminé. */
+export interface HouseLook {
+  wall: string[];
+  dark: string;
+  roof: string;
+  cover: string[];
+  drip: string | null;
+  chimney: string[];
+}
+const LOG_CABIN: HouseLook = { wall: ["#4a3420", "#5a4028", "#684a30", "#76563a"], dark: "#3a2614", roof: "#4a3a2a", cover: SNOW, drip: "#bfe4f4", chimney: SLATE };
+
+export function cabin(seed: number, look: HouseLook = LOG_CABIN): VoxelBuilder {
   const b = new VoxelBuilder();
   const W = 22, D = 17, H = 18; // meia largura, meia profundidade, altura da parede
   const log: Paint = (x, y, z) => {
     const row = Math.floor(y / 3);
     const ring = y % 3 === 0 ? 0.0 : 0.5;
-    return pickTone(["#4a3420", "#5a4028", "#684a30", "#76563a"], Math.min(0.999, ring * 0.5 + hash3(Math.floor(x / 6), row, Math.floor(z / 6), seed) * 0.6));
+    return pickTone(look.wall, Math.min(0.999, ring * 0.5 + hash3(Math.floor(x / 6), row, Math.floor(z / 6), seed) * 0.6));
   };
   for (let y = 0; y < H; y++)
     for (let x = -W; x <= W; x++)
@@ -100,13 +111,13 @@ export function cabin(seed: number): VoxelBuilder {
     for (const sx of [-1, 1])
       for (const sz of [-1, 1]) {
         const alongX = (y / 3) % 2 === 0;
-        for (let k = 1; k <= 2; k++) b.box(alongX ? sx * (W + k) : sx * W, y, alongX ? sz * D : sz * (D + k), (alongX ? sx * (W + k) : sx * W) + 1, y + 2, (alongX ? sz * D : sz * (D + k)) + 1, "#3e2c1a");
+        for (let k = 1; k <= 2; k++) b.box(alongX ? sx * (W + k) : sx * W, y, alongX ? sz * D : sz * (D + k), (alongX ? sx * (W + k) : sx * W) + 1, y + 2, (alongX ? sz * D : sz * (D + k)) + 1, look.dark);
       }
   // Porta e janelas.
-  for (let y = 0; y < 13; y++) for (let x = -4; x <= 4; x++) b.set(x, y, -D, y === 12 || Math.abs(x) === 4 ? "#3a2614" : "#5a3a20");
+  for (let y = 0; y < 13; y++) for (let x = -4; x <= 4; x++) b.set(x, y, -D, y === 12 || Math.abs(x) === 4 ? look.dark : "#5a3a20");
   b.set(3, 6, -D - 1, "#c9a23a");
   for (const wx of [-14, 14]) {
-    for (let y = 7; y < 12; y++) for (let x = wx - 3; x <= wx + 3; x++) b.set(x, y, -D, Math.abs(x - wx) === 3 || y === 7 || y === 11 || x === wx || y === 9 ? "#3a2614" : "#ffcf7a");
+    for (let y = 7; y < 12; y++) for (let x = wx - 3; x <= wx + 3; x++) b.set(x, y, -D, Math.abs(x - wx) === 3 || y === 7 || y === 11 || x === wx || y === 9 ? look.dark : "#ffcf7a");
   }
   // Telhado de duas águas (cumeeira ao longo de x), coberto de neve, com beiral.
   for (let k = 0; k <= D + 4; k++) {
@@ -114,9 +125,9 @@ export function cabin(seed: number): VoxelBuilder {
     for (let x = -W - 3; x <= W + 3; x++)
       for (const sz of [-1, 1]) {
         const z = sz * k;
-        b.set(x, y, z, "#4a3a2a");
-        b.set(x, y + 1, z, pickTone(SNOW, hash3(x, y, z, seed)));
-        if (k === D + 4 && hash3(x, 0, z, seed + 2) < 0.35) for (let d = 1; d < 3 + Math.floor(hash3(x, 1, z, seed) * 3); d++) b.set(x, y - d, z, "#bfe4f4"); // pingentes
+        b.set(x, y, z, look.roof);
+        b.set(x, y + 1, z, pickTone(look.cover, hash3(x, y, z, seed)));
+        if (look.drip && k === D + 4 && hash3(x, 0, z, seed + 2) < 0.35) for (let d = 1; d < 3 + Math.floor(hash3(x, 1, z, seed) * 3); d++) b.set(x, y - d, z, look.drip); // pingentes
       }
   }
   // Empena (o triângulo das paredes da frente e de trás).
@@ -125,8 +136,8 @@ export function cabin(seed: number): VoxelBuilder {
     for (let z = -reach; z <= reach; z++) if (Math.abs(z) <= D) for (const x of [-W, W]) b.set(x, y, z, log(x, y, z));
   }
   // Chaminé de pedra.
-  for (let y = 0; y < H + 22; y++) for (let x = 12; x < 17; x++) for (let z = 6; z < 11; z++) if (y > H + 6 || x === 12 || x === 16 || z === 6 || z === 10) b.set(x, y, z, pickTone(SLATE, hash3(x, y, z, seed)));
-  for (let x = 12; x < 17; x++) for (let z = 6; z < 11; z++) b.set(x, H + 22, z, pickTone(SNOW, hash3(x, 0, z, seed)));
+  for (let y = 0; y < H + 22; y++) for (let x = 12; x < 17; x++) for (let z = 6; z < 11; z++) if (y > H + 6 || x === 12 || x === 16 || z === 6 || z === 10) b.set(x, y, z, pickTone(look.chimney, hash3(x, y, z, seed)));
+  for (let x = 12; x < 17; x++) for (let z = 6; z < 11; z++) b.set(x, H + 22, z, pickTone(look.cover, hash3(x, 0, z, seed)));
   return b;
 }
 
@@ -134,9 +145,19 @@ export function cabin(seed: number): VoxelBuilder {
  * Boca da Caverna de Gelo: um morro de ardósia com um arco escuro na frente (-Z), a borda coberta de
  * gelo, pingentes pendurados no arco e neve em cima.
  */
-export function caveMouth(seed: number): VoxelBuilder {
+/** Cores da boca: rocha, moldura do arco, fundo, pingentes e cobertura do topo (null = nada). */
+export interface MouthLook {
+  rock: string[];
+  rim: string[];
+  deep: [string, string];
+  drip: [string, string] | null;
+  cover: string[] | null;
+}
+const ICE_MOUTH: MouthLook = { rock: SLATE, rim: ICE, deep: ["#1a2230", "#0c1018"], drip: ["#e6f6ff", "#a6d8ee"], cover: SNOW };
+
+export function caveMouth(seed: number, look: MouthLook = ICE_MOUTH): VoxelBuilder {
   const b = new VoxelBuilder();
-  blob(b, [0, 14, 10], [44, 32, 26], stonePaint(SLATE, seed), { rough: 0.22, grain: 6, seed, floor: 0 });
+  blob(b, [0, 14, 10], [44, 32, 26], stonePaint(look.rock, seed), { rough: 0.22, grain: 6, seed, floor: 0 });
   // Arco: escava um túnel até o meio do morro.
   const archR = 15;
   const carve: [number, number, number][] = [];
@@ -146,18 +167,21 @@ export function caveMouth(seed: number): VoxelBuilder {
   });
   for (const [x, y, z] of carve) b.remove(x, y, z);
   // Fundo escuro (sem saída: é a porta da dungeon) e gelo na moldura.
-  for (let x = -archR; x <= archR; x++) for (let y = 0; y < archR + 6; y++) if (Math.hypot(x, Math.max(0, y - 6)) < archR) b.set(x, y, 18, y < 3 ? "#1a2230" : "#0c1018");
+  for (let x = -archR; x <= archR; x++) for (let y = 0; y < archR + 6; y++) if (Math.hypot(x, Math.max(0, y - 6)) < archR) b.set(x, y, 18, y < 3 ? look.deep[0] : look.deep[1]);
   coatSurface(b, (x, y, z) => {
     const r = Math.hypot(x, Math.max(0, y - 6));
-    if (z < 18 && r >= archR - 0.5 && r < archR + 2.5) return pickTone(ICE, hash3(x, y, z, seed));
+    if (z < 18 && r >= archR - 0.5 && r < archR + 2.5) return pickTone(look.rim, hash3(x, y, z, seed));
     return null;
   });
   // Pingentes no arco.
-  for (let x = -archR + 2; x <= archR - 2; x += 2) {
-    const top = Math.round(6 + Math.sqrt(Math.max(0, archR * archR - x * x)));
-    const len = 2 + Math.floor(hash3(x, 0, 0, seed) * 6);
-    for (let d = 0; d < len; d++) b.set(x, top - d, -6 + (x % 3), d === len - 1 ? "#e6f6ff" : "#a6d8ee");
-  }
-  snowCap(b, seed, 2);
+  const drip = look.drip;
+  if (drip)
+    for (let x = -archR + 2; x <= archR - 2; x += 2) {
+      const top = Math.round(6 + Math.sqrt(Math.max(0, archR * archR - x * x)));
+      const len = 2 + Math.floor(hash3(x, 0, 0, seed) * 6);
+      for (let d = 0; d < len; d++) b.set(x, top - d, -6 + (x % 3), d === len - 1 ? drip[0] : drip[1]);
+    }
+  const cover = look.cover;
+  if (cover) coatTop(b, (x, y, z, d) => (d === 0 || noise3(x / 3, y / 3, z / 3, seed + 9) > 0.45 ? pickTone(cover, hash3(x, y, z, seed)) : null), 2);
   return b;
 }

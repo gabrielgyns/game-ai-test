@@ -13,7 +13,9 @@ export type DecorKind =
   // Caverna de Gelo.
   | "iceCluster" | "snowdrift" | "icicles" | "iceLamp" | "frozenBones" | "iceSpikes" | "iceBrazier"
   // Santuário Élfico.
-  | "vines" | "glowShrooms" | "elvenBanner" | "moonBrazier" | "thornSpikes" | "planter";
+  | "vines" | "glowShrooms" | "elvenBanner" | "moonBrazier" | "thornSpikes" | "planter"
+  // Forja Vulcânica.
+  | "anvil" | "chains" | "forgeBanner" | "crucible" | "coalPile" | "fireVent";
 
 const stone: (seed: number) => Paint = (seed) => (x, y, z) => pickTone(["#5e5a64", "#6a6670", "#76727c", "#827e88"], Math.min(0.999, noise3(x / 3, y / 3, z / 3, seed) * 0.7 + hash3(x, y, z, seed) * 0.3));
 
@@ -320,7 +322,80 @@ function planter(): VoxelBuilder {
   return b;
 }
 
+const IRON = ["#2e2c30", "#3a383c", "#46444a"];
+const EMBERS = ["#ff7a1a", "#ffa03a", "#ffc24a"];
+
+/** Bigorna sobre um toco, com um martelo apoiado e uma lâmina em brasa. */
+function anvil(): VoxelBuilder {
+  const b = new VoxelBuilder();
+  b.box(-4, 0, -4, 4, 6, 4, "#4a3220").box(-4, 5, -4, 4, 6, 4, "#5a3e28"); // toco
+  b.box(-7, 6, -3, 7, 8, 3, IRON[1]!).box(-3, 8, -2, 3, 10, 2, IRON[0]!).box(-8, 10, -3, 8, 13, 3, IRON[2]!).box(8, 11, -1, 11, 12, 1, IRON[2]!); // bigorna com bico
+  b.box(-5, 13, -1, 3, 14, 0, "#ff8a2a").box(-5, 13, -1, -3, 14, 0, "#ffc24a"); // lâmina em brasa
+  b.box(5, 0, 5, 6, 10, 6, "#5a3e28").box(3, 10, 4, 8, 13, 7, IRON[2]!); // martelo encostado
+  return b;
+}
+
+/** Correntes penduradas num canto do teto (x+ e z+ são as paredes). */
+function chains(): VoxelBuilder {
+  const b = new VoxelBuilder();
+  for (let k = 0; k < 4; k++) {
+    const x = -3 - k * 3, z = -2 - ((k * 5) % 9);
+    const len = 12 + ((k * 7) % 10);
+    for (let d = 0; d < len; d++) b.set(x + (d % 2), -d, z, d % 3 === 0 ? IRON[2]! : IRON[0]!);
+    b.box(x - 1, -len - 2, z - 1, x + 2, -len, z + 1, IRON[1]!); // gancho
+  }
+  return b;
+}
+
+/** Estandarte da forja: pano preto e vermelho com uma bigorna dourada. */
+function forgeBanner(): VoxelBuilder {
+  const b = new VoxelBuilder();
+  b.box(-8, -1, 0, 8, 0, 2, IRON[1]!);
+  for (let y = -20; y < -1; y++)
+    for (let x = -6; x < 6; x++) {
+      if (y < -16 && Math.abs(x + 0.5) > (y + 20) * 1.5) continue;
+      b.set(x, y, 1, x === -6 || x === 5 ? "#8a1a14" : pickTone(["#1a1414", "#221a1a", "#2a2020"], hash3(x, y, 1, 5)));
+    }
+  for (const [x0, x1, y] of [[-3, 3, -7], [-1, 1, -8], [-1, 1, -9], [-2, 2, -10]] as const) for (let x = x0; x <= x1; x++) b.set(x, y, 0, "#d4a92a");
+  return b;
+}
+
+/** Cadinho: panela de ferro sobre brasas, cheia de metal derretido que brilha. */
+function crucible(): VoxelBuilder {
+  const b = new VoxelBuilder();
+  for (let x = -4; x < 4; x++) for (let z = -4; z < 4; z++) if (Math.hypot(x + 0.5, z + 0.5) < 4) b.set(x, 0, z, pickTone(EMBERS, hash3(x, 0, z)));
+  for (let y = 2; y < 8; y++) {
+    const r = 3 + Math.sin(((y - 2) / 6) * Math.PI) * 1.2;
+    for (let x = -5; x <= 5; x++) for (let z = -5; z <= 5; z++) {
+      const d = Math.hypot(x + 0.5, z + 0.5);
+      if (d < r && (d > r - 1 || y === 2)) b.set(x, y, z, IRON[(x + y + z + 30) % 3]!);
+    }
+  }
+  for (let x = -3; x < 3; x++) for (let z = -3; z < 3; z++) if (Math.hypot(x + 0.5, z + 0.5) < 3) b.set(x, 7, z, hash3(x, 7, z) < 0.5 ? "#ffc24a" : "#ff8a2a");
+  for (const [x, z] of [[-4, -4], [3, -4], [-4, 3], [3, 3]] as const) b.box(x, 0, z, x + 1, 3, z + 1, IRON[0]!);
+  return b;
+}
+
+/** Monte de carvão com algumas brasas acesas. */
+function coalPile(): VoxelBuilder {
+  const b = new VoxelBuilder();
+  blob(b, [0, 0, 1], [7, 4, 6], (x, y, z) => (hash3(x, y, z, 3) < 0.06 ? pickTone(EMBERS, hash3(x, y, z)) : pickTone(["#141214", "#1c1a1c", "#242224"], hash3(x, y, z, 1))), { rough: 0.35, grain: 2, seed: 4, floor: 0 });
+  return trimBelow(b);
+}
+
+/** Respiro de fogo da armadilha: grade de ferro com chamas que sobem. */
+function fireVent(): VoxelBuilder {
+  const b = new VoxelBuilder();
+  for (let x = -5; x < 6; x += 3)
+    for (let z = -5; z < 6; z += 3) {
+      const h = 6 + ((x * 7 + z * 13 + 100) % 3);
+      b.box(x, 0, z, x + 2, h - 3, z + 2, "#ff7a1a").box(x, h - 3, z, x + 2, h - 1, z + 2, "#ffb43a").set(x, h - 1, z, "#ffe08a");
+    }
+  return b;
+}
+
 export const DECOR_BUILDERS: Record<DecorKind, () => VoxelBuilder> = {
+  anvil, chains, forgeBanner, crucible, coalPile, fireVent,
   vines, glowShrooms, elvenBanner, moonBrazier, thornSpikes, planter,
   coffin, barrel, bones, candles, banner, cobweb, rubble, urn, spikes, shrine, brazier,
   iceCluster, snowdrift, icicles, iceLamp, frozenBones, iceSpikes, iceBrazier,

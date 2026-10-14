@@ -112,6 +112,34 @@ const STYLES: Record<DungeonThemeId, DungeonStyle> = {
     snow: false,
     portal: "#5ad88a",
   },
+  volcanicForge: {
+    wall: ["#2e2a2c", "#363234", "#3e3a3c", "#464244", "#3a2e2a"],
+    wallBase: ["#ff7a1a", "#e05a14", "#ffa03a"],
+    crack: "#ff8a2a",
+    plinth: ["#2a2224", "#221c1e"],
+    mortar: "#1a1416",
+    top: ["#5a5254", "#2a2426", "#6a6264", "#3a3436"],
+    arch: ["#2a2426", "#6a6264", "#4a4446", "#545052"],
+    pillar: ["#3a3638", "#444042", "#4e4a4c"],
+    pillarCap: "#8a6a3a",
+    stairRim: ["#3a3436", "#5a5254"],
+    steps: ["#2a2426", "#363032"],
+    pit: ["#ff6a14", "#5a1a08"],
+    floor: ["#3a3436", "#423c3e", "#4a4446", "#524c4e"],
+    joint: "#1e1a1c",
+    floorAccent: ["#5a2a1a", "#6a3220"],
+    trap: ["#1a1416", "#5a2a1a"],
+    rug: ["#ffc24a", "#c0400a", "#e0601a"],
+    speck: "#ff9a3a",
+    decor: { coffin: "anvil", barrel: "coalPile", bones: "coalPile", candles: "crucible", banner: "forgeBanner", cobweb: "chains", rubble: "rubble", urn: "crucible", spikes: "fireVent", brazier: "brazier" },
+    flame: ["#ff7a1a", "#ffb43a", "#ffe08a"],
+    torchLight: "#ff8a3a",
+    brazierLight: "#ff6a2a",
+    candleLight: "#ff9a3a",
+    dust: "#ff9a4a",
+    snow: false,
+    portal: "#ff7a2a",
+  },
   iceCave: {
     wall: ["#6a98ba", "#7aa8c8", "#8ab8d6", "#9ac6e0", "#aed4ea"],
     wallBase: ["#dceef8", "#e8f4fa", "#f4fafd"],
@@ -617,7 +645,7 @@ export class DungeonView {
         if (kind === st.decor.brazier) this.lightSpots.push({ pos: new THREE.Vector3(d.x, 1.3, d.z), color: new THREE.Color(st.brazierLight), power: 11 });
         if (kind === st.decor.candles) this.lightSpots.push({ pos: new THREE.Vector3(d.x, 0.7, d.z), color: new THREE.Color(st.candleLight), power: 4 });
       });
-      mesh.castShadow = kind !== "cobweb" && kind !== "banner" && kind !== "icicles" && kind !== "vines" && kind !== "elvenBanner";
+      mesh.castShadow = kind !== "cobweb" && kind !== "banner" && kind !== "icicles" && kind !== "vines" && kind !== "elvenBanner" && kind !== "chains" && kind !== "forgeBanner";
       mesh.receiveShadow = true;
       mesh.computeBoundingSphere();
       this.group.add(mesh);

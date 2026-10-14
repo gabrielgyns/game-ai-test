@@ -90,7 +90,7 @@ describe("quests", () => {
     const inVale = (n: { transform: { position: { x: number; z: number } } }) => zoneAt(n.transform.position.x, n.transform.position.z).id === "vale";
     const npcs = [...world.npcs()].filter(inVale);
     expect(npcs.map((n) => n.npc!.id).sort()).toEqual(["elder", "guard", "merchant", "smith"]);
-    expect([...world.npcs()].filter((n) => !inVale(n))).toHaveLength(6);
+    expect([...world.npcs()].filter((n) => !inVale(n))).toHaveLength(9);
     for (const n of npcs) expect(Math.hypot(n.transform.position.x, n.transform.position.z)).toBeLessThan(10);
     const player = world.player!;
     player.combat.wantsAttack = true;

@@ -275,7 +275,8 @@ export class Foliage {
     const material = foliageMaterial(this.uniforms);
     const geometries = new Map<Kind, THREE.BufferGeometry>();
     const buckets = new Map<string, Placement[]>();
-    const placements = zone.id === "floresta" ? placeForestFoliage(seed, zone) : zone.id === "picos" ? placePeaksFoliage(seed, zone) : placeFoliage(seed);
+    // Nas Terras Vulcânicas não cresce nada.
+    const placements = zone.id === "floresta" ? placeForestFoliage(seed, zone) : zone.id === "picos" ? placePeaksFoliage(seed, zone) : zone.id === "vulcao" ? [] : placeFoliage(seed);
     for (const p of placements) {
       const key = `${p.kind}|${Math.floor(p.x / CHUNK)}|${Math.floor(p.z / CHUNK)}`;
       let list = buckets.get(key);

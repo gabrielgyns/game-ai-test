@@ -43,3 +43,5 @@ export const ARROW_STORM: PoolSpec = { kind: "arrows", radius: 3.5, damageFracti
 export const SPORE_POOL: PoolSpec = { kind: "spores", radius: 3, damageFraction: 0.2, duration: 9, tickEvery: 0.5 };
 /** Avalanche do Gigante de Gelo: chão congelado que fere e deixa lento quem fica em cima. */
 export const FROST_POOL: PoolSpec = { kind: "frost", radius: 3.2, damageFraction: 0.16, duration: 7, tickEvery: 0.5 };
+/** Magma do Senhor das Chamas e do Mestre da Forja: poça de fogo larga e demorada. */
+export const MAGMA_POOL: PoolSpec = { kind: "fire", radius: 3.2, damageFraction: 0.18, duration: 7, tickEvery: 0.5 };

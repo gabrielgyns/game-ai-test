@@ -29,6 +29,7 @@ export type GameEvent =
   | { type: "skill"; entity: EntityId; skill: SkillId; hits: number }
   | { type: "roll"; entity: EntityId }
   | { type: "dodge"; entity: EntityId; source: EntityId }
+  | { type: "lavaBurn"; entity: EntityId }
   | { type: "buffEnd"; entity: EntityId }
   | { type: "projectileSpawn"; projectileId: number }
   | { type: "projectileHit"; projectileId: number; target?: EntityId; position: { x: number; y: number; z: number }; explodeRadius: number }

@@ -319,6 +319,77 @@ export const QUESTS: QuestDefinition[] = [
       complete: "Trezentos anos e ninguém tinha feito isso. Pedra-Fria nunca vai esquecer seu nome. E as peças da armadura dele são suas.",
     },
   },
+  // Terras Vulcânicas: Bastião de Brasa.
+  {
+    id: "hounds",
+    title: "Cães da Caldeira",
+    giver: "scout",
+    description: "Cães de lava cercam o Bastião. Derrote 12 deles.",
+    objective: { kind: "kill", archetype: "lavaHound", count: 12, label: "Cães de lava derrotados" },
+    reward: { xp: 150000, gold: 3000, item: { kind: "potion", size: "large", quantity: 5 } },
+    requires: [],
+    dialogue: {
+      offer: "Você desceu dos Picos? Então ainda tem fôlego. Os cães de lava rondam a muralha toda noite. Doze deles e a gente respira.",
+      progress: "Eles correm em bando e mordem rápido. Lute perto da muralha, longe da lava.",
+      complete: "A muralha ficou quieta. Toma, poções; aqui em cima elas evaporam rápido.",
+    },
+  },
+  {
+    id: "pyromancers",
+    title: "Culto da Brasa",
+    giver: "scout",
+    description: "Piromantes adoram a caldeira e atiram bolas de fogo em quem passa. Derrote 10 deles.",
+    objective: { kind: "kill", archetype: "flameCaster", count: 10, label: "Piromantes derrotados" },
+    reward: { xp: 200000, gold: 3800, item: { kind: "equipment", tier: 3, rarity: "rare" } },
+    requires: ["hounds"],
+    dialogue: {
+      offer: "Tem gente que olha para o vulcão e vê um deus. Os piromantes acham que o Senhor das Chamas vai salvá-los. Dez deles, antes que convençam mais alguém.",
+      progress: "A bola de fogo segue a linha avisada no chão. Saia dela de lado.",
+      complete: "O culto rachou. Isto estava com o líder deles; é seu.",
+    },
+  },
+  {
+    id: "golems",
+    title: "Pedra que Anda",
+    giver: "commander",
+    description: "Golens de magma sobem dos rios de lava e esmagam as patrulhas. Derrote 6 deles.",
+    objective: { kind: "kill", archetype: "magmaGolem", count: 6, label: "Golens derrotados" },
+    reward: { xp: 260000, gold: 4500, item: { kind: "equipment", tier: 3, rarity: "rare" } },
+    requires: ["hounds"],
+    dialogue: {
+      offer: "Os golens nasceram da lava e voltam para ela. Enquanto isso, esmagam minhas patrulhas. Seis, soldado. Depois a gente fala da Forja.",
+      progress: "O golpe do golem tem aviso longo e acerta como um desabamento. Não fique para ver.",
+      complete: "Seis montes de pedra fria. O Bastião agradece, e eu tenho mais um serviço.",
+    },
+  },
+  {
+    id: "forge",
+    title: "O Mestre da Forja",
+    giver: "commander",
+    description: "Na Forja Vulcânica, a oeste, o Mestre da Forja arma o exército da caldeira. Derrote-o.",
+    objective: { kind: "kill", archetype: "forgeMaster", count: 1, label: "Mestre da Forja derrotado" },
+    reward: { xp: 400000, gold: 7000, item: { kind: "equipment", tier: 3, rarity: "epic" } },
+    requires: ["golems"],
+    dialogue: {
+      offer: "Os golens, as lâminas dos piromantes, tudo sai da Forja Vulcânica, a oeste. Lá dentro um ferreiro que não é mais gente bate na bigorna dia e noite. Desça os dois andares e apague a forja.",
+      progress: "Na Forja você tem três vidas. As grades no chão soltam fogo em ciclo: leia o aviso.",
+      complete: "A bigorna parou. Pela primeira vez em anos não se ouve o martelo daqui. É seu.",
+    },
+  },
+  {
+    id: "fireLord",
+    title: "O Senhor das Chamas",
+    giver: "commander",
+    description: "Na caldeira, ao norte, desperta o Senhor das Chamas, que chove magma e chama os cães de lava. Derrote-o.",
+    objective: { kind: "kill", archetype: "fireLord", count: 1, label: "Senhor das Chamas derrotado" },
+    reward: { xp: 600000, gold: 12000, item: { kind: "equipment", tier: 3, rarity: "epic" } },
+    requires: ["golems", "pyromancers"],
+    dialogue: {
+      offer: "Chegou a hora. Suba o cone ao norte e entre na caldeira pelo sul, onde o fosso de lava se abre. O Senhor das Chamas chove magma: o chão em chamas fica um bom tempo. Derrube o demônio e o fogo volta a dormir.",
+      progress: "A entrada da caldeira é ao sul. O resto da borda é fosso de lava.",
+      complete: "O vulcão silenciou. O Bastião, os Picos, a Floresta, o Vale: todos te devem. E as peças da coroa dele são suas.",
+    },
+  },
 ];
 
 export function questById(id: string): QuestDefinition | undefined {

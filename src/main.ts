@@ -47,7 +47,8 @@ import { ShopUI } from "./game/shopUI";
 import { SkillTreeUI } from "./game/skillTreeUI";
 import { Minimap } from "./game/minimap";
 import { passageAt, travel, ZONE_PASSAGES, ZONES, zoneAt, type ZoneId } from "./domain/zones";
-import { FOREST_CAMP, PEAKS_VILLAGE } from "./domain/terrain";
+import { FOREST_CAMP, PEAKS_VILLAGE, VOLCANO_FORT } from "./domain/terrain";
+import { createLavaMesh, type LavaMesh } from "./game/lava";
 import type { Environment } from "./game/environment";
 import { StashUI } from "./game/stashUI";
 import { WaystoneUI } from "./game/waystoneUI";
@@ -96,7 +97,10 @@ scene.add(environment.group);
 // Dungeons: desenhadas a partir da planta do domínio ao entrar; os portais de entrada ficam nas zonas.
 const dungeonView = new DungeonView(scene);
 const snowfall = new Snowfall();
-scene.add(snowfall.points);
+// Terras Vulcânicas: cinza caindo devagar e brasas subindo (acima de 1: brilham no bloom).
+const ashfall = new Snowfall({ count: 900, color: "#8a8280", size: 0.07, opacity: 0.7, speed: [-0.8, -0.3] });
+const embers = new Snowfall({ count: 260, color: new THREE.Color("#ff8a3a").multiplyScalar(2), size: 0.08, opacity: 0.9, speed: [0.6, 1.6] });
+scene.add(snowfall.points, ashfall.points, embers.points);
 // Braseiros nos pilares do santuário: chamas que brilham mais à noite e uma luz quente no centro.
 const braziers = createBraziers();
 scene.add(braziers.group);
@@ -114,28 +118,31 @@ interface ZoneVisuals {
   stones: { village: VillageId; glow: WaystoneGlow }[];
   /** Portais das dungeons desta zona. */
   portals: Portal[];
+  lava?: LavaMesh;
 }
 const zoneVisuals = new Map<ZoneId, ZoneVisuals>();
 /** Neblina de cada zona fora do vale: cor, quanto puxar para ela e quanto encurtar a distância. */
 const ZONE_FOG: Partial<Record<ZoneId, { color: THREE.Color; mix: number; near: number; far: number; sky: number }>> = {
   floresta: { color: new THREE.Color("#3a5a48"), mix: 0.55, near: 0.45, far: 0.62, sky: 0.35 },
   picos: { color: new THREE.Color("#c8d8e8"), mix: 0.6, near: 0.5, far: 0.7, sky: 0.45 },
+  vulcao: { color: new THREE.Color("#4a2a22"), mix: 0.55, near: 0.5, far: 0.68, sky: 0.55 },
 };
 /** Fogueira da vila da zona (uma luz só, sempre na cena, que muda de lugar com a zona). */
 const VILLAGE_FIRE: Partial<Record<ZoneId, { x: number; z: number }>> = {
   floresta: { x: ZONES.floresta.center.x + FOREST_CAMP.x, z: ZONES.floresta.center.z + FOREST_CAMP.z },
   picos: { x: ZONES.picos.center.x + PEAKS_VILLAGE.x, z: ZONES.picos.center.z + PEAKS_VILLAGE.z + 1 },
+  vulcao: { x: ZONES.vulcao.center.x + VOLCANO_FORT.x, z: ZONES.vulcao.center.z + VOLCANO_FORT.z + 1 },
 };
 const campfireLight = new THREE.PointLight("#ff9a4a", 0, 18, 1.4);
 scene.add(campfireLight);
 
 /** Cor do véu do portal de cada dungeon. */
-const PORTAL_COLOR: Record<DungeonThemeId, string> = { crypt: "#9a5aff", elvenSanctum: "#5ad88a", iceCave: "#5ad0ff" };
+const PORTAL_COLOR: Record<DungeonThemeId, string> = { crypt: "#9a5aff", elvenSanctum: "#5ad88a", iceCave: "#5ad0ff", volcanicForge: "#ff7a2a" };
 
 /** Passagens e pedras de teleporte de uma zona. */
 function zoneMarkers(zone: ZoneId, group: THREE.Group): Pick<ZoneVisuals, "passages" | "stones" | "portals"> {
   const passages = ZONE_PASSAGES.filter((g) => g.from === zone).map((g) => {
-    const marker = createPassageMarker(g, zone === "vale" ? "#d8f0c8" : "#c8e8d0");
+    const marker = createPassageMarker(g, zone === "vale" ? "#d8f0c8" : zone === "vulcao" ? "#d8a888" : "#c8e8d0");
     group.add(marker.group);
     return marker;
   });
@@ -170,6 +177,10 @@ function ensureZoneVisuals(id: ZoneId): ZoneVisuals {
     const fol = new Foliage(9173 + 31, zone);
     group.add(createTerrainMesh(zone), fol.group, env.group);
     zv = { group, environment: env, foliage: fol, ...zoneMarkers(id, group) };
+    if (id === "vulcao") {
+      zv.lava = createLavaMesh(zone);
+      group.add(zv.lava.mesh);
+    }
   }
   scene.add(group);
   zoneVisuals.set(id, zv);
@@ -389,6 +400,7 @@ const sanctuaryPanelOpen = () => stashUI.isOpen || waystoneUI.isOpen;
  * zona de destino (na primeira visita) e os modelos completos do cenário, e clareia.
  */
 const loading = new LoadingScreen();
+let lastLavaWarn = -Infinity;
 async function loadArea(card: { title: string; subtitle: string; detail?: string }, to: ZoneId | null, change: () => void): Promise<void> {
   if (loading.busy) return;
   paused = true;
@@ -993,6 +1005,13 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         saveGame("auto");
         break;
       }
+      case "lavaBurn":
+        if (world.time - lastLavaWarn > 2) {
+          lastLavaWarn = world.time;
+          floats.spawn(player.transform.position, "LAVA!", "#ff7a2a", 1.1);
+          hud.pushLog("A lava queima! Saia dela (rolar por cima não queima).", "dmg-in");
+        }
+        break;
       case "teleport":
         audio.play("coin", { pitch: 0.7 });
         hud.pushLog(`A pedra levou você a ${VILLAGES[ev.village as VillageId].name} (-${ev.gold} ouro).`, "gain");
@@ -1162,6 +1181,7 @@ function frame(): void {
     const known = knownVillages(player);
     for (const s of current.stones) s.glow.update(world.time, known.includes(s.village));
     for (const portal of current.portals) portal.update(world.time);
+    current.lava?.update(world.time);
     if (zoneId === "vale") braziers.update(world.time, sky.night);
     // Floresta: neblina esverdeada, sob a copa. Picos: branca e azulada, de nevasca.
     const look = ZONE_FOG[zoneId];
@@ -1180,6 +1200,9 @@ function frame(): void {
   }
   snowfall.points.visible = zoneId === "picos" && !indoor;
   snowfall.update(world.time, p);
+  ashfall.points.visible = embers.points.visible = zoneId === "vulcao" && !indoor;
+  ashfall.update(world.time, p);
+  embers.update(world.time, p);
   dungeonView.update(world.dungeon, focus, world.time, cam.camera);
   views.prune(world);
   hud.updateDungeon(world.dungeon ? { name: DUNGEON_THEMES[world.dungeon.theme].name, level: world.dungeon.level, floor: world.dungeon.floor, floors: world.dungeon.floors, cleared: world.dungeon.clearedRooms.length, total: world.dungeon.layout.rooms.filter((r) => r.kind === "combat" || r.kind === "stairs").length, lives: world.dungeon.livesLeft, maxLives: DUNGEON_LIVES, boss: world.dungeon.bossDefeated } : null);

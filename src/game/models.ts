@@ -6,6 +6,7 @@ import { createBandit, createBogZombie, createGoblin, createOrc, createScorpion,
 import { createGoblinKing, createScorpionEmperor, createSkeletonLord, createSpiderQueen } from "./characters/bosses";
 import { createVillager } from "./characters/npcs";
 import { createAncientTreant, createArmorer, createElvenOracle, createElvenSpirit, createEnt, createPeddler, createRanger, createWolf } from "./characters/forest";
+import { createCommander, createFireLord, createFlameCaster, createForgeMaster, createForgeSmith, createLavaHound, createMagmaGolem, createScout } from "./characters/volcano";
 import { createFrostGiant, createFurTrader, createHunter, createIceQueen, createIceWraith, createJarl, createSnowWolf, createYeti } from "./characters/peaks";
 
 export type { CharacterModel } from "./characters/common";
@@ -17,8 +18,8 @@ export { createVillager } from "./characters/npcs";
 /** Todos os arquétipos conhecidos, na ordem em que aparecem no jogo. */
 export const ARCHETYPES = [
   "hero", "slime", "goblin", "goblinArcher", "orc", "spider", "bogZombie", "scorpion", "bandit", "banditArcher",
-  "goblinKing", "spiderQueen", "scorpionEmperor", "skeleton", "skeletonArcher", "skeletonLord", "wolf", "ent", "elvenSpirit", "ancientTreant", "elvenOracle", "snowWolf", "iceWraith", "yeti", "frostGiant", "iceQueen",
-  "elder", "smith", "guard", "merchant", "ranger", "peddler", "armorer", "jarl", "furTrader", "hunter",
+  "goblinKing", "spiderQueen", "scorpionEmperor", "skeleton", "skeletonArcher", "skeletonLord", "wolf", "ent", "elvenSpirit", "ancientTreant", "elvenOracle", "snowWolf", "iceWraith", "yeti", "frostGiant", "iceQueen", "lavaHound", "flameCaster", "magmaGolem", "fireLord", "forgeMaster",
+  "elder", "smith", "guard", "merchant", "ranger", "peddler", "armorer", "jarl", "furTrader", "hunter", "commander", "forgeSmith", "scout",
 ] as const;
 
 export function createModel(archetype: string, equipment?: Equipment, classId?: ClassId): CharacterModel {
@@ -50,6 +51,14 @@ export function createModel(archetype: string, equipment?: Equipment, classId?: 
     case "yeti": return createYeti();
     case "frostGiant": return createFrostGiant();
     case "iceQueen": return createIceQueen();
+    case "lavaHound": return createLavaHound();
+    case "flameCaster": return createFlameCaster();
+    case "magmaGolem": return createMagmaGolem();
+    case "fireLord": return createFireLord();
+    case "forgeMaster": return createForgeMaster();
+    case "commander": return createCommander();
+    case "forgeSmith": return createForgeSmith();
+    case "scout": return createScout();
     case "jarl": return createJarl();
     case "furTrader": return createFurTrader();
     case "hunter": return createHunter();

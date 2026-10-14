@@ -26,6 +26,7 @@ export function terrainHeightSmooth(x: number, z: number): number {
   const zone = zoneAt(x, z);
   if (zone.id === "floresta") return forestHeightSmooth(x - zone.center.x, z - zone.center.z);
   if (zone.id === "picos") return peaksHeightSmooth(x - zone.center.x, z - zone.center.z);
+  if (zone.id === "vulcao") return volcanoHeightSmooth(x - zone.center.x, z - zone.center.z);
   return valeHeightSmooth(x, z);
 }
 
@@ -100,8 +101,57 @@ function peaksHeightSmooth(lx: number, lz: number): number {
   const ledge = 4 * (1 - smoothstep(6, 14, dCave));
   const lake = -2 * (1 - smoothstep(-2, 4, dLake));
   const edge = Math.max(Math.abs(lx), Math.abs(lz));
-  const wall = smoothstep(WORLD_HALF - 18, WORLD_HALF, edge) * 18 * (lz > 0 ? smoothstep(5, 14, Math.abs(lx)) : 1);
+  // Penhascos nas bordas, abertos nas passagens (sul, no meio, para a floresta; norte, a oeste, para o vulcão).
+  const wall = smoothstep(WORLD_HALF - 18, WORLD_HALF, edge) * 18 * (lz > 0 ? smoothstep(5, 14, Math.abs(lx)) : smoothstep(5, 14, Math.abs(lx + 50)));
   return 1 + relief + plateau + ledge + lake + wall;
+}
+
+/** Lugares das Terras Vulcânicas, em coordenadas locais: forte, caldeira do chefe e a Forja. */
+export const VOLCANO_FORT = { x: 0, z: 76 };
+export const VOLCANO_CALDERA = { x: 0, z: -72 };
+export const VOLCANO_FORGE = { x: -64, z: -18 };
+export const VOLCANO_LAVA_LAKE = { x: 56, z: 28 };
+/** Altura da lava (plana). */
+export const LAVA_LEVEL = -1.5;
+
+/** Centro (em x local) do rio de lava que desce da caldeira, serpenteando para o sudeste. */
+export const lavaRiverX = (lz: number): number => 22 + 14 * Math.sin(lz * 0.045 + 0.6) + 4 * Math.sin(lz * 0.13);
+
+/** Lava: o rio que desce da caldeira, o lago a leste e o fosso em volta do fundo da caldeira. */
+function lavaLocal(lx: number, lz: number): boolean {
+  if (lz > -50 && lz < 40 && Math.abs(lx - lavaRiverX(lz)) < 3.2 + Math.sin(lz * 0.2) * 0.8) return true;
+  const a = Math.atan2(lz - VOLCANO_LAVA_LAKE.z, lx - VOLCANO_LAVA_LAKE.x);
+  if (Math.hypot(lx - VOLCANO_LAVA_LAKE.x, lz - VOLCANO_LAVA_LAKE.z) < 13 + Math.sin(a * 3) * 2.5) return true;
+  // Fosso de lava na caldeira, aberto ao sul (por onde se entra).
+  const dc = Math.hypot(lx - VOLCANO_CALDERA.x, lz - VOLCANO_CALDERA.z);
+  return dc > 17 && dc < 20.5 && !(lz > VOLCANO_CALDERA.z && Math.abs(lx - VOLCANO_CALDERA.x) < 5);
+}
+
+/**
+ * Relevo das Terras Vulcânicas: campos de basalto quebrado, cones pequenos espalhados e, ao norte, o
+ * vulcão: um cone largo com a caldeira plana no topo, cercada por um fosso de lava. O forte fica ao
+ * sul, perto da passagem; a Forja, num patamar a oeste. A lava é plana e afundada.
+ */
+function volcanoHeightSmooth(lx: number, lz: number): number {
+  const rough = Math.sin(lx * 0.07 + 1.1) * Math.cos(lz * 0.06) * 2.4 + Math.abs(Math.sin((lx + lz) * 0.05)) * 2.2 + Math.cos(lx * 0.17) * Math.sin(lz * 0.15) * 0.8;
+  const cones = Math.max(0, 5 - Math.hypot(lx + 40, lz + 60) * 0.35) + Math.max(0, 4 - Math.hypot(lx - 60, lz + 70) * 0.3) + Math.max(0, 4 - Math.hypot(lx + 70, lz - 40) * 0.3);
+  const dCal = Math.hypot(lx - VOLCANO_CALDERA.x, lz - VOLCANO_CALDERA.z);
+  // Cone do vulcão: sobe até a borda (r ~24) e a caldeira (r < 17) é plana, um pouco abaixo da borda.
+  const volcano = dCal < 17 ? 6 : dCal < 24 ? 6 + (dCal - 17) * 0.6 : Math.max(0, 10.2 - (dCal - 24) * 0.22);
+  const dFort = Math.hypot(lx - VOLCANO_FORT.x, lz - VOLCANO_FORT.z);
+  const dForge = Math.hypot(lx - VOLCANO_FORGE.x, lz - VOLCANO_FORGE.z);
+  const flatten = Math.min(smoothstep(13, 26, dFort), smoothstep(6, 14, dForge), smoothstep(14, 26, dCal));
+  const trail = lz > VOLCANO_FORT.z ? smoothstep(4, 12, Math.abs(lx)) : 1;
+  const ledge = 3 * (1 - smoothstep(6, 14, dForge));
+  const edge = Math.max(Math.abs(lx), Math.abs(lz));
+  const wall = smoothstep(WORLD_HALF - 18, WORLD_HALF, edge) * 16 * (lz > 0 ? smoothstep(5, 14, Math.abs(lx)) : 1);
+  return 1 + (rough + cones) * flatten * trail + volcano + ledge + wall;
+}
+
+/** Lava das Terras Vulcânicas: queima quem pisa (ver `lavaSystem`). */
+export function isLava(x: number, z: number): boolean {
+  const zone = zoneAt(x, z);
+  return zone.id === "vulcao" && lavaLocal(x - zone.center.x, z - zone.center.z);
 }
 
 /** O lago congelado dos Picos: chão liso, onde quem anda escorrega. */
@@ -159,8 +209,9 @@ export function terrainHeight(x: number, z: number): number {
   const cx = Math.floor(x / CELL_SIZE) * CELL_SIZE + CELL_SIZE / 2;
   const cz = Math.floor(z / CELL_SIZE) * CELL_SIZE + CELL_SIZE / 2;
   const h = Math.round(terrainHeightSmooth(cx, cz) / STEP_HEIGHT) * STEP_HEIGHT;
-  // O lago dos Picos é um espelho de gelo plano.
+  // O lago dos Picos é um espelho de gelo plano; a lava, um espelho incandescente afundado.
   if (isIce(cx, cz)) return PEAKS_ICE;
+  if (isLava(cx, cz)) return LAVA_LEVEL;
   // No rio da floresta, o fundo vira espelho d'água plano.
   if (h < FOREST_WATER && zoneAt(cx, cz).id === "floresta") return FOREST_WATER;
   // No pântano, tudo abaixo do nível da água vira um espelho plano (o fundo não importa).

@@ -1,7 +1,7 @@
 import { smoothstep } from "./math";
 import { zoneAt } from "./zones";
 
-export type Biome = "meadow" | "swamp" | "desert" | "forest" | "ruins" | "snow";
+export type Biome = "meadow" | "swamp" | "desert" | "forest" | "ruins" | "snow" | "volcano";
 
 /** Fronteiras em X: pântano a oeste, deserto a leste, campina no meio. */
 export const SWAMP_EDGE = -34;
@@ -12,6 +12,7 @@ export function biomeAt(x: number, z: number): Biome {
   const zone = zoneAt(x, z);
   if (zone.id === "floresta") return x - zone.center.x > 45 ? "ruins" : "forest";
   if (zone.id === "picos") return "snow";
+  if (zone.id === "vulcao") return "volcano";
   if (x < SWAMP_EDGE) return "swamp";
   if (x > DESERT_EDGE) return "desert";
   return "meadow";
@@ -36,4 +37,5 @@ export const BIOME_LABEL: Record<Biome, string> = {
   forest: "Floresta Ancestral",
   ruins: "Ruínas de Elar",
   snow: "Picos Gelados",
+  volcano: "Terras Vulcânicas",
 };

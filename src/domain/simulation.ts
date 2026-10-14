@@ -10,6 +10,7 @@ import { respawnSystem } from "./systems/respawn";
 import { statusSystem } from "./status";
 import { dungeonSystem } from "./dungeon";
 import { villageSystem } from "./villages";
+import { lavaSystem } from "./lava";
 import type { World } from "./world";
 
 /** Avança o mundo um passo e devolve os eventos gerados nesse passo. */
@@ -26,5 +27,6 @@ export function stepWorld(world: World, dt: number): GameEvent[] {
   pickupSystem(world, dt);
   dungeonSystem(world, dt);
   villageSystem(world);
+  lavaSystem(world, dt);
   return world.drainEvents();
 }

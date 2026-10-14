@@ -219,6 +219,10 @@ export function applyDamage(world: World, source: Entity, target: Entity, amount
     world.emit({ type: "dodge", entity: target.id, source: source.id });
     return;
   }
+  // Queimar a Vida (Senhor das Chamas, 3 peças): golpe básico tira um pedaço da vida máxima do alvo.
+  if (kind === "basic" && hasSetPower(source, "lifeburn")) amount += Math.min(amount, Math.round(target.health.max * SET_POWERS.lifeburnFraction));
+  // Metal Derretido (Mestre da Forja, 3 peças).
+  if (kind === "skill" && hasSetPower(source, "molten")) amount = Math.round(amount * (1 + SET_POWERS.moltenBonus));
   // Estilhaçar (Rainha Gélida, 3 peças): alvo lento ou atordoado apanha mais.
   if (kind !== "hazard" && hasSetPower(source, "shatter") && (isStunned(target) || speedFactor(target) < 1)) {
     amount = Math.round(amount * (1 + SET_POWERS.shatterBonus));
@@ -354,6 +358,8 @@ export const SET_POWERS = {
   glacierKeep: 0.5,
   shatterBonus: 0.4,
   evasionChance: 0.15,
+  lifeburnFraction: 0.02,
+  moltenBonus: 0.25,
 };
 
 const REGEN_DELAY_SECONDS = 5;

@@ -113,6 +113,21 @@ segunda dungeon: a mesma estrutura da cripta (dois andares, eventos, três vidas
 Gelo, Nevasca, Prisão de Gelo, Chão Congelado, Deslize), com a **Regalia da Rainha Gélida** (3 peças:
 +40% de dano em inimigos lentos ou atordoados).
 
+Ao norte dos Picos, depois do platô do Gigante e um pouco a oeste, a trilha desce para as **Terras
+Vulcânicas** (inimigos do nível 28 ao 36): campos de basalto negro, árvores carbonizadas, cinza caindo,
+brasas subindo e **rios de lava** que queimam o herói enquanto ele estiver em cima (rolar por cima não
+queima; os bichos de fogo não se importam). **Cães de lava** caçam em bando, **piromantes** atiram
+bolas de fogo e **golens de magma** esmagam devagar. O **Bastião de Brasa**, de casas de pedra, tem o
+**Comandante Varga** e o **Batedor Kael** (cinco quests), a **Ferreira Ignis** (loja do nível 28 para
+cima) e a pedra de teleporte. Ao norte, no topo do vulcão, a caldeira cercada por um fosso de lava
+(entra-se pelo sul) guarda o **Senhor das Chamas** (Lâmina Ígnea, Erupção, Chuva de Magma que deixa o
+chão em chamas, Leque de Brasas, Investida Flamejante e cães na fúria), com a **Coroa das Chamas** (3
+peças: golpes básicos tiram +2% da vida máxima do alvo). A oeste, num patamar de basalto, fica a
+**Forja Vulcânica**, a quarta dungeon (nunca abaixo do nível 28): paredes de basalto com veios em
+brasa, tapetes de lava, bigornas, correntes, cadinhos e grades que soltam fogo. O **Guarda da Forja**
+(um golem enorme) guarda a escada e o **Mestre da Forja** espera no fundo, com a **Forja Ancestral**
+(3 peças: habilidades causam +25% de dano).
+
 Toda vila tem o **baú**, o mesmo em todas e compartilhado entre os seus heróis (3 abas de 30 espaços:
 guarde num e tire no outro), e uma **Pedra de Teleporte**, como a Kafra: passar perto dela pela
 primeira vez a ativa (o cristal acende), e de qualquer pedra dá para ir a outra vila já visitada por

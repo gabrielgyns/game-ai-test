@@ -245,6 +245,24 @@ com screenshots antes de serem considerados prontos.
     novos (trepadeiras, cogumelos que brilham, estandarte élfico, braseiro lunar, espinhos de raiz,
     floreira), portal de véu verde, modelo do Oráculo (translúcido, manto branco e dourado). 4 testes
     novos (`sanctum.test.ts`).
+33. **Terras Vulcânicas e a Forja Vulcânica** (pedido do dono, depois do Santuário). Domínio: zona
+    `vulcao` em 0,−1260 (níveis 28 a 36), ligada ao norte dos Picos (penhasco aberto em x local −50);
+    relevo de basalto com cones, o vulcão com caldeira plana e fosso de lava aberto ao sul, rio de
+    lava (`lavaRiverX`) e lago de lava, lava plana e afundada (`isLava`, `LAVA_LEVEL`); `lavaSystem`
+    queima só o herói (D41); bioma `volcano`; Cão de Lava, Piromante (bola de fogo) e Golem de Magma;
+    Senhor das Chamas (nível 36: Lâmina Ígnea, Erupção, Chuva de Magma com `MAGMA_POOL`, Leque de
+    Brasas, Investida, cães na fúria) com a Coroa das Chamas (2: 4% de roubo de vida; 3: Queimar a
+    Vida); Bastião de Brasa (Comandante Varga, Batedor Kael, Ferreira Ignis com a loja `forge` de nível
+    28+); 5 quests. Forja Vulcânica (`volcanicForge`): nível mínimo 28, cães, piromantes e golens,
+    Guarda da Forja (golem) e Mestre da Forja (escala com o nível) com a Forja Ancestral (2: +110 vida;
+    3: Metal Derretido, +25% nas habilidades). Apresentação: terreno de basalto e cinza com chão
+    chamuscado perto da lava; lava como lâmina incandescente com bloom e pulso (`lava.ts`); cinza
+    caindo e brasas subindo (`Snowfall` com opções); neblina avermelhada; "LAVA!" ao queimar;
+    adereços (colunas de basalto, obsidiana com veios em brasa, árvore carbonizada, respiro de lava,
+    casa de pedra e boca da Forja, as duas como variações da cabana e da boca da caverna); modelos do
+    cão de lava, piromante, golem, Senhor das Chamas (asas, chifres, coroa de fogo), Mestre da Forja,
+    Varga, Ignis e Kael; Forja com basalto e veios em brasa, tapete de lava, bigornas, correntes,
+    cadinhos, carvão, estandartes e grades de fogo; portal laranja. 7 testes novos (`volcano.test.ts`).
 
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).

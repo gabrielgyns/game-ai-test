@@ -62,6 +62,8 @@ export const SHOPS: Record<string, ShopProfile> = {
   /** Mascate Faelan, no acampamento da floresta. */
   peddler: { minLevel: 12, salt: 911, rarities: (rand) => ["uncommon", "rare", "rare", "rare", rand() < 0.45 ? "epic" : "rare"] },
   /** Mercadora Sigrid, na vila de Pedra-Fria. */
+  /** Ferreira Ignis, no Bastião de Brasa. */
+  forge: { minLevel: 28, salt: 7717, rarities: (rand) => ["rare", "rare", rand() < 0.4 ? "epic" : "rare", rand() < 0.5 ? "epic" : "rare", "epic"] },
   trader: { minLevel: 20, salt: 4421, rarities: (rand) => ["rare", "rare", "rare", rand() < 0.5 ? "epic" : "rare", rand() < 0.25 ? "epic" : "rare"] },
 };
 

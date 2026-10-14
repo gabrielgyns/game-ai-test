@@ -111,6 +111,37 @@ export const NPC_DEFS: NpcDefinition[] = [
     idle: [
       "Lobo da neve caça em silêncio. Quando você ouvir, já são três.",
       "Yeti é lento para levantar o braço. Quando levanta, saia de baixo.",
+      "No norte, depois do platô do Gigante e um pouco a oeste, a trilha desce para as Terras Vulcânicas. Lá o chão queima. Literalmente.",
+    ],
+  },
+  // Terras Vulcânicas: Bastião de Brasa.
+  {
+    id: "commander",
+    name: "Comandante Varga",
+    archetype: "commander",
+    idle: [
+      "O Bastião é a última muralha antes da caldeira. Se cair, o fogo desce para os Picos.",
+      "Lava não perdoa: pisou, queima. Rolar por cima dá para aguentar; ficar parado, não.",
+      "A Forja Vulcânica fica a oeste, num patamar de basalto. O que sai de lá não é ferramenta.",
+    ],
+  },
+  {
+    id: "forgeSmith",
+    name: "Ferreira Ignis",
+    archetype: "forgeSmith",
+    shop: "forge",
+    idle: [
+      "Aço temperado em lava dura três vidas. Caro? É. Vale? Também.",
+      "Chão em chamas é poça: sai dela e ela não te pega. O magma do Senhor das Chamas fica um bom tempo no chão.",
+    ],
+  },
+  {
+    id: "scout",
+    name: "Batedor Kael",
+    archetype: "scout",
+    idle: [
+      "Cão de lava corre mais que você. Não fuja: escolha onde lutar.",
+      "Piromante atira bola de fogo pela linha do chão. Saia de lado antes do disparo.",
     ],
   },
 ];

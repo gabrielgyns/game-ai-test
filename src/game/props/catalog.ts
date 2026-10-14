@@ -6,6 +6,7 @@ import { boulder, rockCluster, sandstone, slab } from "./rocks";
 import { birch, bush, deadTree, oak, pine } from "./trees";
 import { brokenColumn, campfire, elvenArch, elvenStatue, fallenLog, giantTree, tent } from "./forest";
 import { cabin, caveMouth, frozenTree, iceCrystal, iceSpire, snowRock } from "./peaks";
+import { basaltColumns, charredTree, forgeMouth, lavaVent, obsidianRock, stoneHut } from "./volcano";
 
 /**
  * Catálogo do cenário. Cada modelo tem um id (que também é o nome do arquivo .vox que pode
@@ -78,6 +79,14 @@ export const PROP_MODELS = {
   frozenTree: model("arvore-congelada", "Árvore morta nevada", () => frozenTree(21, 58)),
   cabin: model("cabana", "Cabana de toras", () => cabin(4), 1 / 10),
   caveMouth: model("boca-da-caverna", "Boca da Caverna de Gelo", () => caveMouth(8), 1 / 8),
+  // Terras Vulcânicas.
+  basaltColumns: model("colunas-de-basalto", "Colunas de basalto", () => basaltColumns(5)),
+  obsidian1: model("obsidiana-1", "Obsidiana 1", () => obsidianRock(3, [15, 11, 12])),
+  obsidian2: model("obsidiana-2", "Obsidiana 2", () => obsidianRock(17, [10, 8, 13])),
+  charredTree: model("arvore-carbonizada", "Árvore carbonizada", () => charredTree(13, 56)),
+  lavaVent: model("respiro-de-lava", "Respiro de lava", () => lavaVent(4)),
+  stoneHut: model("casa-de-pedra", "Casa de pedra do Bastião", () => stoneHut(6), 1 / 10),
+  forgeMouth: model("boca-da-forja", "Boca da Forja Vulcânica", () => forgeMouth(12), 1 / 8),
 } satisfies Record<string, PropModel>;
 
 export type PropKind = keyof typeof PROP_MODELS;

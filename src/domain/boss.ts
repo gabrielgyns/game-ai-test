@@ -2,7 +2,7 @@ import type { Entity, EntityId } from "./components";
 import type { ProjectileKind } from "./projectiles";
 import { createEquipment as createEquipmentSlots, createInventory } from "./inventory";
 import type { Vec2, Vec3 } from "./math";
-import { ACID_POOL, FROST_POOL, SPORE_POOL, type PoolSpec } from "./hazards";
+import { ACID_POOL, FROST_POOL, MAGMA_POOL, SPORE_POOL, type PoolSpec } from "./hazards";
 import { createAbilities } from "./skills";
 
 /** Forma do aviso de golpe, desenhada no chão pela apresentação. */
@@ -281,7 +281,7 @@ export function createSkeletonLord(id: EntityId, position: Vec3, level = 5): Ent
 }
 
 /** Que lacaio cada chefe convoca na fase final. */
-export const BOSS_MINION: Record<string, string> = { goblinKing: "goblin", spiderQueen: "spider", scorpionEmperor: "banditArcher", skeletonLord: "skeleton", ancientTreant: "wolf", frostGiant: "snowWolf", iceQueen: "iceWraith", elvenOracle: "elvenSpirit" };
+export const BOSS_MINION: Record<string, string> = { goblinKing: "goblin", spiderQueen: "spider", scorpionEmperor: "banditArcher", skeletonLord: "skeleton", ancientTreant: "wolf", frostGiant: "snowWolf", iceQueen: "iceWraith", elvenOracle: "elvenSpirit", fireLord: "lavaHound", forgeMaster: "flameCaster" };
 
 export const ANCIENT_TREANT_PATTERNS: AttackPattern[] = [
   { id: "vineLash", name: "Chicote de Vinhas", kind: "melee", range: 4.4, windup: 0.9, damageMultiplier: 1, cooldown: 2.3, minPhase: 1 },
@@ -404,6 +404,70 @@ export function createElvenOracle(id: EntityId, position: Vec3, level = 15): Ent
     combat: { damage, baseDamage: damage, range: 3.2, cooldown: 2, cooldownLeft: 0, wantsAttack: false, windupTime: 0.8, windupLeft: 0 },
     ai: { state: "idle", home: { ...position }, aggroRange: 13, leashRange: 30, xpReward: Math.round(6000 * k), goldReward: Math.round(900 * k), respawnSeconds: Infinity, needsSight: true },
     boss: { title: "Oráculo de Elar", patterns: ELVEN_ORACLE_PATTERNS, cooldowns: {}, phase: 1, phaseThresholds: [0.6, 0.3], windupScale: 1, summoned: false, engaged: false },
+    abilities: { ...createAbilities(), skills: [] },
+    inventory: createInventory(0),
+    equipment: createEquipmentSlots(),
+  };
+}
+
+export const FIRE_LORD_PATTERNS: AttackPattern[] = [
+  { id: "flameBlade", name: "Lâmina Ígnea", kind: "melee", range: 4.8, windup: 0.9, damageMultiplier: 1, cooldown: 2.3, minPhase: 1 },
+  { id: "eruption", name: "Erupção", kind: "slam", range: 7.5, windup: 1.5, damageMultiplier: 1.7, cooldown: 7, minPhase: 1 },
+  { id: "magmaRain", name: "Chuva de Magma", kind: "lob", range: 18, projectile: "fireball", count: 5, pool: MAGMA_POOL, impactRadius: 2.4, windup: 1.2, damageMultiplier: 0.7, cooldown: 7.5, minPhase: 1 },
+  { id: "emberFan", name: "Leque de Brasas", kind: "fan", range: 16, projectile: "fireball", count: 9, spreadDeg: 110, windup: 1.0, damageMultiplier: 0.55, cooldown: 6, minPhase: 2 },
+  { id: "blazeRush", name: "Investida Flamejante", kind: "charge", range: 13, windup: 0.85, damageMultiplier: 1.5, cooldown: 8, minPhase: 2 },
+];
+
+/**
+ * Senhor das Chamas, chefe das Terras Vulcânicas (nível 36): um demônio de fogo que mora na caldeira.
+ * Corta com a lâmina em brasa, faz o chão entrar em erupção, chove magma que deixa poças de fogo e,
+ * ferido, solta leques de brasas e avança. Na fúria, chama os cães de lava.
+ */
+export function createFireLord(id: EntityId, position: Vec3): Entity {
+  const maxHealth = 22000;
+  return {
+    id,
+    kind: "enemy",
+    name: "Senhor das Chamas",
+    archetype: "fireLord",
+    level: 36,
+    transform: { position: { ...position }, yaw: 0 },
+    movement: { speed: 4.2, speedMultiplier: 1, intent: { x: 0, z: 0 } },
+    health: { current: maxHealth, max: maxHealth, baseMax: maxHealth, regenPerSecond: 40, lastDamagedAt: -Infinity },
+    combat: { damage: 260, baseDamage: 260, range: 4.8, cooldown: 2.3, cooldownLeft: 0, wantsAttack: false, windupTime: 0.9, windupLeft: 0 },
+    ai: { state: "idle", home: { ...position }, aggroRange: 18, leashRange: 45, xpReward: 320000, goldReward: 5000, respawnSeconds: 180 },
+    boss: { title: "Senhor das Chamas", patterns: FIRE_LORD_PATTERNS, cooldowns: {}, phase: 1, phaseThresholds: [0.6, 0.3], windupScale: 1, summoned: false, engaged: false },
+    abilities: { ...createAbilities(), skills: [] },
+    inventory: createInventory(0),
+    equipment: createEquipmentSlots(),
+  };
+}
+
+export const FORGE_MASTER_PATTERNS: AttackPattern[] = [
+  { id: "hammerBlow", name: "Martelada", kind: "melee", range: 3.8, windup: 0.95, damageMultiplier: 1.1, cooldown: 2.3, minPhase: 1 },
+  { id: "anvilDrop", name: "Bigorna Ardente", kind: "aoe", range: 3.6, castRange: 16, windup: 1.3, damageMultiplier: 1.7, cooldown: 6.5, minPhase: 1 },
+  { id: "slag", name: "Escória", kind: "lob", range: 15, projectile: "fireball", count: 3, pool: MAGMA_POOL, impactRadius: 2.2, windup: 1.1, damageMultiplier: 0.65, cooldown: 7.5, minPhase: 1 },
+  { id: "forgeQuake", name: "Tremor da Forja", kind: "slam", range: 6.5, windup: 1.4, damageMultiplier: 1.6, cooldown: 7, minPhase: 2 },
+  { id: "bellowsRush", name: "Fole Ardente", kind: "charge", range: 12, windup: 0.8, damageMultiplier: 1.4, cooldown: 7.5, minPhase: 2 },
+];
+
+/** Mestre da Forja, chefe da Forja Vulcânica: escala com o nível da forja, como o Lorde na cripta. */
+export function createForgeMaster(id: EntityId, position: Vec3, level = 30): Entity {
+  const k = (0.7 + 0.1 * Math.max(1, level)) / (0.7 + 0.1 * 30);
+  const maxHealth = Math.round(15000 * k);
+  const damage = Math.round(190 * k);
+  return {
+    id,
+    kind: "enemy",
+    name: "Mestre da Forja",
+    archetype: "forgeMaster",
+    level: level + 2,
+    transform: { position: { ...position }, yaw: Math.PI / 2 },
+    movement: { speed: 4.4, speedMultiplier: 1, intent: { x: 0, z: 0 } },
+    health: { current: maxHealth, max: maxHealth, baseMax: maxHealth, regenPerSecond: 0, lastDamagedAt: -Infinity },
+    combat: { damage, baseDamage: damage, range: 3.8, cooldown: 2.3, cooldownLeft: 0, wantsAttack: false, windupTime: 0.95, windupLeft: 0 },
+    ai: { state: "idle", home: { ...position }, aggroRange: 13, leashRange: 30, xpReward: Math.round(220000 * k), goldReward: Math.round(3500 * k), respawnSeconds: Infinity, needsSight: true },
+    boss: { title: "Mestre da Forja", patterns: FORGE_MASTER_PATTERNS, cooldowns: {}, phase: 1, phaseThresholds: [0.6, 0.3], windupScale: 1, summoned: false, engaged: false },
     abilities: { ...createAbilities(), skills: [] },
     inventory: createInventory(0),
     equipment: createEquipmentSlots(),

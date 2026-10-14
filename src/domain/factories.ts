@@ -51,7 +51,7 @@ export interface EnemyTemplate {
   xpReward: number;
   goldReward: number;
   /** Atiradores: golpe básico à distância e distância que tentam manter. */
-  ranged?: { projectile: "arrow" | "bolt" | "iceShard"; keepDistance: number };
+  ranged?: { projectile: "arrow" | "bolt" | "iceShard" | "fireball"; keepDistance: number };
 }
 
 export const ENEMY_TEMPLATES = {
@@ -299,6 +299,50 @@ export const ENEMY_TEMPLATES = {
     aggroRange: 13,
     xpReward: 2300,
     goldReward: 130,
+  },
+  // Terras Vulcânicas (níveis 28 a 36).
+  lavaHound: {
+    level: 29,
+    name: "Cão de Lava",
+    archetype: "lavaHound",
+    maxHealth: 1150,
+    damage: 92,
+    speed: 7.6,
+    range: 1.9,
+    cooldown: 0.9,
+    windup: 0.35,
+    aggroRange: 16,
+    xpReward: 12000,
+    goldReward: 160,
+  },
+  flameCaster: {
+    level: 30,
+    name: "Piromante",
+    archetype: "flameCaster",
+    maxHealth: 1300,
+    damage: 110,
+    speed: 5,
+    range: 15,
+    cooldown: 2.3,
+    windup: 0.75,
+    aggroRange: 18,
+    xpReward: 14000,
+    goldReward: 190,
+    ranged: { projectile: "fireball", keepDistance: 9 },
+  },
+  magmaGolem: {
+    level: 33,
+    name: "Golem de Magma",
+    archetype: "magmaGolem",
+    maxHealth: 4300,
+    damage: 210,
+    speed: 3.6,
+    range: 2.8,
+    cooldown: 2.1,
+    windup: 1.1,
+    aggroRange: 13,
+    xpReward: 26000,
+    goldReward: 320,
   },
 } as const satisfies Record<string, EnemyTemplate>;
 

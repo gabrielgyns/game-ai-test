@@ -8,7 +8,7 @@ import { terrainHeight } from "./terrain";
  * `World`, cada uma num pedaço distante do plano, como a cripta; a apresentação desenha só a zona onde
  * o herói está. O save não precisa saber de zona: a posição do herói já diz onde ele está.
  */
-export type ZoneId = "vale" | "floresta" | "picos";
+export type ZoneId = "vale" | "floresta" | "picos" | "vulcao";
 
 export interface ZoneDefinition {
   id: ZoneId;
@@ -27,6 +27,15 @@ export interface ZoneDefinition {
 
 export const ZONES: Record<ZoneId, ZoneDefinition> = {
   vale: { id: "vale", name: "Vale das Gosmas", center: { x: 0, z: 0 }, half: 110, levels: [1, 12], subtitle: "Gosmas, goblins e orcs; o pântano a oeste, o deserto a leste e três chefes.", respawn: { x: 0, z: 0 } },
+  vulcao: {
+    id: "vulcao",
+    name: "Terras Vulcânicas",
+    center: { x: 0, z: -1260 },
+    half: 110,
+    levels: [28, 36],
+    subtitle: "Rios de lava, cães de fogo, piromantes e golens de magma; a Forja Vulcânica a oeste e o Senhor das Chamas na caldeira.",
+    respawn: { x: 0, z: -1260 + 71 },
+  },
   picos: {
     id: "picos",
     name: "Picos Gelados",
@@ -77,6 +86,8 @@ export const ZONE_PASSAGES: ZonePassage[] = [
   { id: "vale-floresta", from: "vale", to: "floresta", at: { x: 22, z: -101 }, out: { x: 0, z: -1 }, width: 5, arrive: { x: 0, z: -420 + 92 }, arriveYaw: 0 },
   { id: "floresta-picos", from: "floresta", to: "picos", at: { x: 50, z: -420 - 101 }, out: { x: 0, z: -1 }, width: 5, arrive: { x: 0, z: -840 + 92 }, arriveYaw: 0 },
   { id: "picos-floresta", from: "picos", to: "floresta", at: { x: 0, z: -840 + 101 }, out: { x: 0, z: 1 }, width: 5, arrive: { x: 50, z: -420 - 92 }, arriveYaw: Math.PI },
+  { id: "picos-vulcao", from: "picos", to: "vulcao", at: { x: -50, z: -840 - 101 }, out: { x: 0, z: -1 }, width: 5, arrive: { x: 0, z: -1260 + 92 }, arriveYaw: 0 },
+  { id: "vulcao-picos", from: "vulcao", to: "picos", at: { x: 0, z: -1260 + 101 }, out: { x: 0, z: 1 }, width: 5, arrive: { x: -50, z: -840 - 92 }, arriveYaw: Math.PI },
   { id: "floresta-vale", from: "floresta", to: "vale", at: { x: 0, z: -420 + 101 }, out: { x: 0, z: 1 }, width: 5, arrive: { x: 22, z: -92 }, arriveYaw: Math.PI },
 ];
 

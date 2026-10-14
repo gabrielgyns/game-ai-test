@@ -10,10 +10,10 @@ import { itemPower, newItemId, scaleStats, type EquipSlot, type Item, type ItemS
  *
  * Analogia: as peças avulsas são boas cartas; o conjunto é a combinação que vira a mão.
  */
-export type SetId = "goblinKing" | "spiderQueen" | "scorpionEmperor" | "skeletonLord" | "ancientTreant" | "elvenOracle" | "frostGiant" | "iceQueen";
+export type SetId = "goblinKing" | "spiderQueen" | "scorpionEmperor" | "skeletonLord" | "ancientTreant" | "elvenOracle" | "frostGiant" | "iceQueen" | "fireLord" | "forgeMaster";
 
 /** Poderes de 3 peças. Cada um é lido num ponto do combate (ver `combat.ts`). */
-export type SetPower = "royalFury" | "venom" | "sandShell" | "soulHarvest" | "thorns" | "glacier" | "shatter" | "evasion";
+export type SetPower = "royalFury" | "venom" | "sandShell" | "soulHarvest" | "thorns" | "glacier" | "shatter" | "evasion" | "lifeburn" | "molten";
 
 interface PieceTemplate {
   name: string;
@@ -147,6 +147,34 @@ export const SETS: Record<SetId, SetDefinition> = {
     accessory: { name: "Diadema de Gelo", icon: "ring", stats: { damage: 13 } },
     two: { stat: "speedPercent", value: 8, text: "+8% de velocidade" },
     three: { power: "shatter", text: "Estilhaçar: +40% de dano em inimigos lentos ou atordoados" },
+  },
+  fireLord: {
+    id: "fireLord",
+    name: "Coroa das Chamas",
+    boss: "fireLord",
+    weapon: {
+      warrior: { name: "Lâmina Ígnea", icon: "sword", stats: { damage: 40 } },
+      archer: { name: "Arco de Brasa", icon: "bow", stats: { damage: 39 } },
+      mage: { name: "Cajado do Inferno", icon: "staff", stats: { damage: 41 } },
+    },
+    armor: { name: "Couraça de Magma", icon: "armor", visual: "plate", stats: { maxHealth: 200 } },
+    accessory: { name: "Coroa das Chamas", icon: "ring", stats: { damage: 12, maxHealth: 40 } },
+    two: { stat: "lifesteal", value: 4, text: "4% do dano causado vira vida" },
+    three: { power: "lifeburn", text: "Queimar a Vida: golpes básicos tiram +2% da vida máxima do alvo (até o dobro do golpe)" },
+  },
+  forgeMaster: {
+    id: "forgeMaster",
+    name: "Forja Ancestral",
+    boss: "forgeMaster",
+    weapon: {
+      warrior: { name: "Martelo Ancestral", icon: "axe", stats: { damage: 39 } },
+      archer: { name: "Arco de Aço Negro", icon: "bow", stats: { damage: 38 } },
+      mage: { name: "Cetro da Bigorna", icon: "staff", stats: { damage: 40 } },
+    },
+    armor: { name: "Avental do Mestre", icon: "armor", visual: "chain", stats: { maxHealth: 190 } },
+    accessory: { name: "Anel de Escória", icon: "ring", stats: { damage: 13, maxHealth: 30 } },
+    two: { stat: "maxHealth", value: 110, text: "+110 vida" },
+    three: { power: "molten", text: "Metal Derretido: habilidades causam +25% de dano" },
   },
 };
 

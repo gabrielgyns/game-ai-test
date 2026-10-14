@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { terrainHeight, SPAWN_FLAT_RADIUS, WORLD_HALF } from "../domain/terrain";
 import { BOSS_HOME, seededRandom } from "../domain/worldgen";
 import { biomeAt, DESERT_BOSS_HOME, SWAMP_BOSS_HOME } from "../domain/biomes";
-import { FOREST_BOSS_HOME, FOREST_CAMP, FOREST_RUINS, FOREST_SANCTUM, forestRiverZ, isIce, isWater, PEAKS_BOSS_HOME, PEAKS_CAVE, PEAKS_LAKE, PEAKS_LAKE_RADIUS, PEAKS_VILLAGE } from "../domain/terrain";
+import { FOREST_BOSS_HOME, FOREST_CAMP, FOREST_RUINS, FOREST_SANCTUM, forestRiverZ, isIce, isWater, PEAKS_BOSS_HOME, PEAKS_CAVE, PEAKS_LAKE, PEAKS_LAKE_RADIUS, PEAKS_VILLAGE, isLava, VOLCANO_CALDERA, VOLCANO_FORGE, VOLCANO_FORT, VOLCANO_LAVA_LAKE } from "../domain/terrain";
 import { ZONE_PASSAGES, ZONES, type ZoneDefinition } from "../domain/zones";
 import { DUNGEON_ENTRANCE } from "../domain/dungeon";
 import { VILLAGES } from "../domain/villages";
@@ -243,6 +243,71 @@ export function placePeaksProps(seed = 7171): PropPlacement[] {
   return out;
 }
 
+/** Adereços das Terras Vulcânicas, em coordenadas locais da zona. */
+const VOLCANO_SCATTER: ForestScatter[] = [
+  { kind: "basaltColumns", count: 30, scale: [0.8, 1.3] },
+  { kind: "obsidian1", count: 40, scale: [0.8, 1.6] },
+  { kind: "obsidian2", count: 40, scale: [0.8, 1.6] },
+  { kind: "charredTree", count: 45, scale: [0.85, 1.25] },
+  { kind: "lavaVent", count: 14, scale: [0.8, 1.2] },
+  { kind: "boulder1", count: 15, scale: [0.8, 1.3] },
+];
+
+export function placeVolcanoProps(seed = 9393): PropPlacement[] {
+  const zone = ZONES.vulcao;
+  const rand = seededRandom(seed);
+  const out: PropPlacement[] = [];
+  const world = (lx: number, lz: number) => ({ x: zone.center.x + lx, z: zone.center.z + lz });
+  const push = (kind: PropKind, lx: number, lz: number, yaw: number, scale: number, sink = SINK) => {
+    const p = world(lx, lz);
+    out.push({ kind, x: p.x, y: terrainHeight(p.x, p.z) - sink, z: p.z, yaw, scale });
+  };
+  const facing = (lx: number, lz: number, tx: number, tz: number) => Math.atan2(lx - tx, lz - tz);
+  const free = (lx: number, lz: number) => {
+    const p = world(lx, lz);
+    if (onTrail(p.x, p.z)) return false;
+    for (const [dx, dz] of [[0, 0], [2.5, 0], [-2.5, 0], [0, 2.5], [0, -2.5]] as const) if (isLava(p.x + dx, p.z + dz)) return false;
+    if (Math.hypot(lx - VOLCANO_FORT.x, lz - VOLCANO_FORT.z) < 22) return false;
+    if (Math.hypot(lx - VOLCANO_CALDERA.x, lz - VOLCANO_CALDERA.z) < 22) return false;
+    if (Math.hypot(lx - VOLCANO_FORGE.x, lz - VOLCANO_FORGE.z) < 12) return false;
+    return Math.max(Math.abs(lx), Math.abs(lz)) < zone.half - 5;
+  };
+  for (const s of VOLCANO_SCATTER) {
+    let placed = 0;
+    for (let tries = 0; placed < s.count && tries < s.count * 60; tries++) {
+      const lx = (rand() * 2 - 1) * (zone.half - 5), lz = (rand() * 2 - 1) * (zone.half - 5);
+      if (!free(lx, lz)) continue;
+      push(s.kind, lx, lz, rand() * Math.PI * 2, s.scale[0] + rand() * (s.scale[1] - s.scale[0]));
+      placed++;
+    }
+  }
+  // Bastião de Brasa: casas de pedra em roda, fogueira, baú e Pedra de Teleporte.
+  const v = VOLCANO_FORT;
+  for (const [dx, dz, s] of [[-16, -2, 1], [16, 0, 1], [-13, -15, 0.9], [13, -15, 0.95], [-17, 12, 0.85], [17, 13, 0.85]] as const) {
+    push("stoneHut", v.x + dx, v.z + dz, facing(v.x + dx, v.z + dz, v.x, v.z), s, 0);
+  }
+  push("campfire", v.x, v.z + 1, 0, 1, 0);
+  const village = VILLAGES.bastiao;
+  const local = (p: { x: number; z: number }) => ({ lx: p.x - zone.center.x, lz: p.z - zone.center.z });
+  const st = local(village.stash), sn = local(village.stone);
+  push("stash", st.lx, st.lz, facing(st.lx, st.lz, v.x, v.z), 1, 0);
+  push("waystone", sn.lx, sn.lz, facing(sn.lx, sn.lz, v.x, v.z), 1, 0);
+  // Boca da Forja, atrás do portal, virada para o meio da zona.
+  const away = Math.atan2(VOLCANO_FORGE.x, VOLCANO_FORGE.z);
+  push("forgeMouth", VOLCANO_FORGE.x + Math.sin(away) * 3.2, VOLCANO_FORGE.z + Math.cos(away) * 3.2, away, 1, 0.3);
+  // Caldeira: colunas de basalto na borda e respiros em volta do lago de lava.
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2 + 0.3;
+    if (Math.sin(a) > 0.85) continue; // entrada sul livre
+    push("basaltColumns", VOLCANO_CALDERA.x + Math.cos(a) * 24, VOLCANO_CALDERA.z + Math.sin(a) * 24, a, 0.9 + (i % 3) * 0.12);
+  }
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2;
+    push("lavaVent", VOLCANO_LAVA_LAKE.x + Math.cos(a) * 19, VOLCANO_LAVA_LAKE.z + Math.sin(a) * 19, a, 0.9);
+  }
+  return out;
+}
+
 export interface Environment {
   group: THREE.Group;
   props: PropField;
@@ -253,10 +318,10 @@ export interface Environment {
 /** Árvores, pedras e marcos de uma zona, com a barraca de quem vende na vila. */
 export function createEnvironment(seed = 4242, zone: ZoneDefinition = ZONES.vale): Environment {
   const group = new THREE.Group();
-  const props = new PropField(zone.id === "floresta" ? placeForestProps() : zone.id === "picos" ? placePeaksProps() : placeProps(seed));
+  const props = new PropField(zone.id === "floresta" ? placeForestProps() : zone.id === "picos" ? placePeaksProps() : zone.id === "vulcao" ? placeVolcanoProps() : placeProps(seed));
   group.add(props.group);
   // Barraca de quem vende, atrás do vendedor, com o balcão virado para o centro da vila.
-  const villageCenter = { vale: { x: 0, z: 0 }, floresta: FOREST_CAMP, picos: PEAKS_VILLAGE }[zone.id];
+  const villageCenter = { vale: { x: 0, z: 0 }, floresta: FOREST_CAMP, picos: PEAKS_VILLAGE, vulcao: VOLCANO_FORT }[zone.id];
   const center = { x: zone.center.x + villageCenter.x, z: zone.center.z + villageCenter.z };
   const seller = zone.id === "vale" ? { x: 6, z: 3.5 } : { x: center.x - 7, z: center.z + 4 };
   const outward = Math.atan2(seller.x - center.x, seller.z - center.z);

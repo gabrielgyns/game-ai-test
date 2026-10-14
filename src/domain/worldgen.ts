@@ -1,8 +1,8 @@
 import { createEnemy, createPlayer, type EnemyKind } from "./factories";
-import { FOREST_BOSS_HOME, FOREST_CAMP, isIce, isWater, PEAKS_BOSS_HOME, PEAKS_CAVE, PEAKS_LAKE, PEAKS_VILLAGE, terrainHeight, SPAWN_FLAT_RADIUS, WORLD_HALF } from "./terrain";
+import { FOREST_BOSS_HOME, FOREST_CAMP, isIce, isLava, isWater, VOLCANO_CALDERA, VOLCANO_FORGE, VOLCANO_FORT, PEAKS_BOSS_HOME, PEAKS_CAVE, PEAKS_LAKE, PEAKS_VILLAGE, terrainHeight, SPAWN_FLAT_RADIUS, WORLD_HALF } from "./terrain";
 import { ZONES } from "./zones";
 import { World } from "./world";
-import { createAncientTreant, createFrostGiant, createGoblinKing, createScorpionEmperor, createSpiderQueen } from "./boss";
+import { createAncientTreant, createFireLord, createFrostGiant, createGoblinKing, createScorpionEmperor, createSpiderQueen } from "./boss";
 import { biomeAt, DESERT_BOSS_HOME, SWAMP_BOSS_HOME } from "./biomes";
 import { createNpc, npcById } from "./npc";
 import type { ClassId } from "./classes";
@@ -102,6 +102,7 @@ export function generateWorld(options: WorldGenOptions = {}): World {
   world.spawn((id) => createScorpionEmperor(id, { x: DESERT_BOSS_HOME.x, y: terrainHeight(DESERT_BOSS_HOME.x, DESERT_BOSS_HOME.z), z: DESERT_BOSS_HOME.z }));
   populateForest(world, rand);
   populatePeaks(world, rand);
+  populateVolcano(world, rand);
   return world;
 }
 
@@ -195,4 +196,47 @@ function populatePeaks(world: World, rand: () => number): void {
     world.spawn((id) => createNpc(id, def, at(PEAKS_VILLAGE.x + spot.x, PEAKS_VILLAGE.z + spot.z), Math.atan2(spot.x, spot.z)));
   }
   world.spawn((id) => createFrostGiant(id, at(PEAKS_BOSS_HOME.x, PEAKS_BOSS_HOME.z)));
+}
+
+/**
+ * Terras Vulcânicas: cães de lava em bando pelos campos de basalto, piromantes perto dos rios de lava,
+ * golens de magma ao norte, o Bastião de Brasa ao sul e o Senhor das Chamas na caldeira.
+ */
+function populateVolcano(world: World, rand: () => number): void {
+  const zone = ZONES.vulcao;
+  const at = (lx: number, lz: number) => {
+    const x = zone.center.x + lx, z = zone.center.z + lz;
+    return { x, y: terrainHeight(x, z), z };
+  };
+  const free = (lx: number, lz: number) =>
+    !isLava(zone.center.x + lx, zone.center.z + lz) &&
+    Math.hypot(lx - VOLCANO_FORT.x, lz - VOLCANO_FORT.z) > 26 &&
+    Math.hypot(lx - VOLCANO_CALDERA.x, lz - VOLCANO_CALDERA.z) > 24 &&
+    Math.hypot(lx - VOLCANO_FORGE.x, lz - VOLCANO_FORGE.z) > 9 &&
+    Math.max(Math.abs(lx), Math.abs(lz)) < zone.half - 20;
+  const scatter = (kind: EnemyKind, count: number, area: (lx: number, lz: number) => boolean, pack = 1) => {
+    let placed = 0;
+    for (let tries = 0; placed < count && tries < count * 60; tries++) {
+      const lx = (rand() * 2 - 1) * (zone.half - 20), lz = (rand() * 2 - 1) * (zone.half - 20);
+      if (!free(lx, lz) || !area(lx, lz)) continue;
+      for (let k = 0; k < pack && placed < count; k++) {
+        const px = lx + (rand() - 0.5) * 5, pz = lz + (rand() - 0.5) * 5;
+        if (!free(px, pz)) continue;
+        world.spawn((id) => createEnemy(id, kind, at(px, pz)));
+        placed++;
+      }
+    }
+  };
+  scatter("lavaHound", 21, (_lx, lz) => lz > -40, 3);
+  scatter("flameCaster", 12, (lx) => lx > 0);
+  scatter("magmaGolem", 9, (_lx, lz) => lz < 15);
+  for (const spot of [
+    { id: "commander", x: 5, z: -3 },
+    { id: "forgeSmith", x: -7, z: 4 },
+    { id: "scout", x: 8, z: 6 },
+  ]) {
+    const def = npcById(spot.id)!;
+    world.spawn((id) => createNpc(id, def, at(VOLCANO_FORT.x + spot.x, VOLCANO_FORT.z + spot.z), Math.atan2(spot.x, spot.z)));
+  }
+  world.spawn((id) => createFireLord(id, at(VOLCANO_CALDERA.x, VOLCANO_CALDERA.z)));
 }

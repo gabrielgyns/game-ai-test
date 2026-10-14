@@ -4,7 +4,7 @@ import type { Item, Rarity } from "../domain/items";
 import type { ClassId } from "../domain/classes";
 import { CLASSES, CLASS_ORDER } from "../domain/classes";
 import { ENEMY_TEMPLATES, createEnemy, createPlayer, type EnemyKind } from "../domain/factories";
-import { createAncientTreant, createElvenOracle, createFrostGiant, createGoblinKing, createIceQueen, createScorpionEmperor, createSkeletonLord, createSpiderQueen } from "../domain/boss";
+import { createAncientTreant, createElvenOracle, createFireLord, createForgeMaster, createFrostGiant, createGoblinKing, createIceQueen, createScorpionEmperor, createSkeletonLord, createSpiderQueen } from "../domain/boss";
 import { NPC_DEFS, createNpc } from "../domain/npc";
 import { SKILLS, type SkillId } from "../domain/skills";
 import { RARITY_LABEL } from "../domain/items";
@@ -133,6 +133,9 @@ const ENEMY_DESCRIPTIONS: Record<EnemyKind, string> = {
   elvenSpirit: "Espírito élfico das ruínas de Elar: arqueiro translúcido de capuz azul, que atira de longe e foge.",
   snowWolf: "Lobo das neves dos Picos Gelados: o lobo da floresta de pelagem branca e olhos azuis, em matilha.",
   iceWraith: "Espectro gélido: vulto de gelo translúcido com coroa de estilhaços e cajado de cristal; atira estilhaços que deixam lento.",
+  lavaHound: "Cão de lava: lobo de pelagem negra com rachaduras em brasa e olhos de fogo, em bando.",
+  flameCaster: "Piromante: manto vermelho e preto, máscara de osso e cajado com brasa; atira bolas de fogo de longe.",
+  magmaGolem: "Golem de magma: pedra negra em placas com rachaduras e núcleo em brasa. Lento, golpe de desabamento.",
   yeti: "Yeti: corcunda de pelo branco desgrenhado, cara azulada e mãos enormes. Lento para erguer o braço, devastador quando desce.",
 };
 
@@ -236,6 +239,24 @@ export function buildCatalog(): Exhibit[] {
       description: "Chefe do Santuário Élfico. Elfo alto e translúcido, de manto branco e dourado, diadema e cajado com lua de cristal. Golpe de Cajado, Raios Lunares em leque, Círculo Estelar, Chuva de Estrelas, Passo Etéreo e espíritos na fúria. Escala com o nível do santuário.",
       size: 4,
       spawn: (id) => createElvenOracle(id, { x: 0, y: 0, z: 0 }),
+    },
+    {
+      kind: "character",
+      id: "boss.fireLord",
+      group: "Chefes",
+      label: "Senhor das Chamas",
+      description: "Chefe das Terras Vulcânicas (nível 36). Demônio de pele vermelha com chifres, coroa de fogo, asas de rocha e lâmina em brasa. Lâmina Ígnea, Erupção, Chuva de Magma que deixa o chão em chamas, Leque de Brasas, Investida Flamejante e cães de lava na fúria.",
+      size: 7.5,
+      spawn: (id) => createFireLord(id, { x: 0, y: 0, z: 0 }),
+    },
+    {
+      kind: "character",
+      id: "boss.forgeMaster",
+      group: "Chefes",
+      label: "Mestre da Forja",
+      description: "Chefe da Forja Vulcânica. Ferreiro enorme de avental de couro e máscara de ferro com frestas acesas, martelo em brasa. Martelada, Bigorna Ardente, Escória que deixa o chão em chamas, Tremor da Forja, Fole Ardente e piromantes na fúria. Escala com o nível da forja.",
+      size: 5,
+      spawn: (id) => createForgeMaster(id, { x: 0, y: 0, z: 0 }),
     },
     {
       kind: "character",
@@ -419,6 +440,7 @@ export function buildCatalog(): Exhibit[] {
     frozenBones: "Ossada congelada (caverna)", iceSpikes: "Espinhos de gelo (caverna)", iceBrazier: "Braseiro de chama fria (caverna)",
     vines: "Trepadeiras (santuário)", glowShrooms: "Cogumelos que brilham (santuário)", elvenBanner: "Estandarte élfico (santuário)",
     moonBrazier: "Braseiro lunar (santuário)", thornSpikes: "Espinhos de raiz (santuário)", planter: "Floreira de pedra (santuário)",
+    anvil: "Bigorna (forja)", chains: "Correntes (forja)", forgeBanner: "Estandarte da forja", crucible: "Cadinho (forja)", coalPile: "Monte de carvão (forja)", fireVent: "Respiro de fogo (forja)",
   };
   for (const kind of Object.keys(DECOR_BUILDERS) as DecorKind[]) {
     out.push({
@@ -427,7 +449,7 @@ export function buildCatalog(): Exhibit[] {
       group: "Cripta",
       label: DECOR_LABEL[kind],
       description: "Adereço da Cripta Esquecida, esculpido em voxels de 1/12 m. Encosta nas paredes das salas, sem bloquear o caminho.",
-      size: kind === "banner" || kind === "cobweb" || kind === "icicles" || kind === "vines" || kind === "elvenBanner" ? 2 : 1.4,
+      size: kind === "banner" || kind === "cobweb" || kind === "icicles" || kind === "vines" || kind === "elvenBanner" || kind === "chains" || kind === "forgeBanner" ? 2 : 1.4,
       voxels: () => DECOR_BUILDERS[kind](),
       voxel: DECOR_VOXEL,
       build: () => {
