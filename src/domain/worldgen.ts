@@ -2,6 +2,7 @@ import { createEnemy, createPlayer, type EnemyKind } from "./factories";
 import { terrainHeight, SPAWN_FLAT_RADIUS, WORLD_HALF } from "./terrain";
 import { World } from "./world";
 import { createGoblinKing } from "./boss";
+import { createNpc, npcById } from "./npc";
 
 /** Gerador pseudoaleatório determinístico (mulberry32) para o mundo ser igual a cada partida. */
 export function seededRandom(seed: number): () => number {
@@ -33,6 +34,18 @@ export function generateWorld(options: WorldGenOptions = {}): World {
   const world = new World();
   world.random = seededRandom((options.seed ?? 1337) * 7919 + 17);
   world.spawn((id) => createPlayer(id, { x: 0, y: terrainHeight(0, 0), z: 0 }));
+
+  // NPCs do santuário, virados para o centro.
+  const npcSpots: { id: string; x: number; z: number }[] = [
+    { id: "elder", x: -4.5, z: -5.5 },
+    { id: "smith", x: 5, z: -5 },
+    { id: "guard", x: 0.5, z: 7.5 },
+  ];
+  for (const spot of npcSpots) {
+    const def = npcById(spot.id)!;
+    const yaw = Math.atan2(-(0 - spot.x), -(0 - spot.z));
+    world.spawn((id) => createNpc(id, def, { x: spot.x, y: terrainHeight(spot.x, spot.z), z: spot.z }, yaw));
+  }
 
   const rings: { kind: EnemyKind; min: number; max: number; count: number }[] = [
     { kind: "slime", min: SPAWN_FLAT_RADIUS + 4, max: 40, count: 16 },

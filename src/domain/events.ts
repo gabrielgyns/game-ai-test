@@ -15,6 +15,10 @@ export type GameEvent =
   | { type: "bossEngage"; entity: EntityId }
   | { type: "bossPhase"; entity: EntityId; phase: number }
   | { type: "bossSummon"; entity: EntityId; minions: EntityId[] }
+  | { type: "questAccepted"; entity: EntityId; questId: string }
+  | { type: "questProgress"; entity: EntityId; questId: string; progress: number; count: number }
+  | { type: "questReady"; entity: EntityId; questId: string }
+  | { type: "questCompleted"; entity: EntityId; questId: string; gold: number; xp: number; itemNames: string[] }
   | { type: "drop"; dropId: number }
   | { type: "pickup"; entity: EntityId; itemId: number; dropId: number }
   | { type: "inventoryFull"; entity: EntityId }

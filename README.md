@@ -22,6 +22,7 @@ Abra `http://localhost:5173` e clique na tela para começar.
 | Shift | correr |
 | Q | beber poção (escolhe a menor que cobre o que falta) |
 | I | abrir a mochila (clique equipa ou usa, botão direito larga no chão) |
+| F | falar com o NPC mais próximo |
 | ESC | menu de pausa |
 
 Gosmas vivem perto do santuário central, goblins mais longe e orcs na borda do mapa.
@@ -29,6 +30,9 @@ Derrote inimigos para ganhar XP, ouro e loot: equipamentos de três slots (arma,
 acessório) em quatro raridades (comum, incomum, raro, épico) e poções pequenas e grandes,
 que se empilham na mochila. Itens caem no chão e são coletados ao passar por cima.
 Inimigos avisam o golpe com uma área vermelha que se preenche: saia dela ou role (Espaço) para evitar.
+No santuário vivem três NPCs: a **Anciã Mira** dá a cadeia principal (gosmas, goblins e o Rei Goblin),
+o **Ferreiro Brom** pede ferro dos orcs e forja uma arma rara, e o **Guarda Tiago** ensina a lutar.
+Um "!" sobre o NPC indica quest disponível e "?" quest pronta para entregar.
 No platô ao norte, cercado de totens, vive o **Rei Goblin**: um chefe com Golpe Pesado, Pisão em área e
 Investida Real em linha, três fases que aceleram os avisos, lacaios na fúria final e loot épico garantido. Subir de nível cura por completo e aumenta vida e dano.
 Se cair, você renasce no santuário depois de alguns segundos. Inimigos renascem em casa.
@@ -63,6 +67,8 @@ src/
     loot.ts        tabelas de drop por inimigo
     skills.ts      definições das habilidades, esquiva e buffs
     boss.ts        chefes: padrões de golpe (melee, área, investida), formas de telegraph e fases
+    npc.ts         NPCs do santuário e suas falas
+    quests.ts      definições de quests, diário do jogador, aceitar/avançar/entregar
     terrain.ts     função de altura do terreno (compartilhada com a malha visual)
     worldgen.ts    geração determinística do mundo por anéis de dificuldade
   game/            apresentação em Three.js e HUD em HTML
@@ -75,6 +81,8 @@ src/
     hud.ts         painéis de status, alvo e log de combate
     inventoryUI.ts painel da mochila com tooltips e comparação de itens
     skillBar.ts    barra de habilidades com recarga
+    dialogueUI.ts  painel de conversa com NPCs
+    questTracker.ts lista de quests ativas
     itemIcons.ts   ícones de itens em pixel art (usados na UI e nos drops 3D)
     dropViews.ts   itens caídos no chão: ícone extrudado em voxel, anel e feixe por raridade
     terrainMesh.ts terreno em blocos (colunas por célula, degraus de 0,5 m)

@@ -62,6 +62,10 @@ export class World {
     return drop;
   }
 
+  *npcs(): IterableIterator<Entity> {
+    for (const e of this.entities.values()) if (e.kind === "npc") yield e;
+  }
+
   emit(event: GameEvent): void {
     this.events.push(event);
   }

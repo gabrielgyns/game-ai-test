@@ -2,9 +2,10 @@ import type { Vec2, Vec3 } from "./math";
 import type { Equipment, Inventory } from "./inventory";
 import type { Abilities } from "./skills";
 import type { AttackPattern, Boss } from "./boss";
+import type { QuestLog } from "./quests";
 
 export type EntityId = number;
-export type EntityKind = "player" | "enemy";
+export type EntityKind = "player" | "enemy" | "npc";
 
 export interface Transform {
   position: Vec3;
@@ -107,6 +108,13 @@ export interface Entity {
   equipment?: Equipment;
   abilities?: Abilities;
   boss?: Boss;
+  npc?: { id: string };
+  quests?: QuestLog;
+}
+
+/** Quem pode ferir quem: jogador e inimigos são hostis entre si; NPCs ficam fora. */
+export function isHostile(a: Entity, b: Entity): boolean {
+  return (a.kind === "player" && b.kind === "enemy") || (a.kind === "enemy" && b.kind === "player");
 }
 
 export function isAlive(e: Entity): boolean {

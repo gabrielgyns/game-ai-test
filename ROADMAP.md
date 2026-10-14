@@ -21,6 +21,7 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 - [x] Telegraph: inimigos avisam o golpe (área vermelha) antes de acertar; fugir ou rolar evita
 - [x] Poções empilhadas (pequena 30%, grande 60%) e brilho leve por raridade nos itens
 - [x] Chefe: Rei Goblin na arena ao norte, com três golpes telegrafados, três fases, lacaios e loot épico garantido
+- [x] NPCs no santuário (Anciã, Ferreiro, Guarda) com diálogo (F), 4 quests encadeadas, rastreador e marcadores ! e ?
 
 ## Próximos
 
@@ -30,7 +31,7 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
    por ouro num mercador.
 3. **Mais chefes.** Um por bioma, com mecânicas próprias (projéteis, poças, escudos) usando os padrões de golpe.
 4. **Lock-on.** Travar a câmera num alvo (Zelda) como alternativa ao modo livre.
-5. **NPCs e quests.** Vila no santuário, diálogo, quests de caça e entrega.
+5. **Mais quests.** Objetivos de coleta e exploração, quests repetíveis diárias, e um mercador para vender loot.
 6. **Salvar e carregar.** Persistir no localStorage e exportar para arquivo.
 7. **Áudio.** Efeitos de golpe, passos, música ambiente.
 8. **Classes.** Guerreiro, arqueiro, mago (Perfect World), com árvore de habilidades.

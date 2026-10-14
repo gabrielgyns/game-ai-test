@@ -1,4 +1,5 @@
-import { isAlive, type Entity } from "../components";
+import { isAlive, isHostile, type Entity } from "../components";
+import { advanceKillQuests } from "../quests";
 import type { AttackPattern, TelegraphShape } from "../boss";
 import { directionFromYaw, directionXZ, distanceXZ } from "../math";
 import { CHARGE } from "../skills";
@@ -72,7 +73,7 @@ function resolveAttack(world: World, e: Entity): void {
     case "slam": {
       let hit: Entity | undefined;
       for (const other of world.alive()) {
-        if (other.kind === e.kind) continue;
+        if (!isHostile(e, other)) continue;
         if (distanceXZ(e.transform.position, other.transform.position) > pattern.range) continue;
         hit = other;
         applyDamage(world, e, other, damage);
@@ -154,6 +155,7 @@ function kill(world: World, victim: Entity, killer: Entity): void {
     victim.respawn = { timeLeft: victim.ai.respawnSeconds, at: { ...victim.ai.home } };
     if (killer.kind === "player") {
       rollLoot(world, victim);
+      advanceKillQuests(world, killer, victim.archetype);
       grantXp(world, killer, victim.ai.xpReward);
       if (killer.wallet) {
         killer.wallet.gold += victim.ai.goldReward;

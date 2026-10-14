@@ -3,6 +3,7 @@ import { isAlive, type Entity, type EntityId } from "../domain/components";
 import type { World } from "../domain/world";
 import { createModel, equipmentSignature, type CharacterModel } from "./models";
 import type { TelegraphShape } from "../domain/boss";
+import { questsForNpc } from "../domain/quests";
 import { clamp } from "../domain/math";
 
 /** Liga uma entidade do domínio a um modelo na cena, com animação procedural. */
@@ -24,6 +25,8 @@ class EntityView {
   private readonly telegraphRing: THREE.Mesh;
   private readonly telegraphLine: THREE.Mesh;
   private readonly telegraphLineFill: THREE.Mesh;
+  private marker: THREE.Sprite | null = null;
+  private markerKind: "" | "!" | "?" = "";
   private readonly scene: THREE.Scene;
 
   constructor(readonly entity: Entity, scene: THREE.Scene) {
@@ -75,6 +78,28 @@ class EntityView {
     scene.add(this.telegraph);
   }
 
+  /** "!" quando o NPC tem quest para oferecer, "?" quando há quest para entregar. */
+  private updateMarker(player: Entity | undefined, camera: THREE.Camera): void {
+    const e = this.entity;
+    if (!e.npc || !player?.quests) return;
+    const { offer, turnIn } = questsForNpc(player.quests, e.npc.id);
+    const kind: "" | "!" | "?" = turnIn.length ? "?" : offer.length ? "!" : "";
+    if (kind !== this.markerKind) {
+      this.markerKind = kind;
+      if (this.marker) {
+        this.scene.remove(this.marker);
+        this.marker = null;
+      }
+      if (kind) this.marker = makeMarker(kind, kind === "?" ? "#9ce39c" : "#ffd54a");
+      if (this.marker) this.scene.add(this.marker);
+    }
+    if (this.marker) {
+      const p = e.transform.position;
+      this.marker.position.set(p.x, p.y + this.model.height + 0.5 + Math.sin(performance.now() / 400) * 0.08, p.z);
+      this.marker.quaternion.copy(camera.quaternion);
+    }
+  }
+
   triggerWindup(duration: number, shape: TelegraphShape): void {
     this.windupTotal = duration;
     this.windupShape = shape;
@@ -100,9 +125,10 @@ class EntityView {
     this.scene.add(this.model.root);
   }
 
-  update(dt: number, camera: THREE.Camera, isTarget: boolean, time: number): void {
+  update(dt: number, camera: THREE.Camera, isTarget: boolean, time: number, player?: Entity): void {
     const e = this.entity;
     this.syncEquipment();
+    this.updateMarker(player, camera);
     const root = this.model.root;
     const alive = isAlive(e);
     const p = e.transform.position;
@@ -232,7 +258,34 @@ class EntityView {
 
   dispose(scene: THREE.Scene): void {
     scene.remove(this.model.root, this.healthBar, this.targetRing, this.telegraph);
+    if (this.marker) scene.remove(this.marker);
   }
+}
+
+const markerCache = new Map<string, THREE.Texture>();
+
+function makeMarker(text: string, color: string): THREE.Sprite {
+  let texture = markerCache.get(text + color);
+  if (!texture) {
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 64;
+    const ctx = canvas.getContext("2d")!;
+    ctx.font = "bold 56px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = "rgba(0,0,0,0.8)";
+    ctx.strokeText(text, 32, 34);
+    ctx.fillStyle = color;
+    ctx.fillText(text, 32, 34);
+    texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    markerCache.set(text + color, texture);
+  }
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, depthTest: false, transparent: true }));
+  sprite.scale.set(0.7, 0.7, 1);
+  sprite.renderOrder = 15;
+  return sprite;
 }
 
 export class EntityViews {
@@ -250,7 +303,7 @@ export class EntityViews {
     return this.views.get(id);
   }
 
-  update(dt: number, camera: THREE.Camera, targetId: EntityId | undefined, time: number): void {
-    for (const v of this.views.values()) v.update(dt, camera, v.entity.id === targetId, time);
+  update(dt: number, camera: THREE.Camera, targetId: EntityId | undefined, time: number, player?: Entity): void {
+    for (const v of this.views.values()) v.update(dt, camera, v.entity.id === targetId, time, player);
   }
 }

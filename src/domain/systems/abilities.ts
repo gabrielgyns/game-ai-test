@@ -1,4 +1,4 @@
-import { isAlive, type Entity } from "../components";
+import { isAlive, isHostile, type Entity } from "../components";
 import { distanceXZ } from "../math";
 import { CHARGE, getSkill, ROLL, SECOND_WIND, SKILLS, WARCRY, WHIRLWIND, type SkillId } from "../skills";
 import type { World } from "../world";
@@ -115,7 +115,7 @@ function useSkill(world: World, e: Entity, id: SkillId): boolean {
 function chargeHits(world: World, e: Entity): void {
   const dash = e.abilities!.dash!;
   for (const other of world.alive()) {
-    if (other.kind === e.kind || dash.hitEntityIds.includes(other.id)) continue;
+    if (!isHostile(e, other) || dash.hitEntityIds.includes(other.id)) continue;
     if (distanceXZ(e.transform.position, other.transform.position) > (e.boss ? 2.4 : 1.6)) continue;
     dash.hitEntityIds.push(other.id);
     applyDamage(world, e, other, Math.round(effectiveDamage(e) * dash.damageMultiplier));

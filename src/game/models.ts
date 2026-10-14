@@ -238,6 +238,34 @@ export function createOrc(): CharacterModel {
   return { root, weaponArm, height: 25 * V + 0.1 };
 }
 
+/** Aldeões do santuário: mesma silhueta do herói, roupas e adereços próprios. */
+export function createVillager(variant: "elder" | "smith" | "guard"): CharacterModel {
+  const skin = variant === "smith" ? "#c98a5e" : "#e8b893";
+  const hair = variant === "elder" ? "#e9e4d8" : variant === "smith" ? "#2b2b2b" : "#5a3a1a";
+  const cloth = variant === "elder" ? "#5a3f8f" : variant === "smith" ? "#6b4a2b" : "#7a8290";
+  const eye = "#1b1b1b";
+  const b = new VoxelBuilder();
+  b.box(-3, 0, -1, -1, 6, 1, variant === "elder" ? cloth : "#4a3a2a").box(1, 0, -1, 3, 6, 1, variant === "elder" ? cloth : "#4a3a2a");
+  b.box(-3, 0, -1, -1, 2, 1, "#2b2b2b").box(1, 0, -1, 3, 2, 1, "#2b2b2b");
+  b.box(-4, 6, -2, 4, 13, 2, cloth);
+  if (variant === "smith") b.box(-3, 6, -3, 3, 12, -2, "#3a3a3a"); // avental
+  if (variant === "guard") b.box(-5, 11, -2, -4, 14, 2, "#aab0b8").box(4, 11, -2, 5, 14, 2, "#aab0b8"); // ombreiras
+  b.box(-6, 7, -1, -4, 13, 1, skin).box(4, 7, -1, 6, 13, 1, skin);
+  b.box(-3, 13, -3, 3, 19, 3, skin);
+  b.box(-3, 18, -3, 3, 20, 3, hair).box(-3, 15, 1, 3, 19, 3, hair);
+  if (variant === "elder") b.box(-3, 12, -4, 3, 15, -3, hair); // barba longa
+  if (variant === "smith") b.box(-3, 12, -4, 3, 14, -3, hair); // barba curta
+  if (variant === "guard") b.box(-3, 19, -3, 3, 22, 3, "#aab0b8"); // elmo
+  b.set(-2, 16, -3, eye).set(1, 16, -3, eye);
+  // Adereço na mão esquerda: cajado, martelo ou lança.
+  if (variant === "elder") b.box(-6, 0, -1, -5, 20, 0, "#8a5a2b").box(-7, 20, -2, -4, 22, 1, "#5fd36b");
+  if (variant === "smith") b.box(-6, 4, -1, -5, 14, 0, "#8a5a2b").box(-8, 14, -2, -3, 17, 1, "#7f8794");
+  if (variant === "guard") b.box(-6, 0, -1, -5, 24, 0, "#8a5a2b").box(-6, 24, -1, -5, 28, 0, "#d8dde6");
+  const root = new THREE.Group();
+  root.add(mesh(b));
+  return { root, height: (variant === "guard" ? 22 : 20) * V + 0.1 };
+}
+
 export function createGoblinKing(): CharacterModel {
   const skin = "#6a9c3c", armor = "#5a2e2e", gold = "#e0b43a", eye = "#ffd54a", cape = "#7a1f2b";
   const b = new VoxelBuilder();
@@ -277,6 +305,9 @@ export function createModel(archetype: string, equipment?: Equipment): Character
     case "goblin": return createGoblin();
     case "orc": return createOrc();
     case "goblinKing": return createGoblinKing();
+    case "elder": return createVillager("elder");
+    case "smith": return createVillager("smith");
+    case "guard": return createVillager("guard");
     default: return createSlime();
   }
 }

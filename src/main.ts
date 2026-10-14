@@ -17,6 +17,10 @@ import { PauseMenu } from "./game/menu";
 import { InventoryUI } from "./game/inventoryUI";
 import { DropViews } from "./game/dropViews";
 import { SkillBar } from "./game/skillBar";
+import { DialogueUI } from "./game/dialogueUI";
+import { QuestTracker } from "./game/questTracker";
+import { TALK_RANGE } from "./domain/npc";
+import { questById } from "./domain/quests";
 import { SKILL_BAR, SKILLS } from "./domain/skills";
 import { directionFromYaw } from "./domain/math";
 import { useFirstPotion } from "./domain/inventory";
@@ -67,6 +71,36 @@ const menu = new PauseMenu();
 const inventoryUI = new InventoryUI(world, player);
 const dropViews = new DropViews(scene);
 const skillBar = new SkillBar();
+const dialogue = new DialogueUI(world, player);
+const questTracker = new QuestTracker();
+const interactEl = document.getElementById("interact")!;
+const interactText = document.getElementById("interact-text")!;
+
+function nearestNpc(): Entity | undefined {
+  let best: Entity | undefined;
+  let bestDist = TALK_RANGE;
+  for (const n of world.npcs()) {
+    const d = distanceXZ(player.transform.position, n.transform.position);
+    if (d < bestDist) {
+      best = n;
+      bestDist = d;
+    }
+  }
+  return best;
+}
+
+function openDialogue(npc: Entity): void {
+  dialogue.open(npc);
+  paused = true;
+  document.exitPointerLock();
+}
+function closeDialogue(): void {
+  dialogue.close();
+  paused = false;
+  input.requestLock();
+}
+dialogue.onClose = closeDialogue;
+dialogue.onAction = () => handleEvents(world.drainEvents());
 let started = false;
 let paused = false;
 
@@ -101,6 +135,10 @@ input.onPointerLockChange = (locked) => {
     if (locked) closeInventory();
     return;
   }
+  if (dialogue.isOpen) {
+    if (locked) closeDialogue();
+    return;
+  }
   paused = !locked;
   if (locked) menu.close();
   else menu.open();
@@ -115,6 +153,7 @@ menu.onResume = resume;
 input.onEscape = () => {
   if (!started) return;
   if (inventoryUI.isOpen) closeInventory();
+  else if (dialogue.isOpen) closeDialogue();
   else if (menu.isOpen) resume();
 };
 
@@ -178,6 +217,28 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         views.sync(world);
         hud.pushLog("Goblins foram convocados!", "dmg-in");
         break;
+      case "questAccepted":
+        hud.pushLog(`Quest aceita: ${questById(ev.questId)?.title ?? ev.questId}`, "level");
+        break;
+      case "questProgress": {
+        const q = questById(ev.questId);
+        if (q) hud.pushLog(`${q.objective.label}: ${ev.progress} / ${ev.count}`, "gain");
+        break;
+      }
+      case "questReady": {
+        const q = questById(ev.questId);
+        if (q) {
+          floats.spawn(player.transform.position, "OBJETIVO CONCLUÍDO", "#9ce39c", 1.1);
+          hud.pushLog(`${q.title}: objetivo concluído! Volte ao santuário.`, "level");
+        }
+        break;
+      }
+      case "questCompleted": {
+        const q = questById(ev.questId);
+        hud.pushLog(`Quest concluída: ${q?.title ?? ev.questId} (+${ev.xp} XP, +${ev.gold} ouro${ev.itemNames.length ? ", " + ev.itemNames.join(", ") : ""})`, "level");
+        floats.spawn(player.transform.position, "QUEST CONCLUÍDA!", "#ffe57a", 1.3);
+        break;
+      }
       case "damage": {
         const target = world.get(ev.target);
         const source = world.get(ev.source);
@@ -266,10 +327,17 @@ function frame(): void {
   const frameDt = Math.min(timer.getDelta(), 0.1);
 
   // Input → intenções no domínio.
-  const { lookX, lookY, zoom, attack, inventory, potion, roll, skill } = input.flush();
-  if (inventory && started && !menu.isOpen) {
+  const { lookX, lookY, zoom, attack, inventory, potion, roll, skill, interact } = input.flush();
+  if (inventory && started && !menu.isOpen && !dialogue.isOpen) {
     if (inventoryUI.isOpen) closeInventory();
     else openInventory();
+  }
+  if (interact && started && !menu.isOpen && !inventoryUI.isOpen) {
+    if (dialogue.isOpen) closeDialogue();
+    else {
+      const npc = nearestNpc();
+      if (npc && isAlive(player)) openDialogue(npc);
+    }
   }
   if (paused) {
     hud.update(player, currentTarget());
@@ -319,7 +387,11 @@ function frame(): void {
   cam.update(new THREE.Vector3(p.x, p.y, p.z), frameDt);
   sun.position.set(p.x + 40, p.y + 70, p.z + 30);
   sun.target.position.set(p.x, p.y, p.z);
-  views.update(frameDt, cam.camera, target?.id, world.time);
+  views.update(frameDt, cam.camera, target?.id, world.time, player);
+  const npcNear = nearestNpc();
+  interactEl.classList.toggle("hidden", !npcNear || dialogue.isOpen);
+  if (npcNear) interactText.textContent = `Falar com ${npcNear.name}`;
+  questTracker.update(player);
   dropViews.update(world, world.time);
   floats.update(frameDt);
   hud.update(player, target);
