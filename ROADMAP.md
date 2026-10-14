@@ -36,16 +36,16 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 - [x] Árvore de habilidades: 1 ponto por nível, 5 ranks por habilidade (60 ao todo) com talentos que atordoam, congelam, deixam lento ou vulnerável, criam fogo e tempestades; reinício por ouro
 - [x] Dungeons: Cripta Esquecida instanciada (planta nova a cada entrada), paredes com colisão e linha de visão, esqueletos que escalam com o nível, Lorde Esqueleto, baú de loot garantido, três vidas, recorte de paredes na câmera
 - [x] Saves em 5 slots locais, com nome do herói, resumo de progresso, exportar/importar por slot e migração do save antigo
+- [x] Cenário em alta resolução: 25 modelos esculpidos em 12 voxels/m (carvalhos com galhos, bétulas, pinheiros em camadas e nevados, arbustos, pedras com musgo e líquen, arenitos, árvores mortas com barba-de-velho, cogumelos, cactos, ossadas e os marcos das arenas), três níveis de detalhe com sombra barata e recorte pela câmera
+- [x] Modelos `.vox` do MagicaVoxel: `assets/vox/<id>.vox` substitui a escultura; o lab exporta qualquer adereço como `.vox` e mostra um arquivo arrastado para a cena
 - [x] Lab de modelos (`/lab.html`): vitrine de tudo que aparece no jogo, luz, animações e comparação com a versão anterior
 
 ## Próximos
 
-1. **Cenário em alta resolução.** Árvores com galhos e pedras com musgo na mesma resolução dos
-   personagens, e suporte a modelos `.vox` (MagicaVoxel) para desenhar num editor.
-2. **Conjuntos de itens.** Peças que dão bônus quando vestidas juntas; afixos e mercador já existem.
-3. **Lock-on.** Travar a câmera num alvo (Zelda) como alternativa ao modo livre.
-4. **Mais quests.** Objetivos de coleta e exploração e quests repetíveis diárias.
-5. **Save na nuvem** (quando houver servidor); os slots locais já existem.
-6. **Áudio com assets.** Trocar a síntese por samples e trilha composta quando houver arte sonora.
-7. **Mais dungeons.** Novos temas (mina, templo do deserto), salas especiais (armadilhas, desafios) e modificadores de dificuldade.
-8. **Multiplayer.** Servidor rodando o mesmo domínio; cliente só renderiza.
+1. **Conjuntos de itens.** Peças que dão bônus quando vestidas juntas; afixos e mercador já existem.
+2. **Lock-on.** Travar a câmera num alvo (Zelda) como alternativa ao modo livre.
+3. **Mais quests.** Objetivos de coleta e exploração e quests repetíveis diárias.
+4. **Save na nuvem** (quando houver servidor); os slots locais já existem.
+5. **Áudio com assets.** Trocar a síntese por samples e trilha composta quando houver arte sonora.
+6. **Mais dungeons.** Novos temas (mina, templo do deserto), salas especiais (armadilhas, desafios) e modificadores de dificuldade.
+7. **Multiplayer.** Servidor rodando o mesmo domínio; cliente só renderiza.

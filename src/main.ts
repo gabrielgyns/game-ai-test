@@ -15,6 +15,7 @@ import { GameAudio } from "./game/audio";
 import { ThirdPersonCamera } from "./game/camera";
 import { EntityViews } from "./game/entityViews";
 import { createEnvironment } from "./game/environment";
+import { loadVoxOverrides } from "./game/props/catalog";
 import { FloatingTexts } from "./game/effects";
 import { Hud } from "./game/hud";
 import { Input } from "./game/input";
@@ -69,8 +70,10 @@ let hitStop = 0;
 
 const terrainMesh = createTerrainMesh();
 scene.add(terrainMesh);
+// Modelos desenhados no MagicaVoxel (assets/vox/*.vox) substituem os esculpidos por código.
+await loadVoxOverrides();
 const environment = createEnvironment();
-scene.add(environment);
+scene.add(environment.group);
 // Cripta: desenhada a partir da planta do domínio ao entrar; o portal de entrada fica no mapa.
 const dungeonView = new DungeonView(scene);
 const entrancePortal = createPortal();
@@ -878,11 +881,12 @@ function frame(): void {
   cam.applyShake(shake.update(frameDt));
   // Na cripta: o vale some (economiza e não vaza luz), a câmera fica mais de cima e o céu escurece.
   const indoor = inDungeonSpace(p.x);
-  terrainMesh.visible = environment.visible = foliage.group.visible = braziers.group.visible = entrancePortal.group.visible = !indoor;
+  terrainMesh.visible = environment.group.visible = foliage.group.visible = braziers.group.visible = entrancePortal.group.visible = !indoor;
   cam.minPitch = indoor ? 0.8 : -0.15;
   cam.maxDistance = indoor ? 13 : 18;
   sky.update(world.time, cam.camera, focus, frameDt, indoor);
   if (!indoor) {
+    environment.update(cam.camera);
     foliage.update(world.time, p);
     braziers.update(world.time, sky.night);
     entrancePortal.update(world.time);
@@ -929,6 +933,7 @@ if (import.meta.env.DEV) {
     particles,
     shake,
     foliage,
+    environment,
     enterDungeon: (seed?: number) => afterDungeonChange(() => enterDungeon(world, player, seed)),
     exitDungeon: () => afterDungeonChange(() => exitDungeon(world, player, "leave")),
     activeSlot: () => activeSlot,

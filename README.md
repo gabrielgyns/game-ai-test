@@ -99,14 +99,31 @@ generativa que vira um tema pulsante quando um chefe entra em combate. Volumes n
 Os personagens são voxels de 16 por metro com rosto, roupa com costuras, armas detalhadas, oclusão
 ambiente nos cantos e grão leve; pernas e braços são articulados e andam de verdade.
 
+O cenário é esculpido em voxels de 12 por metro: carvalhos (inclusive de outono) com galhos que se
+abrem e copas em tufos, bétulas de casca branca, pinheiros em camadas nas encostas e nevados no alto da
+muralha, arbustos com frutinhas, pedras com rachaduras, líquen e musgo no topo, lajes, arenitos em
+camadas no deserto, árvores mortas com barba-de-velho no pântano, cogumelos gigantes, cactos com gomos
+e espinhos, ossadas, pilares com caneluras no santuário, totens com crânio na arena do Rei Goblin,
+casulos de seda na da Rainha e obeliscos com hieróglifos na do Imperador. Cada peça tem três níveis de
+detalhe (perto, meio e longe) que trocam sozinhos com a distância.
+
+**Modelos do MagicaVoxel.** Qualquer peça do cenário pode ser trocada por um desenho seu: no lab,
+escolha o modelo e clique em **Exportar .vox**, edite no [MagicaVoxel](https://ephtracy.github.io/)
+e salve em `assets/vox/<id>.vox` (o id aparece na descrição do modelo, por exemplo `carvalho-1.vox`).
+O jogo usa o arquivo no lugar da escultura, na mesma escala (1 voxel = 1/12 m), com os mesmos níveis de
+detalhe. A vista Front do editor é a frente do modelo no jogo, e o eixo Z do editor aponta para cima.
+Para só olhar um arquivo, arraste-o para a cena do lab.
+
 ## Lab de modelos
 
 `http://localhost:5173/lab.html` abre a vitrine: todos os heróis (3 classes × 4 conjuntos de
 equipamento), mobs, chefes, NPCs, itens por raridade, habilidades, projéteis e adereços de cenário,
 num pedestal com câmera orbital. Dá para trocar a luz (campina, pântano, deserto, noite, estúdio),
 disparar as animações do jogo (andar, atacar, aviso de golpe, rolamento, investida, Golpe Giratório,
-escudo, morte) e comparar lado a lado com a versão anterior dos modelos. É onde o visual é
-trabalhado antes de ir para o jogo.
+escudo, morte) e comparar lado a lado com a versão anterior dos modelos (personagens e cenário). Os
+adereços de cenário mostram cada nível de detalhe (perto, meio, longe) e podem ser exportados como
+`.vox`; um `.vox` arrastado para a cena aparece na vitrine. É onde o visual é trabalhado antes de ir
+para o jogo.
 
 Veja o [ROADMAP](ROADMAP.md) para a visão e os próximos marcos.
 

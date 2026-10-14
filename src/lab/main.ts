@@ -10,7 +10,9 @@ import { CHARGE, ROLL } from "../domain/skills";
 import { EntityViews } from "../game/entityViews";
 import { VoxelBuilder, voxelMaterial } from "../game/voxel";
 import { createModel as createLegacyModel } from "./legacyModels";
-import { buildCatalog, type Exhibit } from "./catalog";
+import { buildCatalog, type Exhibit, type LodLevel } from "./catalog";
+import { builderToVox, parseVox, voxToBuilder } from "../game/vox";
+import { loadVoxOverrides, SCENERY_VOXEL } from "../game/props/catalog";
 
 /* ---------- Renderer e cena ---------- */
 
@@ -126,6 +128,8 @@ const ANIMS: Record<Anim, string> = {
 
 /* ---------- Estado ---------- */
 
+// Os .vox de assets/vox também valem no lab, para ver o desenho antes de entrar no jogo.
+await loadVoxOverrides();
 const catalog = buildCatalog();
 const state = {
   current: null as Exhibit | null,
@@ -139,6 +143,7 @@ const state = {
   object: null as THREE.Object3D | null,
   objectUpdate: null as ((t: number) => void) | null,
   legacy: null as THREE.Object3D | null,
+  lod: "hi" as LodLevel,
 };
 
 const presetSelect = document.getElementById("preset") as HTMLSelectElement;
@@ -146,6 +151,8 @@ const animSelect = document.getElementById("anim") as HTMLSelectElement;
 const turntable = document.getElementById("turntable") as HTMLInputElement;
 const compareBox = document.getElementById("compare") as HTMLInputElement;
 const gridBox = document.getElementById("grid") as HTMLInputElement;
+const lodSelect = document.getElementById("lod") as HTMLSelectElement;
+const exportButton = document.getElementById("export") as HTMLButtonElement;
 const stats = document.getElementById("stats")!;
 const nav = document.getElementById("catalog")!;
 
@@ -176,7 +183,8 @@ function show(id: string): void {
   clearExhibit();
   state.current = ex;
   state.lastCycle = -1;
-  const offset = state.compare && ex.kind === "character" ? ex.size * 0.55 : 0;
+  const comparable = ex.kind === "character" || !!ex.legacy;
+  const offset = state.compare && comparable ? ex.size * 0.55 : 0;
   if (ex.kind === "character") {
     const world = new World();
     const entity = world.spawn((eid) => ex.spawn(eid));
@@ -194,10 +202,17 @@ function show(id: string): void {
       state.legacy = legacy.root;
     }
   } else {
-    const built = ex.build();
+    const built = ex.build({ lod: ex.lods ? state.lod : "hi" });
+    built.object.position.x = offset;
     scene.add(built.object);
     state.object = built.object;
     state.objectUpdate = built.update ?? null;
+    if (state.compare && ex.legacy) {
+      const legacy = ex.legacy();
+      legacy.position.x = -offset;
+      scene.add(legacy);
+      state.legacy = legacy;
+    }
   }
   // Enquadra: alvo na metade da altura, distância proporcional ao tamanho.
   const focusY = ex.size * 0.42;
@@ -211,7 +226,9 @@ function show(id: string): void {
   for (const b of nav.querySelectorAll("button")) b.classList.toggle("active", b.dataset.id === ex.id);
   const animOpts = ex.kind === "character";
   animSelect.disabled = !animOpts;
-  compareBox.disabled = !animOpts;
+  compareBox.disabled = !comparable;
+  lodSelect.disabled = !(ex.kind === "object" && ex.lods);
+  exportButton.disabled = !(ex.kind === "object" && ex.voxels);
   const url = new URL(window.location.href);
   url.searchParams.set("e", ex.id);
   history.replaceState(null, "", url);
@@ -300,19 +317,24 @@ function loop(now: number): void {
 
 /* ---------- UI ---------- */
 
-const groups = [...new Set(catalog.map((e) => e.group))];
-for (const g of groups) {
-  const h = document.createElement("h3");
-  h.textContent = g;
-  nav.appendChild(h);
-  for (const ex of catalog.filter((e) => e.group === g)) {
-    const b = document.createElement("button");
-    b.textContent = ex.label;
-    b.dataset.id = ex.id;
-    b.addEventListener("click", () => show(ex.id));
-    nav.appendChild(b);
+function renderNav(): void {
+  nav.replaceChildren();
+  const groups = [...new Set(catalog.map((e) => e.group))];
+  for (const g of groups) {
+    const h = document.createElement("h3");
+    h.textContent = g;
+    nav.appendChild(h);
+    for (const ex of catalog.filter((e) => e.group === g)) {
+      const b = document.createElement("button");
+      b.textContent = ex.label;
+      b.dataset.id = ex.id;
+      b.classList.toggle("active", ex.id === state.current?.id);
+      b.addEventListener("click", () => show(ex.id));
+      nav.appendChild(b);
+    }
   }
 }
+renderNav();
 presetSelect.addEventListener("change", () => applyPreset(presetSelect.value));
 animSelect.addEventListener("change", () => {
   state.anim = animSelect.value as Anim;
@@ -322,6 +344,59 @@ compareBox.addEventListener("change", () => {
   state.compare = compareBox.checked;
   if (state.current) show(state.current.id);
 });
+lodSelect.addEventListener("change", () => {
+  state.lod = lodSelect.value as LodLevel;
+  if (state.current) show(state.current.id);
+});
+exportButton.addEventListener("click", () => {
+  const ex = state.current;
+  if (ex?.kind !== "object" || !ex.voxels) return;
+  const bytes = builderToVox(ex.voxels());
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/octet-stream" }));
+  a.download = `${ex.id.replace(/^prop\./, "")}.vox`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+
+/** Mostra um .vox solto na vitrine, na escala do cenário (1 voxel = 1/12 m). */
+function showVoxFile(buffer: ArrayBuffer, name: string): string {
+  const voxels = voxToBuilder(parseVox(buffer));
+  const geometry = voxels.build(SCENERY_VOXEL, { jitter: 0, aoStrength: 0.55 });
+  const id = `vox.${name}`;
+  const existing = catalog.findIndex((e) => e.id === id);
+  if (existing >= 0) catalog.splice(existing, 1);
+  catalog.push({
+    kind: "object",
+    id,
+    group: "Arquivos .vox",
+    label: name,
+    description: `Arquivo solto no lab: ${voxels.size.toLocaleString("pt-BR")} voxels, em 1/12 m por voxel. Para usar no jogo, salve com o id de um modelo em assets/vox/.`,
+    size: geometry.boundingSphere!.radius * 1.05,
+    voxels: () => voxels,
+    voxel: SCENERY_VOXEL,
+    build: () => {
+      const m = new THREE.Mesh(geometry, voxelMaterial());
+      m.castShadow = m.receiveShadow = true;
+      return { object: m };
+    },
+  });
+  renderNav();
+  show(id);
+  return id;
+}
+canvas.addEventListener("dragover", (e) => e.preventDefault());
+canvas.addEventListener("drop", async (e) => {
+  e.preventDefault();
+  const file = e.dataTransfer?.files[0];
+  if (!file) return;
+  try {
+    showVoxFile(await file.arrayBuffer(), file.name.replace(/\.vox$/i, ""));
+  } catch (err) {
+    document.getElementById("info-desc")!.textContent = `Não consegui ler ${file.name}: ${(err as Error).message}`;
+  }
+});
+
 gridBox.addEventListener("change", () => {
   grid.visible = pedestal.visible = gridBox.checked;
 });
@@ -335,6 +410,7 @@ if (params.get("anim")) {
 }
 if (params.get("compare") === "1") compareBox.checked = state.compare = true;
 if (params.get("turn") === "0") turntable.checked = false;
+if (params.get("lod")) lodSelect.value = state.lod = params.get("lod") as LodLevel;
 resize();
 show(params.get("e") ?? catalog[0]!.id);
 requestAnimationFrame(loop);
@@ -353,6 +429,16 @@ requestAnimationFrame(loop);
     compareBox.checked = state.compare = on;
     if (state.current) show(state.current.id);
   },
+  setLod: (lod: LodLevel) => {
+    lodSelect.value = state.lod = lod;
+    if (state.current) show(state.current.id);
+  },
+  /** Exporta o modelo atual como .vox e devolve os bytes (sem baixar). */
+  exportVox: () => {
+    const ex = state.current;
+    return ex?.kind === "object" && ex.voxels ? Array.from(builderToVox(ex.voxels())) : null;
+  },
+  loadVox: (bytes: number[], name: string) => showVoxFile(new Uint8Array(bytes).buffer, name),
   setTurntable: (on: boolean) => {
     turntable.checked = on;
   },

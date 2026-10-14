@@ -112,6 +112,20 @@ com screenshots antes de serem considerados prontos.
     tochas com 6 luzes que seguem o herói, baú que abre, portais), vale escondido e céu escuro dentro
     da cripta, câmera mais de cima, recorte de paredes em funil no shader, painel da cripta no HUD.
     Custo: ~340k triângulos dentro da cripta. 15 testes novos.
+23. **Cenário em alta resolução** (pedido do dono: "árvores com galhos e pedras com musgo na mesma
+    resolução dos personagens, e suporte a .vox"). `VoxelBuilder` com chave numérica (bem mais
+    rápido), `downsample` para LOD, `forEach`/`bounds`/`get`. `props/sculpt.ts` (cápsulas que afinam,
+    galhos em curva, bolhas com borda por ruído, demãos no topo e na superfície), `trees.ts`,
+    `rocks.ts`, `landmarks.ts` e `catalog.ts` com 25 modelos em 1/12 m; `placeProps` decide onde
+    cada um nasce (bioma, faixa de altura, arenas e portal livres). `field.ts`: três níveis (até 15 m
+    completo, até 34 m metade, além disso um quarto), sombra vinda de uma versão magra do modelo,
+    nível longe sem sombra e recortado pela câmera a cada quadro, peças pequenas somem além de 70 m,
+    modelo completo montado um por quadro depois do boot. `vox.ts`: leitura e escrita do formato do
+    MagicaVoxel (paleta, cena com vários modelos via nTRN/nGRP/nSHP, conversão de eixos, redução para
+    255 cores); `assets/vox/<id>.vox` substitui a escultura. Lab: nível de detalhe, exportar `.vox`,
+    arrastar `.vox` para a cena, comparação com os adereços antigos (`legacyProps.ts`). Custo: ~1,1M
+    triângulos no vale (antes ~870k), ~400k no pântano e no deserto, ~1,5M no platô do Rei Goblin,
+    que vê o mapa inteiro; boot ~1,3 s mais lento no headless. 16 testes novos.
 
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).

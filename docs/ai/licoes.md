@@ -92,3 +92,17 @@
   interações.
 - Luzes pontuais que entram e saem da cena recompilam shaders: mantenha um conjunto fixo (as 6 das
   tochas) e só mude intensidade e posição.
+
+## Sobre o cenário em alta resolução
+- A superfície irregular é o que custa: uma copa lisa e uma rugosa com o mesmo volume diferem pouco em
+  voxels e muito em triângulos. A oclusão ambiente soma ~70% (quebra a fusão de faces). O grão quase
+  não pesa. Meça com um teste rascunho antes de escolher a resolução.
+- `InstancedMesh` é recortado pela câmera como um bloco só: com instâncias espalhadas pelo mapa, a
+  esfera cobre tudo e todas são desenhadas, nas duas passadas. Recorte na CPU (`Frustum` por instância)
+  para o nível longe, e esferas por nível para os outros.
+- O `WebGLShadowMap` testa `object.layers` contra a câmera **principal**: não dá para esconder um
+  projetor de sombra da tela com camadas. Use material com `colorWrite: false, depthWrite: false`.
+- Gravar arquivo em `assets/vox/` com o dev server ligado recarrega a página (o glob é observado).
+  Num teste headless, isso troca a cena no meio do script.
+- `Map.forEach` apagando as próprias chaves pula itens: junte primeiro, apague depois (`trimBelow`).
+

@@ -39,9 +39,11 @@ main { position: relative; flex: 1; height: 100vh; }
   border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 13px;
 }
 #toolbar label { display: flex; gap: 6px; align-items: center; color: var(--muted); }
-#toolbar select {
+#toolbar select, #toolbar button {
   background: var(--panel-2); color: var(--text); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; padding: 4px 8px;
 }
+#toolbar button { cursor: pointer; }
+#toolbar button:disabled, #toolbar select:disabled { opacity: 0.45; cursor: default; }
 #stats { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
 
 #info {

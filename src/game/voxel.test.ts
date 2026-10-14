@@ -83,3 +83,18 @@ describe("VoxelBuilder: oclusão, grão e carimbos", () => {
     expect(b.has(1, 0, 0)).toBe(false);
   });
 });
+
+describe("VoxelBuilder.downsample (LOD)", () => {
+  it("cada bloco 2×2×2 cheio vira um voxel com a cor mais comum", () => {
+    const b = new VoxelBuilder().box(0, 0, 0, 4, 2, 2, "#ff0000").set(0, 0, 0, "#00ff00");
+    const lo = b.downsample(2);
+    expect(lo.size).toBe(2);
+    expect(lo.get(0, 0, 0)).toBe(0xff0000); // 7 vermelhos contra 1 verde
+  });
+
+  it("blocos quase vazios somem conforme o preenchimento mínimo", () => {
+    const b = new VoxelBuilder().set(0, 0, 0, "#fff");
+    expect(b.downsample(2, 0.1).size).toBe(1);
+    expect(b.downsample(2, 0.5).size).toBe(0);
+  });
+});

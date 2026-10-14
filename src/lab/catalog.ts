@@ -10,7 +10,10 @@ import { SKILLS, type SkillId } from "../domain/skills";
 import { RARITY_LABEL } from "../domain/items";
 import { DropView } from "../game/dropViews";
 import { createProjectileMesh } from "../game/projectileViews";
-import { createBraziers, PROP_BUILDERS } from "../game/environment";
+import { createBraziers, stallGeometry } from "../game/environment";
+import { buildLods, PROP_MODELS, propVoxels, type PropKind, type PropLods } from "../game/props/catalog";
+import { LEGACY_PROPS } from "./legacyProps";
+import type { VoxelBuilder } from "../game/voxel";
 import { FOLIAGE_BUILDERS } from "../game/foliage";
 import { createPortal } from "../game/portal";
 import { terrainHeight } from "../domain/terrain";
@@ -35,9 +38,33 @@ export type Exhibit =
       group: string;
       label: string;
       description: string;
-      build: () => { object: THREE.Object3D; update?: (time: number) => void };
+      build: (opts: { lod: LodLevel }) => { object: THREE.Object3D; update?: (time: number) => void };
       size: number;
+      /** A versão anterior do modelo, para comparar lado a lado. */
+      legacy?: () => THREE.Object3D;
+      /** Voxels do modelo (para exportar como .vox) e quantos metros tem cada voxel. */
+      voxels?: () => VoxelBuilder;
+      voxel?: number;
+      /** O modelo tem níveis de detalhe (LOD) para escolher na barra. */
+      lods?: boolean;
     };
+
+export type LodLevel = keyof PropLods;
+
+/** Qual adereço antigo corresponde a cada modelo novo (para a comparação). */
+const LEGACY_OF: Partial<Record<PropKind, string>> = {
+  oak1: "Árvore 1", oak2: "Árvore 2", oakAutumn: "Árvore 3", boulder1: "Pedra 1", boulder2: "Pedra 2",
+  deadTree1: "Árvore morta 1", deadTree2: "Árvore morta 2", mushrooms: "Cogumelo", cactus1: "Cacto 1", cactus2: "Cacto 2",
+  bones: "Ossada", pillar: "Pilar do santuário", totem: "Totem goblin", cocoon: "Casulo de teia",
+  obelisk: "Obelisco do deserto", obeliskBroken: "Obelisco quebrado",
+};
+
+const lodCache = new Map<PropKind, PropLods>();
+const lodsOf = (kind: PropKind): PropLods => {
+  let l = lodCache.get(kind);
+  if (!l) lodCache.set(kind, (l = buildLods(kind)));
+  return l;
+};
 
 let itemId = 9000;
 
@@ -301,21 +328,52 @@ export function buildCatalog(): Exhibit[] {
       return { object: holder, update: (t: number) => b.update(t, 1) };
     },
   });
-  for (const [label, build] of Object.entries(PROP_BUILDERS)) {
+  for (const [kind, model] of Object.entries(PROP_MODELS) as [PropKind, (typeof PROP_MODELS)[PropKind]][]) {
+    const legacyLabel = LEGACY_OF[kind];
+    const legacyBuild = legacyLabel ? LEGACY_PROPS[legacyLabel] : undefined;
     out.push({
       kind: "object",
-      id: `prop.${label}`,
+      id: `prop.${model.id}`,
       group: "Cenário",
-      label,
-      description: "Adereço instanciado pelo cenário, em voxels de 25 cm.",
-      size: label.startsWith("Barraca") ? 5 : label.startsWith("Árvore") || label.startsWith("Obelisco") ? 3.4 : 1.8,
-      build: () => {
-        const m = new THREE.Mesh(build(), voxelMaterial());
+      label: model.label,
+      description: `Esculpido em voxels de 1/${Math.round(1 / model.voxel)} m, com três níveis de detalhe (perto, meio, longe). Para trocar por um desenho seu, salve assets/vox/${model.id}.vox.`,
+      get size() {
+        const g = lodsOf(kind).hi;
+        if (!g.boundingBox) g.computeBoundingBox();
+        const box = g.boundingBox!;
+        // O lab enquadra pela altura; peças largas e baixas precisam de um pouco mais de recuo.
+        return Math.max(box.max.y - box.min.y, (box.max.x - box.min.x) * 0.8, (box.max.z - box.min.z) * 0.8);
+      },
+      voxels: () => propVoxels(kind),
+      voxel: model.voxel,
+      lods: true,
+      build: ({ lod }) => {
+        const m = new THREE.Mesh(lodsOf(kind)[lod], voxelMaterial());
         m.castShadow = m.receiveShadow = true;
         return { object: m };
       },
+      legacy: legacyBuild
+        ? () => {
+            const m = new THREE.Mesh(legacyBuild(), voxelMaterial());
+            m.castShadow = m.receiveShadow = true;
+            return m;
+          }
+        : undefined,
     });
   }
+  out.push({
+    kind: "object",
+    id: "prop.barraca",
+    group: "Cenário",
+    label: "Barraca da Mercadora",
+    description: "Balcão, toldo listrado e caixotes, em voxels de 1/8 m.",
+    size: 5,
+    build: () => {
+      const m = new THREE.Mesh(stallGeometry(), voxelMaterial());
+      m.castShadow = m.receiveShadow = true;
+      return { object: m };
+    },
+  });
 
   return out;
 }

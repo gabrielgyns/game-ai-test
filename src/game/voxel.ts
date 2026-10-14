@@ -26,33 +26,63 @@ export interface BuildOptions {
   skipGroundFaces?: boolean;
 }
 
-export class VoxelBuilder {
-  private readonly voxels = new Map<string, THREE.Color>();
+/** Chave numérica de um voxel: cabe em ±1024 por eixo e é bem mais rápida que uma string. */
+const OFF = 1024, SPAN = 2048;
+const pack = (x: number, y: number, z: number): number => ((x + OFF) * SPAN + (y + OFF)) * SPAN + (z + OFF);
+function unpack(k: number): [number, number, number] {
+  const z = (k % SPAN) - OFF;
+  const rest = Math.floor(k / SPAN);
+  return [Math.floor(rest / SPAN) - OFF, (rest % SPAN) - OFF, z];
+}
 
-  private key(x: number, y: number, z: number): string {
-    return `${x},${y},${z}`;
-  }
+export class VoxelBuilder {
+  /** Cor (hex) de cada voxel, pela chave numérica. */
+  private readonly voxels = new Map<number, number>();
 
   set(x: number, y: number, z: number, color: THREE.ColorRepresentation): this {
-    this.voxels.set(this.key(x, y, z), color instanceof THREE.Color ? color : new THREE.Color(color));
+    this.voxels.set(pack(x, y, z), toHex(color));
     return this;
   }
 
   remove(x: number, y: number, z: number): this {
-    this.voxels.delete(this.key(x, y, z));
+    this.voxels.delete(pack(x, y, z));
     return this;
+  }
+
+  /** Cor do voxel (hex), ou undefined se vazio. */
+  get(x: number, y: number, z: number): number | undefined {
+    return this.voxels.get(pack(x, y, z));
+  }
+
+  /** Percorre todos os voxels (a ordem não é garantida). */
+  forEach(fn: (x: number, y: number, z: number, hex: number) => void): void {
+    for (const [k, hex] of this.voxels) {
+      const [x, y, z] = unpack(k);
+      fn(x, y, z, hex);
+    }
+  }
+
+  /** Caixa que envolve todos os voxels: mínimo inclusivo, máximo exclusivo. */
+  bounds(): { min: [number, number, number]; max: [number, number, number] } {
+    const min: [number, number, number] = [Infinity, Infinity, Infinity];
+    const max: [number, number, number] = [-Infinity, -Infinity, -Infinity];
+    this.forEach((x, y, z) => {
+      min[0] = Math.min(min[0], x); min[1] = Math.min(min[1], y); min[2] = Math.min(min[2], z);
+      max[0] = Math.max(max[0], x + 1); max[1] = Math.max(max[1], y + 1); max[2] = Math.max(max[2], z + 1);
+    });
+    return { min, max };
   }
 
   /** Preenche a caixa [x0,x1) × [y0,y1) × [z0,z1). */
   box(x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, color: THREE.ColorRepresentation): this {
-    const c = color instanceof THREE.Color ? color : new THREE.Color(color);
+    const c = toHex(color);
     // Aceita os cantos em qualquer ordem (útil ao espelhar com sinal negativo).
     const [ax, bx] = x0 <= x1 ? [x0, x1] : [x1, x0];
     const [ay, by] = y0 <= y1 ? [y0, y1] : [y1, y0];
     const [az, bz] = z0 <= z1 ? [z0, z1] : [z1, z0];
     for (let x = ax; x < bx; x++)
       for (let y = ay; y < by; y++)
-        for (let z = az; z < bz; z++) this.set(x, y, z, c);
+        for (let z = az; z < bz; z++) this.voxels.set(pack(x, y, z), c);
     return this;
   }
 
@@ -91,12 +121,12 @@ export class VoxelBuilder {
 
   /** Esfera (ou elipsoide) centrada em (cx, cy, cz). */
   sphere(cx: number, cy: number, cz: number, rx: number, ry: number, rz: number, color: THREE.ColorRepresentation): this {
-    const c = color instanceof THREE.Color ? color : new THREE.Color(color);
+    const c = toHex(color);
     for (let x = Math.floor(-rx); x <= Math.ceil(rx); x++)
       for (let y = Math.floor(-ry); y <= Math.ceil(ry); y++)
         for (let z = Math.floor(-rz); z <= Math.ceil(rz); z++) {
           const d = (x / rx) ** 2 + (y / ry) ** 2 + (z / rz) ** 2;
-          if (d <= 1.05) this.set(cx + x, cy + y, cz + z, c);
+          if (d <= 1.05) this.voxels.set(pack(cx + x, cy + y, cz + z), c);
         }
     return this;
   }
@@ -133,25 +163,47 @@ export class VoxelBuilder {
 
   /** Copia todos os voxels de outro builder com deslocamento. */
   merge(other: VoxelBuilder, dx = 0, dy = 0, dz = 0): this {
-    for (const [key, color] of other.voxels) {
-      const [x, y, z] = key.split(",").map(Number) as [number, number, number];
-      this.set(x + dx, y + dy, z + dz, color);
-    }
+    other.forEach((x, y, z, hex) => this.voxels.set(pack(x + dx, y + dy, z + dz), hex));
     return this;
   }
 
   /** Espelha em X (x → -1 - x, para grades centradas entre -n e n). */
   mirrorX(): this {
     const copy = [...this.voxels];
-    for (const [key, color] of copy) {
-      const [x, y, z] = key.split(",").map(Number) as [number, number, number];
-      this.set(-1 - x, y, z, color);
+    for (const [k, hex] of copy) {
+      const [x, y, z] = unpack(k);
+      this.voxels.set(pack(-1 - x, y, z), hex);
     }
     return this;
   }
 
+  /**
+   * Versão em resolução menor, para o nível de detalhe (LOD) de longe: cada bloco f×f×f vira um voxel
+   * se estiver ao menos `fill` cheio, com a cor mais comum do bloco. Galhos finos somem, a silhueta fica.
+   */
+  downsample(f: number, fill = 0.25): VoxelBuilder {
+    const blocks = new Map<number, Map<number, number>>();
+    this.forEach((x, y, z, hex) => {
+      const k = pack(Math.floor(x / f), Math.floor(y / f), Math.floor(z / f));
+      let hist = blocks.get(k);
+      if (!hist) blocks.set(k, (hist = new Map()));
+      hist.set(hex, (hist.get(hex) ?? 0) + 1);
+    });
+    const out = new VoxelBuilder();
+    const need = Math.max(1, Math.round(f * f * f * fill));
+    for (const [k, hist] of blocks) {
+      let total = 0, best = 0, bestCount = -1;
+      for (const [hex, n] of hist) {
+        total += n;
+        if (n > bestCount) [best, bestCount] = [hex, n];
+      }
+      if (total >= need) out.voxels.set(k, best);
+    }
+    return out;
+  }
+
   has(x: number, y: number, z: number): boolean {
-    return this.voxels.has(this.key(x, y, z));
+    return this.voxels.has(pack(x, y, z));
   }
 
   get size(): number {
@@ -180,7 +232,7 @@ export class VoxelBuilder {
     interface Cell {
       u: number;
       v: number;
-      color: THREE.Color;
+      hex: number;
       /** Assinatura de fusão: cor + AO dos 4 cantos + grão. */
       sig: string;
       ao: [number, number, number, number];
@@ -189,9 +241,9 @@ export class VoxelBuilder {
 
     for (const face of FACES) {
       // Agrupa as faces expostas desta direção por camada (coordenada ao longo da normal).
-      const layers = new Map<number, Map<string, Cell>>();
-      for (const [key, color] of this.voxels) {
-        const [x, y, z] = key.split(",").map(Number) as [number, number, number];
+      const layers = new Map<number, Map<number, Cell>>();
+      for (const [key, hex] of this.voxels) {
+        const [x, y, z] = unpack(key);
         if (this.has(x + face.n[0], y + face.n[1], z + face.n[2])) continue;
         if (opts.skipGroundFaces && face.n[1] === -1 && y === 0) continue;
         const p: [number, number, number] = [x, y, z];
@@ -200,19 +252,20 @@ export class VoxelBuilder {
         const v = p[face.vAxis];
         const aoQuad = ao ? this.faceAO(p, face) : ([3, 3, 3, 3] as [number, number, number, number]);
         const shade = grain > 0 ? 1 + (hash(Math.floor(x / grainScale), Math.floor(y / grainScale), Math.floor(z / grainScale)) - 0.5) * grain * 2 : 1;
-        const sig = `${color.getHex()}|${aoQuad.join("")}|${grain > 0 ? shade.toFixed(3) : ""}`;
+        const sig = `${hex}|${aoQuad.join("")}|${grain > 0 ? shade.toFixed(3) : ""}`;
         let layer = layers.get(d);
         if (!layer) layers.set(d, (layer = new Map()));
-        layer.set(`${u},${v}`, { u, v, color, sig, ao: aoQuad, shade });
+        layer.set(uvKey(u, v), { u, v, hex, sig, ao: aoQuad, shade });
       }
 
       for (const [d, layer] of layers) {
-        const done = new Set<string>();
+        const done = new Set<number>();
         for (const [k, cell] of layer) {
           if (done.has(k)) continue;
           const same = (u: number, v: number) => {
-            const c = layer.get(`${u},${v}`);
-            return c !== undefined && !done.has(`${u},${v}`) && c.sig === cell.sig;
+            const key = uvKey(u, v);
+            const c = layer.get(key);
+            return c !== undefined && !done.has(key) && c.sig === cell.sig;
           };
           // Estende em u, depois em v enquanto a linha inteira combinar.
           let w = 1;
@@ -222,7 +275,7 @@ export class VoxelBuilder {
             for (let i = 0; i < w; i++) if (!same(cell.u + i, cell.v + h)) break outer;
             h++;
           }
-          for (let i = 0; i < w; i++) for (let j = 0; j < h; j++) done.add(`${cell.u + i},${cell.v + j}`);
+          for (let i = 0; i < w; i++) for (let j = 0; j < h; j++) done.add(uvKey(cell.u + i, cell.v + j));
 
           const quadShade = grain > 0 ? cell.shade : 1 + (hash(cell.u, d, cell.v) - 0.5) * jitter * 2;
           const plane = d + (face.n[face.axis] > 0 ? 1 : 0);
@@ -249,7 +302,7 @@ export class VoxelBuilder {
           const base = positions.length / 3;
           for (const c of corners) {
             const occlusion = 1 - ((3 - c.ao) / 3) * aoStrength;
-            tmp.copy(cell.color).multiplyScalar(quadShade * face.light * occlusion);
+            tmp.setHex(cell.hex).multiplyScalar(quadShade * face.light * occlusion);
             positions.push(c.p[0] * scale, c.p[1] * scale, c.p[2] * scale);
             normals.push(face.n[0], face.n[1], face.n[2]);
             colors.push(tmp.r, tmp.g, tmp.b);
@@ -290,6 +343,19 @@ export class VoxelBuilder {
     };
     return [vertex(-1, -1), vertex(1, -1), vertex(1, 1), vertex(-1, 1)];
   }
+}
+
+const uvKey = (u: number, v: number): number => (u + OFF) * SPAN + (v + OFF);
+
+const hexCache = new Map<string, number>();
+const scratch = new THREE.Color();
+/** Cor em hex (sRGB), com cache para as strings repetidas da paleta. */
+function toHex(color: THREE.ColorRepresentation): number {
+  if (typeof color === "number") return color;
+  if (color instanceof THREE.Color) return color.getHex();
+  let hex = hexCache.get(color);
+  if (hex === undefined) hexCache.set(color, (hex = scratch.set(color).getHex()));
+  return hex;
 }
 
 function hash(x: number, y: number, z: number): number {

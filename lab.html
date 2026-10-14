@@ -10,7 +10,7 @@
     <aside id="sidebar">
       <header>
         <h1>Lab de modelos</h1>
-        <p>Vitrine de tudo que aparece no jogo. <a href="/">Voltar ao jogo</a></p>
+        <p>Vitrine de tudo que aparece no jogo. Arraste um arquivo .vox para a cena para vê-lo. <a href="/">Voltar ao jogo</a></p>
       </header>
       <nav id="catalog"></nav>
     </aside>
@@ -21,6 +21,8 @@
         <label><input type="checkbox" id="turntable" checked /> Girar</label>
         <label><input type="checkbox" id="compare" /> Comparar com a versão anterior</label>
         <label><input type="checkbox" id="grid" checked /> Chão</label>
+        <label>Detalhe <select id="lod"><option value="hi">perto</option><option value="mid">meio</option><option value="lo">longe</option></select></label>
+        <button id="export" title="Baixa o modelo como .vox para editar no MagicaVoxel">Exportar .vox</button>
         <span id="stats"></span>
       </div>
       <canvas id="lab"></canvas>

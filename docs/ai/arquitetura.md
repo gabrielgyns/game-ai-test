@@ -75,7 +75,12 @@ o servidor roda `stepWorld` e o cliente roda só `src/game`.
 - `entityViews.ts`: liga entidade a modelo; animações procedurais (andar, golpe, rolamento em torno
   do centro com ordem de rotação YXZ, giro), barras de vida, telegraph (círculo ou linha), marcadores
   de quest sobre NPCs.
-- `terrainMesh.ts` / `environment.ts`: terreno em blocos e props instanciados por variante.
+- `terrainMesh.ts`: terreno em blocos.
+- `environment.ts` + `props/`: o cenário. `placeProps` decide onde cada modelo nasce; `catalog.ts`
+  lista os 25 modelos (id = nome do `.vox` que o substitui) e monta os níveis de detalhe; `field.ts`
+  (`PropField`) distribui as instâncias entre completo/médio/longe pela câmera, com projetores de
+  sombra magros e recorte do nível longe quadro a quadro; `sculpt.ts`, `trees.ts`, `rocks.ts`,
+  `landmarks.ts` esculpem os modelos. `vox.ts` lê e escreve `.vox` do MagicaVoxel.
 - `sky.ts`, `foliage.ts`, `particles.ts`, `shake.ts`: ambiente e "sensação de jogo". O céu lê o
   relógio do domínio; partículas, clarão e tremor reagem aos eventos em `handleEvents`.
 - `audio.ts`: tudo sintetizado com Web Audio; música generativa com modo de chefe.
@@ -99,7 +104,10 @@ o servidor roda `stepWorld` e o cliente roda só `src/game`.
 - `catalog.ts` lista os `Exhibit`s (personagem via `World` + `EntityViews`, ou objeto estático).
 - `main.ts`: cena, presets de luz, animações (que mexem na entidade como o jogo faria) e o gancho
   `window.__lab` (show, setAnim, setPreset, setCompare, orbit, step) para screenshots headless.
-- `legacyModels.ts`: cópia congelada dos modelos de 8 voxels/m, só para o modo "comparar".
+- `legacyModels.ts` e `legacyProps.ts`: cópias congeladas dos personagens de 8 voxels/m e dos
+  adereços de 4 voxels/m, só para o modo "comparar".
+- Barra: nível de detalhe dos adereços, "Exportar .vox", e arrastar um `.vox` para a cena.
+  `window.__lab` também tem `setLod`, `exportVox` e `loadVox`.
 
 ## Dependências
 

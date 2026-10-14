@@ -142,3 +142,23 @@ cripta: dentro dela, o herói é salvo na porta.
 Com paredes, a câmera de terceira pessoa fica atrás delas. Em vez de mover a câmera (que brigaria com
 o mouse), o shader das paredes descarta pixels num funil entre a câmera e o herói, e a câmera da
 cripta tem inclinação mínima maior. Barato, sem física de câmera, e o herói nunca some atrás de tijolo.
+
+## D30. Cenário esculpido, com 12 voxels por metro
+Os personagens usam 16 voxels/m, mas uma árvore de 5 m nessa escala passa de 50 mil triângulos. Com
+12 voxels/m um carvalho fica entre 20 e 25 mil, e de perto a diferença para 16 quase não se vê. Em vez
+de caixas empilhadas, o cenário é esculpido com formas (cápsulas, bolhas com ruído, demãos de musgo),
+o que dá galhos curvos e copas irregulares com pouco código por modelo.
+
+## D31. LOD por redução da própria grade
+Os níveis médio e longe saem de `downsample` do mesmo modelo (blocos 2×2×2 e 4×4×4), sem desenhar
+nada à parte: qualquer modelo novo, inclusive um `.vox`, ganha LOD de graça. A sombra usa uma redução
+mais "magra" (só blocos bem cheios), que fica por dentro do modelo e não sombreia a própria superfície;
+o projetor é desenhado na tela sem escrever cor nem profundidade, porque o Three testa as camadas da
+câmera principal também na passada de sombra.
+
+## D32. `.vox` substitui por id, sem manifesto
+`import.meta.glob("/assets/vox/*.vox")` lista os arquivos na hora do build: basta salvar o arquivo com
+o id do modelo, sem registrar nada. O carregamento é um `await` no topo do `main.ts`, antes de criar o
+cenário, então não há troca visível depois do boot. Eixos: o editor é Z para cima com a vista Front
+em -Y; o jogo é Y para cima com a frente em -Z, então (x, y, z) do editor vira (-x, z, y).
+
