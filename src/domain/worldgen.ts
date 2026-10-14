@@ -106,7 +106,7 @@ export function generateWorld(options: WorldGenOptions = {}): World {
 
 /**
  * Floresta Ancestral: lobos em matilhas pela mata, entes na mata funda (oeste e norte), espíritos
- * élficos nas ruínas a leste, a Guardiã Lyra no acampamento e o Ente Ancião na clareira ao norte.
+ * élficos nas ruínas a leste, a vila do acampamento (Guardiã Lyra, Mascate Faelan, Armeira Kaia) e o Ente Ancião na clareira ao norte.
  */
 function populateForest(world: World, rand: () => number): void {
   const zone = ZONES.floresta;
@@ -140,8 +140,14 @@ function populateForest(world: World, rand: () => number): void {
   scatter("ent", 10, (lx, lz) => lx < 30 && lz < 50);
   scatter("elvenSpirit", 10, (lx) => lx > 45);
   scatter("elvenSpirit", 3, (lx) => lx < 45);
-  const ranger = npcById("ranger")!;
-  const r = at(FOREST_CAMP.x + 4, FOREST_CAMP.z - 2);
-  world.spawn((id) => createNpc(id, ranger, r, Math.atan2(4, -2)));
+  // Vila do acampamento: cada um no seu canto, virado para a fogueira.
+  for (const spot of [
+    { id: "ranger", x: 4, z: -2 },
+    { id: "peddler", x: -7, z: 4 },
+    { id: "armorer", x: 7, z: -7 },
+  ]) {
+    const def = npcById(spot.id)!;
+    world.spawn((id) => createNpc(id, def, at(FOREST_CAMP.x + spot.x, FOREST_CAMP.z + spot.z), Math.atan2(spot.x, spot.z)));
+  }
   world.spawn((id) => createAncientTreant(id, at(FOREST_BOSS_HOME.x, FOREST_BOSS_HOME.z)));
 }

@@ -219,39 +219,43 @@ export function stashChest(seed: number): VoxelBuilder {
 }
 
 /**
- * Altar das Eras: plataforma de pedra em degraus, um pedestal com quatro runas (uma cor por nível de
- * dificuldade: verde, azul, roxo e vermelho) e um cristal âmbar no topo, onde se escolhe a era do mundo.
+ * Pedra de Teleporte: um monólito de pedra escura, afunilado, sobre dois degraus redondos, com runas
+ * entalhadas que brilham em azul e um encaixe no topo. O cristal que flutua acima é da apresentação
+ * (`game/waystone.ts`), para poder girar e acender quando a pedra é ativada.
  */
-export function ageAltar(seed: number): VoxelBuilder {
+export function waystone(seed: number): VoxelBuilder {
   const b = new VoxelBuilder();
-  const stone: Paint = (x, y, z) => pickTone(["#8a8478", "#9a9488", "#aaa496", "#b8b2a4"], Math.min(0.999, noise3(x / 4, y / 4, z / 4, seed) * 0.7 + hash3(x, y, z, seed) * 0.3));
-  const fill = (x0: number, y0: number, z0: number, x1: number, y1: number, z1: number) => {
-    for (let x = x0; x < x1; x++) for (let y = y0; y < y1; y++) for (let z = z0; z < z1; z++) b.set(x, y, z, stone(x, y, z));
-  };
-  fill(-13, 0, -13, 13, 2, 13);
-  fill(-10, 2, -10, 10, 4, 10);
-  fill(-5, 4, -5, 5, 15, 5);
-  fill(-7, 15, -7, 7, 17, 7);
-  // Runas: uma em cada face do pedestal, na cor do nível.
-  const runes: [string, (u: number, v: number) => [number, number, number]][] = [
-    ["#5fd36b", (u, v) => [u, v, -6]],
-    ["#5b8def", (u, v) => [5, v, u]],
-    ["#b06cf0", (u, v) => [u, v, 5]],
-    ["#e5484d", (u, v) => [-6, v, u]],
-  ];
-  for (const [color, at] of runes)
-    for (const [u, v] of [[-1, 11], [0, 11], [-1, 10], [0, 9], [-1, 8], [0, 8], [-2, 9], [1, 9]] as const) {
-      const [x, y, z] = at(u, v);
-      b.set(x, y, z, color);
+  const stone: Paint = (x, y, z) => pickTone(["#4a4f5c", "#555b68", "#606776", "#6c7484"], Math.min(0.999, noise3(x / 3, y / 4, z / 3, seed) * 0.7 + hash3(x, y, z, seed) * 0.3));
+  const step: Paint = (x, y, z) => pickTone(["#8a8478", "#9a9488", "#aaa496"], Math.min(0.999, noise3(x / 4, y / 4, z / 4, seed + 1) * 0.7 + hash3(x, y, z, seed) * 0.3));
+  for (let x = -12; x <= 12; x++)
+    for (let z = -12; z <= 12; z++) {
+      const d = Math.hypot(x + 0.5, z + 0.5);
+      if (d < 11.5) for (let y = 0; y < 2; y++) b.set(x, y, z, step(x, y, z));
+      if (d < 8.5) for (let y = 2; y < 4; y++) b.set(x, y, z, step(x, y, z));
     }
-  // Cristal âmbar em ponta, com faces claras.
-  for (let y = 17; y < 29; y++) {
-    const r = y < 22 ? (y - 16) * 0.75 : (29 - y) * 0.6;
-    for (let x = -4; x <= 4; x++)
-      for (let z = -4; z <= 4; z++)
-        if (Math.abs(x + 0.5) + Math.abs(z + 0.5) <= r) b.set(x, y, z, x + z > 0 ? "#ffd27a" : y % 3 ? "#e8a840" : "#f4c060");
+  // Monólito afunilado, com a borda irregular de pedra lascada.
+  for (let y = 4; y < 34; y++) {
+    const t = (y - 4) / 30;
+    const hw = 5.5 - t * 2.2, hd = 3.6 - t * 1.4;
+    for (let x = -6; x <= 6; x++)
+      for (let z = -4; z <= 4; z++) {
+        const rough = hash3(x, y, z, seed + 3) * 0.9;
+        if (Math.abs(x + 0.5) <= hw - (Math.abs(z + 0.5) > hd - 1 ? rough : 0) && Math.abs(z + 0.5) <= hd) b.set(x, y, z, stone(x, y, z));
+      }
   }
-  // Musgo nas frestas dos degraus.
-  coatTop(b, (x, y, z) => (y <= 3 && noise3(x / 3, y, z / 3, seed + 2) > 0.72 ? pickTone(["#4d7a30", "#5c8a38"], hash3(x, y, z)) : null));
+  // Encaixe do cristal: um anel mais claro no topo, aberto no meio.
+  for (let x = -3; x <= 2; x++) for (let z = -2; z <= 1; z++) if (Math.abs(x + 0.5) > 1 || Math.abs(z + 0.5) > 1) b.set(x, 34, z, "#7c8494");
+  // Runas na frente e atrás: traços verticais e cruzados, em azul vivo.
+  const rune = (y: number, x: number, glyph: number) => {
+    for (const zf of [-4, 3]) {
+      const z = zf;
+      b.set(x, y, z, "#5ad0ff").set(x, y + 1, z, "#5ad0ff").set(x, y + 2, z, "#5ad0ff");
+      if (glyph % 2) b.set(x - 1, y + 1, z, "#9ae8ff").set(x + 1, y + 1, z, "#9ae8ff");
+      else b.set(x + 1, y + 2, z, "#9ae8ff").set(x - 1, y, z, "#9ae8ff");
+    }
+  };
+  for (let i = 0; i < 5; i++) rune(8 + i * 5, i % 2 ? 1 : -1, i);
+  // Musgo nos degraus e na base do monólito.
+  coatTop(b, (x, y, z) => (y <= 6 && noise3(x / 3, y, z / 3, seed + 2) > 0.7 ? pickTone(["#4d7a30", "#5c8a38"], hash3(x, y, z)) : null));
   return b;
 }

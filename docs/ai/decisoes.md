@@ -169,7 +169,7 @@ comum (entra na mesma soma dos afixos); o de 3 é um poder com efeito no combate
 falta, para que o farm de chefe tenha um fim visível. As peças são épicas por baixo (brilho, preço,
 regras de loot) e só a apresentação as pinta de verde-água, sem uma raridade nova no domínio.
 
-## D34. Dificuldade do mundo reescala a partir da nascença; loot pelo nível de quem derrubou
+## D34. ~~Dificuldade do mundo~~ (substituída pela D38); loot pelo nível de quem derrubou (vale)
 Cada inimigo guarda os números com que nasceu (`tierBase`) e a era aplica um bônus de nível sobre eles,
 então trocar de era é idempotente e reversível, sem recriar o mundo. O poder do item vem do nível da
 criatura que o derrubou (não da era nem do herói): uma regra só serve vale, cripta, chefes e conjuntos.
@@ -194,5 +194,16 @@ Como a cripta (D28), cada zona é um quadrado próprio no plano (Vale em 0,0; Fl
 funções do terreno, a água, o bioma e o limite de movimento perguntam `zoneAt(x, z)`. Assim simulação,
 save (a posição já diz a zona), respawn e IA continuam iguais, e todas as zonas existem ao mesmo tempo
 (poucos inimigos por zona: custo pequeno). A apresentação monta o desenho de uma zona na primeira
-visita e só mostra a zona do herói. Viajar é um portão com F, como um warp do Ragnarok.
+visita e só mostra a zona do herói. ~~Viajar é um portão com F~~: virou passagem na borda (D38).
+
+## D38. O mundo cresce em áreas, não em eras
+O dono não quis "matar os mesmos mobs no mesmo mundo": a dificuldade do mundo (D34, primeira metade)
+saiu inteira (eras, `tierBase`, Altar, chefes que destravam). Fica o nível do item. O fim de jogo vem
+de áreas novas, como no Ragnarok: andar até a borda e atravessar a boca de uma passagem (`passageAt`,
+uma faixa além de uma linha, não uma tecla) leva à área vizinha, atrás de uma tela de carregamento que
+também monta a área e os modelos completos do cenário. Cada área tem uma vila (`villages.ts`): baú (o
+mesmo em todas), loja com estoque próprio (`SHOPS`, `world.shops` por id; save antigo com uma loja só
+vira a da Mercadora) e uma Pedra de Teleporte, que se ativa ao chegar perto e leva por ouro a outra
+vila conhecida (`player.villages` no save). A pedra é a viagem rápida: barata o bastante para usar,
+cara o bastante para a passagem a pé ainda fazer sentido perto.
 

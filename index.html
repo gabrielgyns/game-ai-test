@@ -15,7 +15,7 @@
           <span id="hud-name">Herói</span>
           <span id="hud-level">Nv 1</span>
         </div>
-        <div class="row small clock"><span id="hud-clock"></span><span id="tier-label"></span></div>
+        <div class="row small clock"><span id="hud-clock"></span><span id="area-label"></span></div>
         <div class="bar hp"><div id="hud-hp-fill"></div><span id="hud-hp-text"></span></div>
         <div class="bar xp"><div id="hud-xp-fill"></div><span id="hud-xp-text"></span></div>
         <div class="row small"><span id="hud-gold">0 ouro</span><span id="hud-kills">0 abates</span></div>
@@ -129,12 +129,22 @@
         <div id="stash-tooltip" class="item-tip hidden"></div>
       </div>
 
-      <div id="tiers" class="hidden">
+      <div id="waystone" class="hidden">
         <div class="panel">
-          <div class="inv-header"><h2>Altar das Eras</h2><span class="hint">dificuldade do mundo</span></div>
-          <p class="tiers-intro">O mesmo vale, numa era mais dura. Inimigos e chefes sobem de nível, dão mais XP e ouro, e o loot vem no nível deles. A cripta acompanha o seu nível em qualquer era.</p>
-          <div id="tiers-list"></div>
-          <div class="shop-footer"><span class="hint">ESC ou F: fechar</span><button id="tiers-close" type="button">Fechar</button></div>
+          <div class="inv-header"><h2>Pedra de Teleporte</h2><span class="hint" id="waystone-fee"></span></div>
+          <p class="waystone-intro">Toda vila tem uma pedra. Passar perto dela a ativa; de qualquer pedra se vai, por um pouco de ouro, a outra vila já visitada.</p>
+          <div id="waystone-list"></div>
+          <div class="shop-footer"><span class="hint">ESC ou F: fechar</span><button id="waystone-close" type="button">Fechar</button></div>
+        </div>
+      </div>
+
+      <div id="loading" class="hidden">
+        <div class="loading-card">
+          <div class="loading-kicker">Viajando para</div>
+          <h1 id="loading-name"></h1>
+          <div id="loading-detail"></div>
+          <p id="loading-sub"></p>
+          <div class="loading-track"><div id="loading-bar"></div></div>
         </div>
       </div>
 

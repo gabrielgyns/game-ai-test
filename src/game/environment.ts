@@ -3,9 +3,9 @@ import { terrainHeight, SPAWN_FLAT_RADIUS, WORLD_HALF } from "../domain/terrain"
 import { BOSS_HOME, seededRandom } from "../domain/worldgen";
 import { biomeAt, DESERT_BOSS_HOME, SWAMP_BOSS_HOME } from "../domain/biomes";
 import { FOREST_BOSS_HOME, FOREST_CAMP, FOREST_RUINS, forestRiverZ, isWater } from "../domain/terrain";
-import { ZONE_GATES, ZONES, type ZoneDefinition } from "../domain/zones";
+import { ZONE_PASSAGES, ZONES, type ZoneDefinition } from "../domain/zones";
 import { DUNGEON_ENTRANCE } from "../domain/dungeon";
-import { ALTAR_SPOT, STASH_SPOT } from "../domain/sanctuary";
+import { VILLAGES } from "../domain/villages";
 import { VoxelBuilder, voxelMaterial } from "./voxel";
 import { PropField, type PropPlacement } from "./props/field";
 import type { PropKind } from "./props/catalog";
@@ -75,9 +75,10 @@ export function placeProps(seed = 4242): PropPlacement[] {
     const a = (i / 8) * Math.PI * 2;
     out.push({ kind: "pillar", x: Math.round(Math.cos(a) * 8) + 0.5, y: terrainHeight(0, 0), z: Math.round(Math.sin(a) * 8) + 0.5, yaw: -a, scale: 1 });
   }
-  // Baú compartilhado e Altar das Eras, na praça, virados para o centro.
-  out.push({ kind: "stash", x: STASH_SPOT.x, y: terrainHeight(STASH_SPOT.x, STASH_SPOT.z), z: STASH_SPOT.z, yaw: Math.atan2(STASH_SPOT.x, STASH_SPOT.z), scale: 1 });
-  out.push({ kind: "altar", x: ALTAR_SPOT.x, y: terrainHeight(ALTAR_SPOT.x, ALTAR_SPOT.z), z: ALTAR_SPOT.z, yaw: Math.atan2(ALTAR_SPOT.x, ALTAR_SPOT.z), scale: 1 });
+  // Baú compartilhado e Pedra de Teleporte, na praça, virados para o centro.
+  const { stash, stone } = VILLAGES.santuario;
+  out.push({ kind: "stash", x: stash.x, y: terrainHeight(stash.x, stash.z), z: stash.z, yaw: Math.atan2(stash.x, stash.z), scale: 1 });
+  out.push({ kind: "waystone", x: stone.x, y: terrainHeight(stone.x, stone.z), z: stone.z, yaw: Math.atan2(stone.x, stone.z), scale: 1 });
   // Arena do Rei Goblin: anel de totens com crânios, virados para o centro.
   for (let i = 0; i < 10; i++) {
     const a = (i / 10) * Math.PI * 2;
@@ -142,6 +143,7 @@ export function placeForestProps(seed = 5151): PropPlacement[] {
     if (isWater(p.x, p.z) || Math.abs(lz - forestRiverZ(lx)) < 6) return false;
     if (Math.hypot(lx - FOREST_CAMP.x, lz - FOREST_CAMP.z) < 15) return false;
     if (Math.hypot(lx - FOREST_BOSS_HOME.x, lz - FOREST_BOSS_HOME.z) < 20) return false;
+    if (onTrail(p.x, p.z)) return false;
     return Math.max(Math.abs(lx), Math.abs(lz)) < zone.half - 6;
   };
   for (const s of FOREST_SCATTER) {
@@ -154,10 +156,17 @@ export function placeForestProps(seed = 5151): PropPlacement[] {
       placed++;
     }
   }
-  // Acampamento da Guardiã: duas barracas e a fogueira no meio.
-  push("tent", FOREST_CAMP.x - 7, FOREST_CAMP.z - 3, 0.6, 1, 0);
-  push("tent", FOREST_CAMP.x + 8, FOREST_CAMP.z + 3, -2.2, 1, 0);
+  // Vila do acampamento: barracas em roda, a fogueira no meio, o baú e a Pedra de Teleporte.
+  push("tent", FOREST_CAMP.x - 9, FOREST_CAMP.z - 3, 0.9, 1, 0);
+  push("tent", FOREST_CAMP.x + 10, FOREST_CAMP.z + 3, -2.2, 1, 0);
+  push("tent", FOREST_CAMP.x + 11, FOREST_CAMP.z - 9, -1.0, 0.9, 0);
+  push("tent", FOREST_CAMP.x - 11, FOREST_CAMP.z + 9, 2.4, 0.9, 0);
   push("campfire", FOREST_CAMP.x, FOREST_CAMP.z, 0, 1, 0);
+  const camp = VILLAGES.acampamento;
+  const local = (p: { x: number; z: number }) => ({ lx: p.x - zone.center.x, lz: p.z - zone.center.z });
+  const st = local(camp.stash), sn = local(camp.stone);
+  push("stash", st.lx, st.lz, Math.atan2(st.lx - FOREST_CAMP.x, st.lz - FOREST_CAMP.z), 1, 0);
+  push("waystone", sn.lx, sn.lz, Math.atan2(sn.lx - FOREST_CAMP.x, sn.lz - FOREST_CAMP.z), 1, 0);
   // Clareira do Ente Ancião: anel de cogumelos azuis e árvores ancestrais em volta.
   for (let i = 0; i < 12; i++) {
     const a = (i / 12) * Math.PI * 2;
@@ -177,19 +186,18 @@ export interface Environment {
   update(camera: THREE.Camera): void;
 }
 
-/** Árvores, pedras e marcos de uma zona; no vale, também a barraca da Mercadora. */
+/** Árvores, pedras e marcos de uma zona, com a barraca de quem vende na vila. */
 export function createEnvironment(seed = 4242, zone: ZoneDefinition = ZONES.vale): Environment {
   const group = new THREE.Group();
   const props = new PropField(zone.id === "floresta" ? placeForestProps() : placeProps(seed));
   group.add(props.group);
-  if (zone.id !== "vale") return { group, props, update: (camera) => (props.buildPending(), props.update(camera)) };
-
-  // Barraca da Mercadora, atrás dela, com o balcão virado para o centro do santuário.
-  const merchantSpot = { x: 6, z: 3.5 };
-  const outward = Math.atan2(merchantSpot.x, merchantSpot.z);
+  // Barraca de quem vende, atrás do vendedor, com o balcão virado para o centro da vila.
+  const center = zone.id === "vale" ? { x: 0, z: 0 } : { x: zone.center.x + FOREST_CAMP.x, z: zone.center.z + FOREST_CAMP.z };
+  const seller = zone.id === "vale" ? { x: 6, z: 3.5 } : { x: center.x - 7, z: center.z + 4 };
+  const outward = Math.atan2(seller.x - center.x, seller.z - center.z);
   const stall = new THREE.Mesh(stallGeometry(), voxelMaterial());
   stall.castShadow = stall.receiveShadow = true;
-  stall.position.set(merchantSpot.x + Math.sin(outward) * 1.6, terrainHeight(merchantSpot.x, merchantSpot.z), merchantSpot.z + Math.cos(outward) * 1.6);
+  stall.position.set(seller.x + Math.sin(outward) * 1.6, terrainHeight(seller.x, seller.z), seller.z + Math.cos(outward) * 1.6);
   stall.rotation.y = outward; // o -Z local (frente do balcão) aponta para o centro
   group.add(stall);
 
@@ -234,6 +242,16 @@ export function stallGeometry(): THREE.BufferGeometry {
   return b.build(1 / 8, { grain: 0.05, grainScale: 2 });
 }
 
+/** Perto da trilha de uma passagem (da boca até uns 14 m para dentro): fica livre de cenário. */
+export function onTrail(x: number, z: number, margin = 6): boolean {
+  return ZONE_PASSAGES.some((g) => {
+    const dx = x - g.at.x, dz = z - g.at.z;
+    const inward = -(dx * g.out.x + dz * g.out.z);
+    const side = Math.abs(dx * g.out.z - dz * g.out.x);
+    return inward > -8 && inward < 16 && side < g.width + margin;
+  });
+}
+
 function randomPoint(rand: () => number, minRadius: number, biome?: Biome, height?: [number, number]): { x: number; z: number } | null {
   for (let tries = 0; tries < 4000; tries++) {
     const x = (rand() * 2 - 1) * (WORLD_HALF - 6);
@@ -245,7 +263,7 @@ function randomPoint(rand: () => number, minRadius: number, biome?: Biome, heigh
     if (biome && biomeAt(x, z) !== biome) continue;
     if (isWater(x, z)) continue;
     if (Math.hypot(x - DUNGEON_ENTRANCE.x, z - DUNGEON_ENTRANCE.z) < 5) continue; // portal da cripta
-    if (ZONE_GATES.some((g) => Math.hypot(x - g.at.x, z - g.at.z) < 7)) continue; // portões entre zonas
+    if (onTrail(x, z)) continue; // trilhas das passagens entre zonas
     if (height) {
       const h = terrainHeight(x, z);
       if (h < height[0] || h > height[1]) continue;

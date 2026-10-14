@@ -42,10 +42,11 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 - [x] Minimapa que gira com a câmera (inimigos, chefes, quests, portal, baú, loot raro) e mapa grande na tecla M, no vale e na cripta
 - [x] Conjuntos de itens: 4 conjuntos de 3 peças (um por chefe), bônus com 2 peças e poder com 3 (Fúria Real, Veneno, Casca de Areia, Colheita de Almas); o chefe derruba a peça que falta
 - [x] Baú do santuário compartilhado entre os heróis (3 abas de 30)
-- [x] Dificuldade do mundo no Altar das Eras: Aventureiro, Veterano, Apocalipse e Pesadelo, destravados pelos três chefes; itens com nível, que crescem com quem os derrubou
+- [x] Itens com nível, que crescem com quem os derrubou (a dificuldade do mundo, que vinha junto, saiu: o mundo cresce em áreas novas)
 - [x] Dungeon 2.0: cripta em dois andares com salas de formas variadas, salas de tesouro e santuário, emboscadas, ondas, armadilhas de espinhos, Cavaleiro Sepulcral guardando a escada, visual esculpido (paredes em relevo, arcos, colunas, tapetes, adereços, luz colorida) e inimigos que contornam paredes (campo de fluxo)
-- [x] Sistema de zonas (estilo Ragnarok): o mundo em regiões ligadas por portões, só a zona do herói desenhada
-- [x] Floresta Ancestral (níveis 12 a 20): rio, ruínas de Elar, acampamento da Guardiã Lyra com 4 quests, lobos, entes, espíritos élficos e o Ente Ancião com o conjunto Coração da Floresta
+- [x] Sistema de zonas (estilo Ragnarok): o mundo em áreas ligadas por passagens na borda, com tela de carregamento, só a área do herói desenhada
+- [x] Vilas: cada área com a sua (baú compartilhado, loja regional, quests) e Pedras de Teleporte entre as vilas visitadas, por ouro
+- [x] Floresta Ancestral (níveis 12 a 20): rio, ruínas de Elar, vila do acampamento (Guardiã Lyra, Mascate Faelan, Armeira Kaia) com 5 quests, lobos, entes, espíritos élficos e o Ente Ancião com o conjunto Coração da Floresta
 - [x] Lab de modelos (`/lab.html`): vitrine de tudo que aparece no jogo, luz, animações e comparação com a versão anterior
 
 ## Próximos
@@ -64,13 +65,15 @@ mais forte é 12 e só a cripta acompanha o herói. A ordem dos marcos ataca iss
 
 ### Fase 2: um mundo maior, em zonas (estilo Ragnarok)
 
-3. ~~Sistema de zonas~~ e a ~~Floresta Ancestral~~: feitos (ver acima).
-4. **Zonas novas**, cada uma com cara própria, uma dungeon e um chefe com conjunto:
+3. ~~Sistema de zonas~~, a ~~Floresta Ancestral~~, ~~passagens na borda~~ e ~~vilas com Pedra de
+   Teleporte~~: feitos (ver acima). Cada área nova segue a mesma receita: vila (baú, loja regional,
+   quests, pedra), inimigos novos, chefe com conjunto e, de preferência, uma dungeon própria. Áreas de
+   passagem (só trilha e inimigos, sem vila) também cabem entre duas vilas.
+4. **Zonas novas**, cada uma com cara própria, uma vila, uma dungeon e um chefe com conjunto:
    - Picos Gelados (20 a 28): neve, gelo escorregadio, yetis, nevasca.
    - Terras Vulcânicas (28 a 36): lava, cinzas, demônios do fogo.
    - Uma dungeon própria da Floresta (Santuário Élfico, ver Fase 3).
-5. **Viagem rápida.** Pedras de teleporte por zona, ativadas ao tocar e usadas pelo mapa grande. Só
-   faz sentido com várias zonas e dungeons, então vem depois delas.
+5. ~~Viagem rápida~~: feita como Pedras de Teleporte nas vilas (ver acima).
 6. **Mundo vivo.** Eventos no mapa (acampamento goblin que aparece, chefe errante à noite, baú
    amaldiçoado) e clima por bioma (chuva, névoa, tempestade de areia, nevasca).
 7. **Mais quests.** Coleta, exploração e escolta, uma linha de história por zona e quests repetíveis

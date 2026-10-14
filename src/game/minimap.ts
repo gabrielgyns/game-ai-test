@@ -28,13 +28,13 @@ const LEGEND: { kind: MapMarker["kind"]; label: string }[] = [
   { kind: "enemy", label: "Inimigo" },
   { kind: "boss", label: "Chefe" },
   { kind: "portal", label: "Portal da cripta" },
-  { kind: "gate", label: "Portão para outra região" },
+  { kind: "gate", label: "Passagem para outra região" },
   { kind: "exit", label: "Saída" },
   { kind: "chest", label: "Baú da cripta" },
   { kind: "stairs", label: "Escada" },
   { kind: "shrine", label: "Santuário" },
-  { kind: "stash", label: "Baú do santuário" },
-  { kind: "altar", label: "Altar das Eras" },
+  { kind: "stash", label: "Baú da vila" },
+  { kind: "waystone", label: "Pedra de Teleporte" },
   { kind: "loot", label: "Item raro ou épico" },
 ];
 
@@ -172,9 +172,9 @@ function drawMarker(ctx: CanvasRenderingContext2D, kind: MapMarker["kind"], x: n
     case "shrine":
       dot("#5ab0ff", r * 1.0);
       break;
-    case "altar":
+    case "waystone":
       ctx.rotate(Math.PI / 4);
-      ctx.fillStyle = "#ffb36b";
+      ctx.fillStyle = "#5ad0ff";
       ctx.fillRect(-r * 0.9, -r * 0.9, r * 1.8, r * 1.8);
       ctx.strokeRect(-r * 0.9, -r * 0.9, r * 1.8, r * 1.8);
       break;

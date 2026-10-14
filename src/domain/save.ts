@@ -1,5 +1,5 @@
 import type { Equipment } from "./inventory";
-import { applyWorldTier, newWorldTierState, type WorldTierState } from "./worldTier";
+import { VILLAGES, type VillageId } from "./villages";
 import { recomputeStats } from "./inventory";
 import { resetItemIds, type Item } from "./items";
 import type { Vec3 } from "./math";
@@ -38,11 +38,13 @@ export interface SaveData {
     quests: QuestLog;
     /** Ranks da árvore de habilidades (opcional: saves antigos não têm). */
     talents?: TalentRanks;
-    /** Dificuldade do mundo (opcional: saves antigos começam no Aventureiro). */
-    worldTier?: WorldTierState;
+    /** Pedras de teleporte ativadas (opcional: saves antigos só conhecem o santuário). */
+    villages?: VillageId[];
   };
   drops: { item: Item; position: Vec3; age: number; requireLeave?: boolean }[];
-  /** Estoque do dia e recompra da Mercadora (opcional: saves antigos não têm). */
+  /** Estoque do dia e recompra de cada loja, pelo id da loja (opcional: saves antigos não têm). */
+  shops?: Record<string, ShopState>;
+  /** Formato antigo: só a loja da Mercadora do santuário. */
   shop?: ShopState;
 }
 
@@ -72,10 +74,10 @@ export function serializeGame(world: World, seed: number): SaveData {
       equipment: structuredClone(p.equipment ?? { weapon: null, armor: null, accessory: null }),
       quests: structuredClone(p.quests ?? {}),
       talents: { ...(p.talents ?? {}) },
-      worldTier: structuredClone(p.worldTier ?? newWorldTierState()),
+      villages: [...(p.villages ?? ["santuario"])],
     },
     drops: [...world.drops.values()].filter((d) => d.position.x < DUNGEON_REGION_X).map((d) => ({ item: structuredClone(d.item), position: { ...d.position }, age: d.age, requireLeave: d.requireLeave })),
-    shop: world.shop ? structuredClone(world.shop) : undefined,
+    shops: structuredClone(world.shops),
   };
 }
 
@@ -111,8 +113,7 @@ export function restoreGame(save: SaveData): World {
   p.equipment = structuredClone(s.equipment);
   p.quests = structuredClone(s.quests);
   p.talents = { ...(s.talents ?? {}) };
-  p.worldTier = structuredClone(s.worldTier ?? newWorldTierState());
-  applyWorldTier(world);
+  p.villages = (s.villages ?? ["santuario"]).filter((v) => v in VILLAGES);
   recomputeStats(p);
   p.health.current = Math.min(p.health.max, Math.max(1, s.health));
 
@@ -128,10 +129,10 @@ export function restoreGame(save: SaveData): World {
     drop.age = d.age;
     drop.requireLeave = d.requireLeave ?? false;
   }
-  if (save.shop) {
-    world.shop = structuredClone(save.shop);
-    world.shop.offers.forEach((o) => track(o.item));
-    world.shop.buyback.forEach((b) => track(b.item));
+  world.shops = structuredClone(save.shops ?? (save.shop ? { merchant: save.shop } : {}));
+  for (const shop of Object.values(world.shops)) {
+    shop.offers.forEach((o) => track(o.item));
+    shop.buyback.forEach((b) => track(b.item));
   }
   world.drainEvents(); // os addDrop acima não são "eventos" novos para a apresentação
   resetItemIds(maxItemId + 1);

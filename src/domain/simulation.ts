@@ -9,6 +9,7 @@ import { hazardSystem } from "./systems/hazards";
 import { respawnSystem } from "./systems/respawn";
 import { statusSystem } from "./status";
 import { dungeonSystem } from "./dungeon";
+import { villageSystem } from "./villages";
 import type { World } from "./world";
 
 /** Avança o mundo um passo e devolve os eventos gerados nesse passo. */
@@ -24,5 +25,6 @@ export function stepWorld(world: World, dt: number): GameEvent[] {
   hazardSystem(world, dt);
   pickupSystem(world, dt);
   dungeonSystem(world, dt);
+  villageSystem(world);
   return world.drainEvents();
 }

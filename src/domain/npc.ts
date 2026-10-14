@@ -7,8 +7,8 @@ export interface NpcDefinition {
   archetype: string;
   /** Fala quando não há quest para oferecer nem entregar. */
   idle: string[];
-  /** Tem loja (abre o painel de compra e venda). */
-  shop?: boolean;
+  /** Id da loja (abre o painel de compra e venda; cada loja tem estoque próprio, ver `SHOPS`). */
+  shop?: string;
 }
 
 export const NPC_DEFS: NpcDefinition[] = [
@@ -38,14 +38,15 @@ export const NPC_DEFS: NpcDefinition[] = [
       "Quando a área vermelha aparecer no chão, sai dela ou rola com Espaço. Dentro dela, o golpe acerta.",
       "Gosmas perto, goblins no meio, orcs na borda. O norte é coisa de gente preparada.",
       "Shift corre. Andar de ré com S é mais lento, mas mantém o inimigo na sua frente.",
-      "Ao norte, perto do platô do Rei Goblin, a muralha tem uma passagem: um portão leva à Floresta Ancestral. Lá a coisa é séria, nível 12 para cima.",
+      "Ao norte, perto do platô do Rei Goblin, a muralha tem uma trilha que sai do vale e entra na Floresta Ancestral. Lá a coisa é séria, nível 12 para cima.",
+      "Aquela pedra azul no meio da praça é uma Pedra de Teleporte. Toda vila tem uma: visitou, ativou. Depois é só pagar uns trocados e ela te leva de uma vila para outra.",
     ],
   },
   {
     id: "merchant",
     name: "Mercadora Zuri",
     archetype: "merchant",
-    shop: true,
+    shop: "merchant",
     idle: [
       "Ouro parado não mata gosma. Vendo poções a qualquer hora, e o que chega nas caravanas muda todo dia.",
       "Repare nos nomes: \"da Serpente\" cura sempre, \"da Águia\" acerta crítico, \"do Vampiro\" bebe a vida de quem apanha.",
@@ -59,7 +60,26 @@ export const NPC_DEFS: NpcDefinition[] = [
     idle: [
       "A floresta é antiga e não gosta de pressa. Os lobos caçam em bando: recue até um tronco e lute de costas para ele.",
       "Os entes batem devagar, mas cada golpe derruba um homem. Leia o aviso e saia do caminho.",
-      "O portão ao sul leva de volta ao Vale. Se cair aqui, acorda no acampamento.",
+      "A trilha ao sul leva de volta ao Vale. Se cair aqui, acorda no acampamento.",
+    ],
+  },
+  {
+    id: "peddler",
+    name: "Mascate Faelan",
+    archetype: "peddler",
+    shop: "peddler",
+    idle: [
+      "Quem chega até aqui não quer mais espada de goblin. Meu estoque é da floresta: mais caro, mais forte.",
+      "A Zuri lá do vale e eu não dividimos freguês nem recompra. Vendeu para ela, recompra com ela.",
+    ],
+  },
+  {
+    id: "armorer",
+    name: "Armeira Kaia",
+    archetype: "armorer",
+    idle: [
+      "Meu baú é o mesmo do santuário, sabia? Coisa de elfo: o que você guarda lá, tira aqui.",
+      "Peça de conjunto só cai de chefe. A do Ente Ancião regenera vida e devolve dor a quem te bate.",
     ],
   },
 ];

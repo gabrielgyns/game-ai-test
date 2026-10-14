@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { VoxelBuilder } from "../voxel";
 import { blob, bough, hash3, limb, noise3, pickTone, type Paint } from "../props/sculpt";
 import { buildHumanoid } from "./humanoid";
-import { V, mesh, pivot, shades, type CharacterModel } from "./common";
+import { PAL, V, mesh, pivot, shades, type CharacterModel } from "./common";
 
 /**
  * Criaturas da Floresta Ancestral, em voxels de 1/16 m: o lobo cinzento (quadrúpede com quatro pernas
@@ -195,6 +195,85 @@ export function createRanger(): CharacterModel {
     headPaint: (b) => {
       b.box(-7, 8, -7, 7, 15, 7, cloak.base).box(-7, 14, -7, 7, 15, 7, cloak.light).box(-6, 2, 6, 6, 10, 7, cloak.dark); // capuz
       b.box(-7, 8, -7, -5, 10, 7, cloak.dark).box(5, 8, -7, 7, 10, 7, cloak.dark);
+    },
+  });
+}
+
+/** Mascate Faelan: meio-elfo de capa marrom, mochila enorme cheia de tralha e orelhas pontudas. */
+export function createPeddler(): CharacterModel {
+  const coat = shades("#7a5a3a", 0.1);
+  const hair = shades("#d8c48a", 0.08);
+  return buildHumanoid({
+    skin: shades("#e2b892", 0.09),
+    legs: { hw: 2, hd: 2, length: 12 },
+    arms: { hw: 2, hd: 2, length: 12 },
+    head: { hw: 6, h: 12, hd: 6 },
+    torso: { hw: 7, h: 14, hd: 4 },
+    legX: 3,
+    armX: 9,
+    pants: shades("#3a4a2a", 0.08),
+    boots: shades("#4a3018", 0.1),
+    bootH: 4,
+    sleeve: coat,
+    sleeveLen: 10,
+    face: { mouth: "smile" },
+    mouthY: 3,
+    topExtra: 2,
+    torsoPaint: (b, y) => {
+      b.box(-8, y - 4, -5, 8, y + 3, 5, coat.base).box(-8, y - 4, -5, 8, y - 3, 5, coat.dark); // casaco até a coxa
+      b.box(-8, y + 2, -5, 8, y + 4, 5, "#3a2414").set(0, y + 3, -6, PAL.gold.light); // cinto com fivela
+      b.box(-1, y + 4, -5, 1, y + 13, -4, PAL.gold.dark); // botões
+      // Mochila: caixote com rolo de pano, panela e lanterna penduradas.
+      b.box(-6, y + 1, 5, 6, y + 16, 10, "#6b4a2b").box(-6, y + 15, 5, 6, y + 16, 10, "#8a6238");
+      b.box(-7, y + 16, 6, 7, y + 19, 9, "#a83a3a").box(-7, y + 17, 6, 7, y + 18, 9, "#c8584a"); // rolo de pano
+      b.box(6, y + 4, 7, 9, y + 7, 10, "#5a5a62").box(-9, y + 6, 7, -7, y + 9, 9, "#e0a030"); // panela e lanterna
+      for (const x of [-5, 4]) b.box(x, y + 2, -5, x + 1, y + 14, 5, "#3a2414"); // alças
+    },
+    headPaint: (b) => {
+      b.box(-6, 11, -6, 6, 14, 6, hair.base).box(-6, 4, 5, 6, 12, 7, hair.base).box(-6, 10, -7, 6, 12, -6, hair.light);
+      b.box(-8, 5, -1, -6, 9, 1, "#e2b892").set(-9, 9, 0, "#e2b892"); // orelhas pontudas
+      b.box(6, 5, -1, 8, 9, 1, "#e2b892").set(8, 9, 0, "#e2b892");
+      b.box(-8, 14, -8, 8, 15, 8, "#4a3a22").box(-5, 15, -5, 5, 19, 5, "#5a4a2a").box(-5, 16, -5, 5, 17, 5, "#a83a3a"); // chapéu
+    },
+  });
+}
+
+/** Armeira Kaia: braços fortes, avental de couro, trança ruiva, ombreira de casca de ente e martelo. */
+export function createArmorer(): CharacterModel {
+  const bark = shades("#5a4028", 0.1);
+  const hair = shades("#b04a24", 0.08);
+  return buildHumanoid({
+    skin: shades("#c98a5e", 0.09),
+    legs: { hw: 2, hd: 2, length: 12 },
+    arms: { hw: 3, hd: 3, length: 12 },
+    head: { hw: 6, h: 12, hd: 6 },
+    torso: { hw: 8, h: 14, hd: 4 },
+    legX: 3,
+    armX: 11,
+    pants: shades("#3a3028", 0.08),
+    boots: shades("#2b2b2b", 0.1),
+    bootH: 4,
+    sleeve: shades("#6a7a4a", 0.1),
+    sleeveLen: 3,
+    face: { mouth: "flat" },
+    mouthY: 3,
+    topExtra: 0,
+    torsoPaint: (b, y) => {
+      const apron = shades("#4a3424", 0.1);
+      b.box(-6, y - 2, -5, 6, y + 12, -4, apron.base).box(-6, y + 9, -5, 6, y + 12, -4, apron.light);
+      b.box(-8, y + 1, -5, 8, y + 3, 5, PAL.leather.dark);
+      // Ombreira de casca de ente, no ombro esquerdo, com musgo.
+      b.box(-12, y + 11, -5, -7, y + 15, 5, bark.base).box(-12, y + 14, -5, -7, y + 15, 5, bark.light);
+      b.set(-11, y + 15, -2, "#5c8a38").set(-9, y + 15, 1, "#4d7a30");
+    },
+    headPaint: (b) => {
+      b.box(-6, 11, -6, 6, 14, 6, hair.base).box(-6, 8, 5, 6, 12, 6, hair.base).box(-6, 11, -7, 6, 12, -6, hair.dark);
+      b.box(-2, -6, 6, 2, 9, 8, hair.base).box(-1, -9, 7, 1, -6, 8, hair.light).set(0, -5, 8, "#3a2414"); // trança
+      b.box(-7, 9, -7, 7, 11, 7, "#3a5a2a"); // faixa na testa
+    },
+    offhandPaint: (b) => {
+      b.box(-1, -22, -1, 1, -8, 0, PAL.wood.base);
+      b.box(-4, -27, -3, 4, -21, 2, PAL.darkSteel.base).box(-4, -27, -3, 4, -21, -2, PAL.darkSteel.light);
     },
   });
 }

@@ -195,6 +195,23 @@ com screenshots antes de serem considerados prontos.
     neblina esverdeada na floresta; minimapa por zona; modelos de lobo (quatro patas no trote), ente,
     espírito translúcido, Ente Ancião (voxels duas vezes maiores) e Guardiã. ~1,1M triângulos no quadro
     da floresta. 10 testes novos.
+30. **Áreas no lugar de eras** (pedido do dono: "não queremos ficar matando os mesmos mobs no mesmo
+    mundo, algo tipo Ragnarok: passo daquele ponto e faz loading para uma área nova, com vila"). Saiu a
+    dificuldade do mundo inteira (`worldTier.ts`, `tierBase`, Altar das Eras, "Era X" no painel,
+    eventos de era); o nível do item ficou. Domínio: `ZONE_PASSAGES` e `passageAt` (a boca é uma faixa
+    além de uma linha na borda; chega-se fora da boca de volta), `villages.ts` (Santuário do Vale e
+    Acampamento da Guardiã: pedra, baú e ponto de chegada; `villageSystem` ativa a pedra a 9 m na
+    primeira visita; `teleport` cobra 20 + 3 por nível, troca de zona e não funciona na cripta),
+    lojas por id (`SHOPS`: a do Mascate tem 5 ofertas, mais raras, nível mínimo 12; recompra por loja;
+    save migra a loja antiga), NPCs Mascate Faelan e Armeira Kaia, quest "Cerne de Ente" passa para a
+    Armeira e "Madeira Viva" (10 entes, depois do chefe) é nova, respawn da floresta ao lado da pedra.
+    Apresentação: tela de carregamento (fade, nome, faixa de nível, linha da área, barra) que monta a
+    área e os modelos completos atrás dela; passagens marcadas por trilha de lajes, postes com
+    lanterna e cortina de névoa; Pedra de Teleporte esculpida (monólito com runas) e cristal flutuante
+    que acende ao ativar, com luz fria; painel da pedra; vila do acampamento com quatro barracas,
+    barraca do Mascate, baú e pedra; modelos do Mascate (mochila enorme, orelhas de elfo) e da Armeira
+    (ombreira de casca, trança, martelo); nome da área no painel do herói; minimapa com a pedra.
+    10 testes novos ou refeitos.
 
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).

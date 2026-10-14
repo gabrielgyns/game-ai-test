@@ -33,8 +33,8 @@ export class World {
   private nextProjectileId = 1;
   /** Poças e outros perigos ativos no chão. */
   readonly hazards = new Map<number, Hazard>();
-  /** Estoque e recompra da Mercadora (montado na primeira visita de cada dia). */
-  shop?: ShopState;
+  /** Estoque e recompra de cada loja, pelo id (montado na primeira visita de cada dia). */
+  shops: Record<string, ShopState> = {};
   /** Dungeon em andamento (instanciada; não vai para o save). */
   dungeon?: DungeonRun;
   private nextHazardId = 1;

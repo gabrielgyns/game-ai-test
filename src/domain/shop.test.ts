@@ -5,7 +5,7 @@ import { addItem, equipFromInventory, MAX_COOLDOWN_REDUCTION } from "./inventory
 import { createEquipment, createPotion, resetItemIds, type Item } from "./items";
 import { restoreGame, serializeGame } from "./save";
 import {
-  BUY_RATE, POTION_PRICES, buyBack, buyOffer, buyPotion, ensureShop, rollStock, sellAllCommon, sellFromInventory, sellPrice, stockTier,
+  BUY_RATE, POTION_PRICES, SHOPS, buyBack, buyOffer, buyPotion, ensureShop, rollStock, sellAllCommon, sellFromInventory, sellPrice, stockTier,
 } from "./shop";
 import { stepWorld } from "./simulation";
 import { applyDamage, CRIT_MULTIPLIER } from "./systems/combat";
@@ -219,6 +219,31 @@ describe("loja da Mercadora", () => {
     expect(price).toBeGreaterThan(0);
   });
 
+  it("cada vila tem a sua loja: a da floresta vende no nível da região e mais coisa", () => {
+    const { world, p } = shopWorld();
+    p.progression!.level = 5;
+    const vale = ensureShop(world, p, "merchant");
+    const forest = ensureShop(world, p, "peddler");
+    expect(forest).not.toBe(vale);
+    expect(forest.offers.length).toBeGreaterThan(vale.offers.length);
+    expect(forest.offers.every((o) => o.item.level === SHOPS.peddler!.minLevel)).toBe(true);
+    expect(vale.offers.every((o) => o.item.level === 5)).toBe(true);
+    // Recompra é de cada loja.
+    addItem(p.inventory!, createPotion("small"));
+    sellFromInventory(world, p, p.inventory!.items.findIndex((i) => i?.kind === "consumable"), "peddler");
+    expect(forest.buyback).toHaveLength(1);
+    expect(vale.buyback).toHaveLength(0);
+  });
+
+  it("save antigo, com uma loja só, vira a loja da Mercadora", () => {
+    const { world, p } = shopWorld();
+    const shop = ensureShop(world, p);
+    const save = serializeGame(world, 4);
+    delete save.shops;
+    save.shop = shop;
+    expect(restoreGame(save).shops.merchant!.day).toBe(shop.day);
+  });
+
   it("loja e afixos fazem a viagem pelo save", () => {
     const { world, p } = shopWorld();
     const shop = ensureShop(world, p);
@@ -226,9 +251,9 @@ describe("loja da Mercadora", () => {
     addItem(p.inventory!, createPotion("small"));
     sellFromInventory(world, p, p.inventory!.items.findIndex((i) => i?.kind === "consumable"));
     const restored = restoreGame(serializeGame(world, 4));
-    expect(restored.shop!.day).toBe(shop.day);
-    expect(restored.shop!.offers.map((o) => o.sold)).toEqual(shop.offers.map((o) => o.sold));
-    expect(restored.shop!.buyback).toHaveLength(1);
+    expect(restored.shops.merchant!.day).toBe(shop.day);
+    expect(restored.shops.merchant!.offers.map((o) => o.sold)).toEqual(shop.offers.map((o) => o.sold));
+    expect(restored.shops.merchant!.buyback).toHaveLength(1);
     const bought = restored.player!.inventory!.items.find((i) => i?.name === shop.offers[0]!.item.name);
     expect(bought?.affixes).toEqual(shop.offers[0]!.item.affixes);
   });

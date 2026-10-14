@@ -7,7 +7,6 @@ import { CLASSES } from "../classes";
 import { fireProjectile } from "./projectiles";
 import { applySlow, vulnerability } from "../status";
 import { hasSetPower } from "../sets";
-import { recordBossKill } from "../worldTier";
 import { hasTalent } from "../skillTree";
 import { playerRespawnPoint } from "../dungeon";
 import { grantXp } from "../progression";
@@ -309,7 +308,6 @@ function kill(world: World, victim: Entity, killer: Entity): void {
       rollLoot(world, victim);
       advanceKillQuests(world, killer, victim.archetype);
       grantXp(world, killer, victim.ai.xpReward);
-      if (victim.boss) recordBossKill(world, killer, victim.archetype);
       // Colheita de Almas (Lorde Esqueleto, 3 peças): cada abate cura e adianta as habilidades.
       if (hasSetPower(killer, "soulHarvest") && isAlive(killer)) {
         killer.health.current = Math.min(killer.health.max, killer.health.current + killer.health.max * SET_POWERS.soulHarvestHeal);

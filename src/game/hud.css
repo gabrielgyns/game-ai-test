@@ -365,39 +365,27 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0d12; col
 .item-tip .price { color: #ffd37a; font-weight: 600; margin-top: 4px; }
 
 /* Loja da Mercadora (o baú e o altar usam o mesmo esqueleto de painel) */
-#stash, #tiers {
+#stash, #waystone {
   position: absolute; inset: 0; display: flex; justify-content: center; align-items: center;
   background: rgba(5, 6, 10, 0.5); pointer-events: auto;
 }
-#stash .panel, #tiers .panel {
+#stash .panel, #waystone .panel {
   width: min(820px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto;
   background: var(--panel); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 18px 20px; backdrop-filter: blur(6px);
 }
-#tiers .panel { width: min(620px, calc(100vw - 32px)); }
+#waystone .panel { width: min(560px, calc(100vw - 32px)); }
 #stash .shop-body { grid-template-columns: 1fr 1fr; }
 #stash-grid { grid-template-columns: repeat(6, 56px); }
 #stash-bag { grid-template-columns: repeat(5, 56px); }
 #stash .cell { width: 56px; height: 56px; }
 #stash-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
-#stash button, #tiers button {
+#stash button, #waystone button {
   font: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.16); border-radius: 8px; padding: 6px 12px; cursor: pointer; white-space: nowrap;
 }
-#stash button:hover, #tiers button:hover { background: rgba(255,255,255,0.16); }
+#stash button:hover, #waystone button:hover { background: rgba(255,255,255,0.16); }
 #stash-tabs button.active { background: rgba(255, 211, 122, 0.16); border-color: #c9a83a; color: #ffe7a0; }
-#tiers button:disabled { cursor: default; opacity: 0.55; }
-.tiers-intro { font-size: 13px; color: var(--muted); margin: 0 0 12px; line-height: 1.45; }
-.tier { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,0.04); margin-bottom: 8px; border: 1px solid transparent; }
-.tier.current { border-color: #c9a83a; background: rgba(255, 211, 122, 0.08); }
-.tier.locked { opacity: 0.55; }
-.tier .info { flex: 1; }
-.tier .tname { font-weight: 700; font-size: 15px; }
-.tier .bonus { font-size: 11px; font-weight: 600; color: #ffb36b; margin-left: 6px; }
-.tier .tdesc { font-size: 12px; color: var(--muted); margin-top: 2px; }
-.tier .tseal { font-size: 12px; margin-top: 6px; color: var(--text); }
-.tier .tseal span { margin-right: 8px; color: var(--muted); }
-.tier .tseal span.done { color: #9ce39c; }
-#tier-label { font-size: 11px; font-weight: 700; color: #ffb36b; margin-left: 6px; }
+#waystone button:disabled { cursor: default; opacity: 0.55; }
 
 #shop {
   position: absolute; inset: 0; display: flex; justify-content: center; align-items: center;
@@ -495,3 +483,23 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0d12; col
 }
 #dungeon-hud b { color: #d8b8ff; }
 #dungeon-hud .lost { color: rgba(255,255,255,0.2); }
+.waystone-intro { font-size: 13px; color: var(--muted); margin: 0 0 12px; line-height: 1.45; }
+.village { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,0.04); margin-bottom: 8px; border: 1px solid transparent; }
+.village.current { border-color: #5ad0ff; background: rgba(90, 208, 255, 0.08); }
+.village.locked { opacity: 0.55; }
+.village .info { flex: 1; }
+.village .vname { font-weight: 700; font-size: 15px; }
+.village .vdesc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* Tela de carregamento entre áreas. */
+#loading { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; background: #07090c; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
+#loading.shown { opacity: 1; pointer-events: auto; }
+#loading.hidden { display: none; }
+.loading-card { text-align: center; padding: 0 16px; max-width: 560px; }
+.loading-kicker { font-size: 12px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); }
+#loading-name { margin: 8px 0 4px; font-size: clamp(28px, 6vw, 44px); letter-spacing: 0.04em; color: #f4ead4; text-shadow: 0 2px 18px rgba(122, 216, 106, 0.25); }
+#loading-detail { font-size: 14px; font-weight: 700; color: #9ae08a; }
+#loading-sub { font-size: 14px; color: var(--muted); line-height: 1.5; margin: 14px 0 22px; }
+.loading-track { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.1); overflow: hidden; width: min(320px, 70vw); margin: 0 auto; }
+#loading-bar { height: 100%; width: 0; background: linear-gradient(90deg, #5a9a44, #9ae08a); transition: width 0.25s ease; }
+#area-label { font-size: 11px; font-weight: 700; color: #9ae08a; margin-left: 8px; }

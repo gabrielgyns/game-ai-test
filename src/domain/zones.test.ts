@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { gateNear, travel, ZONE_GATES, ZONES, zoneAt } from "./zones";
+import { passageAt, travel, ZONE_PASSAGES, ZONES, zoneAt } from "./zones";
 import { generateWorld } from "./worldgen";
 import { biomeAt } from "./biomes";
 import { FOREST_BOSS_HOME, FOREST_CAMP, forestRiverZ, isWater, terrainHeight } from "./terrain";
@@ -37,17 +37,34 @@ describe("zonas", () => {
     expect(Math.abs(terrainHeight(boss.x, boss.z) - terrainHeight(boss.x + 6, boss.z))).toBeLessThan(1);
   });
 
-  it("portões levam de uma zona à outra e de volta, sempre a chão firme e fora do alcance do portão", () => {
+  it("passagens na borda levam de uma zona à outra e de volta, a chão firme e fora da boca de volta", () => {
     const world = generateWorld({ seed: 3 });
     const p = world.player!;
-    for (const gate of ZONE_GATES) {
-      p.transform.position = { x: gate.at.x, y: 0, z: gate.at.z };
-      expect(travel(world, p)?.id).toBe(gate.id);
-      expect(zoneAt(p.transform.position.x, p.transform.position.z).id).toBe(gate.to);
+    for (const g of ZONE_PASSAGES) {
+      expect(passageAt({ x: g.at.x - g.out.x, z: g.at.z - g.out.z })).toBeUndefined(); // antes da linha, nada
+      const crossed = passageAt({ x: g.at.x + g.out.x * 0.5, z: g.at.z + g.out.z * 0.5 });
+      expect(crossed?.id).toBe(g.id);
+      travel(world, p, crossed!);
+      expect(zoneAt(p.transform.position.x, p.transform.position.z).id).toBe(g.to);
       expect(isWater(p.transform.position.x, p.transform.position.z)).toBe(false);
-      expect(gateNear(p.transform.position)).toBeUndefined(); // não volta sem querer
+      expect(passageAt(p.transform.position)).toBeUndefined(); // não volta sem querer
     }
     expect(world.drainEvents().filter((e) => e.type === "zoneTravel")).toHaveLength(2);
+  });
+
+  it("a boca de cada passagem é alcançável andando (a borda trava o resto)", () => {
+    const world = generateWorld({ seed: 3 });
+    const p = world.player!;
+    for (const g of ZONE_PASSAGES) {
+      p.transform.position = { x: g.at.x - g.out.x * 6, y: 0, z: g.at.z - g.out.z * 6 };
+      p.movement.intent = { ...g.out };
+      let reached = false;
+      for (let i = 0; i < 4 * 60 && !reached; i++) {
+        stepWorld(world, 1 / 60);
+        reached = passageAt(p.transform.position)?.id === g.id;
+      }
+      expect(reached).toBe(true);
+    }
   });
 
   it("andar não atravessa a borda da zona", () => {
@@ -69,7 +86,7 @@ describe("zonas", () => {
       expect(entityLevel(e)).toBeLessThanOrEqual(F.levels[1]);
       expect(isWater(e.transform.position.x, e.transform.position.z)).toBe(false);
     }
-    expect(inForest.some((e) => e.npc?.id === "ranger")).toBe(true);
+    expect(inForest.filter((e) => e.npc).map((e) => e.npc!.id).sort()).toEqual(["armorer", "peddler", "ranger"]);
   });
 
   it("cair na floresta renasce no acampamento, não no santuário", () => {
@@ -82,7 +99,7 @@ describe("zonas", () => {
     expect(Math.hypot(p.transform.position.x - F.respawn.x, p.transform.position.z - F.respawn.z)).toBeLessThan(2);
   });
 
-  it("o mapa só mostra a zona do herói, com o portão de volta", () => {
+  it("o mapa só mostra a zona do herói, com a passagem de volta e a vila", () => {
     const world = generateWorld({ seed: 3 });
     const p = world.player!;
     p.transform.position = { ...forest(0, 60), y: 0 };
@@ -90,7 +107,8 @@ describe("zonas", () => {
     expect(m.every((k) => zoneAt(k.x, k.z).id === "floresta")).toBe(true);
     expect(m.find((k) => k.kind === "gate")?.label).toBe("Vale das Gosmas");
     expect(m.filter((k) => k.kind === "boss").map((k) => k.label)).toEqual(["Ente Ancião"]);
-    expect(m.some((k) => k.kind === "stash" || k.kind === "portal")).toBe(false);
+    expect(m.some((k) => k.kind === "portal")).toBe(false);
+    expect(m.filter((k) => k.kind === "stash" || k.kind === "waystone")).toHaveLength(2);
   });
 
   it("estar na floresta vai no save: carregar volta para lá", () => {

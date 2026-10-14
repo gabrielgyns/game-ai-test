@@ -58,7 +58,7 @@ export class ShopUI {
       this.cells.push(cell);
     }
     el("shop-sell-common").addEventListener("click", () => {
-      const total = sellAllCommon(this.world, this.player);
+      const total = sellAllCommon(this.world, this.player, this.shopId);
       if (total === 0) this.onMessage("Nenhum equipamento comum na mochila.");
       this.after();
     });
@@ -70,7 +70,11 @@ export class ShopUI {
     return !this.root.classList.contains("hidden");
   }
 
-  open(merchantName: string): void {
+  /** Loja aberta agora (cada vila tem a sua, ver `SHOPS`). */
+  private shopId = "merchant";
+
+  open(merchantName: string, shopId = "merchant"): void {
+    this.shopId = shopId;
     el("shop-title").textContent = merchantName;
     this.render();
     this.root.classList.remove("hidden");
@@ -84,7 +88,7 @@ export class ShopUI {
   private sell(index: number): void {
     const item = this.player.inventory!.items[index];
     if (!item) return;
-    sellFromInventory(this.world, this.player, index);
+    sellFromInventory(this.world, this.player, index, this.shopId);
     this.after();
     const left = this.player.inventory!.items[index];
     if (left) this.showTip(left, `Vender por ${sellPrice(left)} ouro`, "Clique para vender");
@@ -102,7 +106,7 @@ export class ShopUI {
   }
 
   render(): void {
-    const shop = ensureShop(this.world, this.player);
+    const shop = ensureShop(this.world, this.player, this.shopId);
     const gold = this.player.wallet?.gold ?? 0;
     this.gold.textContent = `${gold} ouro`;
     const clock = clockAt(this.world.time);
@@ -112,9 +116,9 @@ export class ShopUI {
     this.offers.replaceChildren(
       this.row(this.displayPotions.small, POTION_PRICES.small, gold, false, () => this.result(buyPotion(this.world, this.player, "small")), "Sempre em estoque"),
       this.row(this.displayPotions.large, POTION_PRICES.large, gold, false, () => this.result(buyPotion(this.world, this.player, "large")), "Sempre em estoque"),
-      ...shop.offers.map((o, i) => this.row(o.item, o.price, gold, o.sold, () => this.result(buyOffer(this.world, this.player, i)))),
+      ...shop.offers.map((o, i) => this.row(o.item, o.price, gold, o.sold, () => this.result(buyOffer(this.world, this.player, i, this.shopId)))),
     );
-    this.buyback.replaceChildren(...shop.buyback.map((b, i) => this.row(b.item, b.price, gold, false, () => this.result(buyBack(this.world, this.player, i)))));
+    this.buyback.replaceChildren(...shop.buyback.map((b, i) => this.row(b.item, b.price, gold, false, () => this.result(buyBack(this.world, this.player, i, this.shopId)))));
 
     const inv = this.player.inventory!;
     inv.items.forEach((item, i) => this.renderCell(this.cells[i]!, item));

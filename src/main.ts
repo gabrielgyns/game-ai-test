@@ -46,14 +46,16 @@ import { roomAt } from "./domain/dungeonLayout";
 import { ShopUI } from "./game/shopUI";
 import { SkillTreeUI } from "./game/skillTreeUI";
 import { Minimap } from "./game/minimap";
-import { gateNear, travel, ZONE_GATES, ZONES, zoneAt, type ZoneId } from "./domain/zones";
+import { passageAt, travel, ZONE_PASSAGES, ZONES, zoneAt, type ZoneId } from "./domain/zones";
 import { FOREST_CAMP } from "./domain/terrain";
 import type { Environment } from "./game/environment";
-import type { Portal } from "./game/portal";
 import { StashUI } from "./game/stashUI";
-import { TierUI } from "./game/tierUI";
-import { sanctuaryInteraction } from "./domain/sanctuary";
-import { WORLD_TIERS, worldTierOf } from "./domain/worldTier";
+import { WaystoneUI } from "./game/waystoneUI";
+import { knownVillages, teleport, teleportFee, VILLAGES, VILLAGE_LIST, villageInteraction, type VillageId } from "./domain/villages";
+import { npcById } from "./domain/npc";
+import { createPassageMarker, type PassageMarker } from "./game/passage";
+import { createWaystoneGlow, type WaystoneGlow } from "./game/waystone";
+import { LoadingScreen } from "./game/loading";
 import { displayRarity } from "./game/itemTooltip";
 import { equippedSetCounts, SETS } from "./domain/sets";
 import type { Item } from "./domain/items";
@@ -99,27 +101,34 @@ const braziers = createBraziers();
 scene.add(braziers.group);
 
 /**
- * O que se desenha de cada zona: terreno, vegetação, cenário e os portões. O vale já existe no boot
- * (os objetos acima); as outras zonas são montadas na primeira visita (leva ~1 s, na hora do portão).
+ * O que se desenha de cada zona: terreno, vegetação, cenário, as passagens e o cristal da pedra de
+ * teleporte. O vale já existe no boot (os objetos acima); as outras zonas são montadas na primeira
+ * visita, atrás da tela de carregamento.
  */
 interface ZoneVisuals {
   group: THREE.Group;
   environment: Environment;
   foliage: Foliage;
-  gates: Portal[];
+  passages: PassageMarker[];
+  stones: { village: VillageId; glow: WaystoneGlow }[];
 }
 const zoneVisuals = new Map<ZoneId, ZoneVisuals>();
 const FOREST_FOG = new THREE.Color("#3a5a48");
 const campfireLight = new THREE.PointLight("#ff9a4a", 0, 18, 1.4);
 
-function gatePortals(zone: ZoneId, group: THREE.Group): Portal[] {
-  return ZONE_GATES.filter((g) => g.from === zone).map((g) => {
-    const portal = createPortal("#7ad86a");
-    portal.group.position.set(g.at.x, terrainHeight(g.at.x, g.at.z), g.at.z);
-    portal.group.rotation.y = g.yaw;
-    group.add(portal.group);
-    return portal;
+/** Passagens e pedras de teleporte de uma zona. */
+function zoneMarkers(zone: ZoneId, group: THREE.Group): Pick<ZoneVisuals, "passages" | "stones"> {
+  const passages = ZONE_PASSAGES.filter((g) => g.from === zone).map((g) => {
+    const marker = createPassageMarker(g, zone === "vale" ? "#d8f0c8" : "#c8e8d0");
+    group.add(marker.group);
+    return marker;
   });
+  const stones = VILLAGE_LIST.filter((v) => v.zone === zone).map((v) => {
+    const glow = createWaystoneGlow(v);
+    group.add(glow.group);
+    return { village: v.id, glow };
+  });
+  return { passages, stones };
 }
 
 function ensureZoneVisuals(id: ZoneId): ZoneVisuals {
@@ -128,7 +137,7 @@ function ensureZoneVisuals(id: ZoneId): ZoneVisuals {
   const group = new THREE.Group();
   if (id === "vale") {
     group.add(terrainMesh, foliage.group, environment.group, braziers.group, entrancePortal.group);
-    zv = { group, environment, foliage, gates: gatePortals(id, group) };
+    zv = { group, environment, foliage, ...zoneMarkers(id, group) };
   } else {
     const zone = ZONES[id];
     const env = createEnvironment(5151, zone);
@@ -137,7 +146,7 @@ function ensureZoneVisuals(id: ZoneId): ZoneVisuals {
     const camp = { x: zone.center.x + FOREST_CAMP.x, z: zone.center.z + FOREST_CAMP.z };
     campfireLight.position.set(camp.x, terrainHeight(camp.x, camp.z) + 1.2, camp.z);
     group.add(campfireLight);
-    zv = { group, environment: env, foliage: fol, gates: gatePortals(id, group) };
+    zv = { group, environment: env, foliage: fol, ...zoneMarkers(id, group) };
   }
   scene.add(group);
   zoneVisuals.set(id, zv);
@@ -261,14 +270,9 @@ function currentInteraction(): { label: string; act: () => void } | null {
       },
     };
   }
-  const gate = gateNear(player.transform.position);
-  if (gate) {
-    const to = ZONES[gate.to];
-    return { label: `Viajar para ${to.name} (inimigos nível ${to.levels[0]} a ${to.levels[1]})`, act: () => afterDungeonChange(() => travel(world, player)) };
-  }
-  const spot = sanctuaryInteraction(player);
-  if (spot === "stash") return { label: "Abrir o baú do santuário", act: () => openPanel(stashUI) };
-  if (spot === "altar") return { label: `Altar das Eras (era: ${worldTierOf(world).name})`, act: () => openPanel(tierUI) };
+  const spot = villageInteraction(player);
+  if (spot?.spot === "stash") return { label: "Abrir o baú", act: () => openPanel(stashUI) };
+  if (spot?.spot === "stone") return { label: `Pedra de Teleporte (viagem: ${teleportFee(player)} ouro)`, act: () => openPanel(waystoneUI) };
   const npc = nearestNpc();
   return npc ? { label: `Falar com ${npc.name}`, act: () => openDialogue(npc) } : null;
 }
@@ -299,7 +303,7 @@ shopUI.onAction = () => handleEvents(world.drainEvents());
 shopUI.onMessage = (text) => toast(text);
 function openShop(npc: Entity): void {
   dialogue.close();
-  shopUI.open(npc.name);
+  shopUI.open(npc.name, npcById(npc.npc?.id ?? "")?.shop);
   paused = true;
 }
 function closeShop(): void {
@@ -309,16 +313,22 @@ function closeShop(): void {
 }
 shopUI.onClose = closeShop;
 dialogue.onShop = openShop;
-// Baú do santuário (compartilhado entre os slots) e Altar das Eras (dificuldade do mundo).
+// Baú das vilas (o mesmo em todas, compartilhado entre os slots) e Pedra de Teleporte.
 const stash = loadStash();
 const stashUI = new StashUI(stash, player);
 stashUI.onChange = () => saveStash(stash);
 stashUI.onMessage = (text) => toast(text);
-const tierUI = new TierUI(world, player);
-tierUI.onMessage = (text) => toast(text);
-tierUI.onChange = () => {
-  handleEvents(world.drainEvents());
-  saveGame("manual");
+const waystoneUI = new WaystoneUI(world, player);
+waystoneUI.onMessage = (text) => toast(text);
+waystoneUI.onTravel = (to) => {
+  closeWaystone();
+  const village = VILLAGES[to];
+  const zone = ZONES[village.zone];
+  void loadArea(
+    { title: village.name, subtitle: zone.subtitle, detail: `${zone.name} · inimigos nível ${zone.levels[0]} a ${zone.levels[1]}` },
+    village.zone,
+    () => teleport(world, player, to),
+  );
 };
 function openPanel(panel: { open(): void }): void {
   panel.open();
@@ -331,15 +341,40 @@ function closeStash(): void {
   paused = false;
   input.requestLock();
 }
-function closeTiers(): void {
-  tierUI.close();
+function closeWaystone(): void {
+  waystoneUI.close();
   paused = false;
   input.requestLock();
 }
 stashUI.onClose = closeStash;
-tierUI.onClose = closeTiers;
-/** Painéis do santuário abertos (bloqueiam as outras teclas de painel). */
-const sanctuaryPanelOpen = () => stashUI.isOpen || tierUI.isOpen;
+waystoneUI.onClose = closeWaystone;
+/** Painéis da vila abertos (bloqueiam as outras teclas de painel). */
+const sanctuaryPanelOpen = () => stashUI.isOpen || waystoneUI.isOpen;
+
+/**
+ * Troca de área (passagem na borda ou Pedra de Teleporte): escurece, move o herói no domínio, monta a
+ * zona de destino (na primeira visita) e os modelos completos do cenário, e clareia.
+ */
+const loading = new LoadingScreen();
+async function loadArea(card: { title: string; subtitle: string; detail?: string }, to: ZoneId, change: () => void): Promise<void> {
+  if (loading.busy) return;
+  paused = true;
+  player.movement.intent = { x: 0, z: 0 };
+  await loading.run(card, async (progress) => {
+    afterDungeonChange(change);
+    progress(0.15);
+    await new Promise((r) => requestAnimationFrame(r));
+    const zv = ensureZoneVisuals(to);
+    progress(0.4);
+    // Monta os modelos completos já, atrás da tela, em vez de um por quadro com o jogo rodando.
+    const until = performance.now() + 2500;
+    while (performance.now() < until && zv.environment.props.buildPending()) {
+      progress(0.4 + 0.5 * Math.min(1, (performance.now() + 2500 - until) / 2500));
+      await new Promise((r) => requestAnimationFrame(r));
+    }
+    for (const [id, other] of zoneVisuals) other.group.visible = id === to;
+  }, () => (paused = false));
+}
 // Árvore de habilidades (K): painel modal como a mochila.
 const treeUI = new SkillTreeUI(world, player);
 treeUI.onAction = () => handleEvents(world.drainEvents());
@@ -411,8 +446,8 @@ input.onPointerLockChange = (locked) => {
     if (locked) closeStash();
     return;
   }
-  if (tierUI.isOpen) {
-    if (locked) closeTiers();
+  if (waystoneUI.isOpen) {
+    if (locked) closeWaystone();
     return;
   }
   if (treeUI.isOpen) {
@@ -535,7 +570,7 @@ input.onEscape = () => {
   else if (treeUI.isOpen) closeTree();
   else if (shopUI.isOpen) closeShop();
   else if (stashUI.isOpen) closeStash();
-  else if (tierUI.isOpen) closeTiers();
+  else if (waystoneUI.isOpen) closeWaystone();
   else if (dialogue.isOpen) closeDialogue();
   else if (menu.isOpen) resume();
 };
@@ -868,7 +903,6 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
       case "zoneTravel": {
         const to = ZONES[ev.to as ZoneId];
         audio.play("bossPhase");
-        floats.spawn(player.transform.position, to.name.toUpperCase(), "#9ae08a", 1.4);
         hud.pushLog(`Você chegou a ${to.name} (inimigos nível ${to.levels[0]} a ${to.levels[1]}).`, "level");
         saveGame("auto");
         break;
@@ -910,16 +944,17 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         audio.play("questAccept");
         hud.pushLog(`Sala limpa (${ev.cleared}/${ev.total}).`, "gain");
         break;
-      case "worldTierUnlocked": {
-        const tier = WORLD_TIERS[ev.tier - 1]!;
-        audio.play("questComplete");
-        floats.spawn(player.transform.position, `NOVA ERA: ${tier.name.toUpperCase()}`, "#ffb36b", 1.5);
-        hud.pushLog(`Os três chefes caíram. A era ${tier.name} está aberta no Altar das Eras.`, "level");
+      case "villageAttuned": {
+        const village = VILLAGES[ev.village as VillageId];
+        audio.play("questAccept");
+        floats.spawn(player.transform.position, "PEDRA DE TELEPORTE ATIVADA", "#7ad8ff", 1.3);
+        hud.pushLog(`${village.name}: a Pedra de Teleporte foi ativada. Dá para voltar aqui de qualquer vila.`, "level");
+        saveGame("auto");
         break;
       }
-      case "worldTierChanged":
-        audio.play("levelUp");
-        hud.pushLog(`O vale entrou na era ${WORLD_TIERS[ev.tier - 1]!.name}: inimigos ${WORLD_TIERS[ev.tier - 1]!.levelBonus ? `+${WORLD_TIERS[ev.tier - 1]!.levelBonus} níveis` : "no nível original"}.`, "level");
+      case "teleport":
+        audio.play("coin", { pitch: 0.7 });
+        hud.pushLog(`A pedra levou você a ${VILLAGES[ev.village as VillageId].name} (-${ev.gold} ouro).`, "gain");
         break;
       case "dungeonComplete":
         audio.play("questComplete");
@@ -992,7 +1027,7 @@ function frame(): void {
   if (interact && started && !menu.isOpen && !inventoryUI.isOpen && !treeUI.isOpen) {
     if (shopUI.isOpen) closeShop();
     else if (stashUI.isOpen) closeStash();
-    else if (tierUI.isOpen) closeTiers();
+    else if (waystoneUI.isOpen) closeWaystone();
     else if (dialogue.isOpen) closeDialogue();
     else if (isAlive(player)) {
       const action = currentInteraction();
@@ -1047,6 +1082,12 @@ function frame(): void {
     handleEvents(stepWorld(world, FIXED_DT));
     accumulator -= FIXED_DT;
   }
+  // Passou da boca de uma passagem na borda: carrega a área vizinha.
+  const crossed = !world.dungeon && isAlive(player) ? passageAt(player.transform.position) : undefined;
+  if (crossed) {
+    const zone = ZONES[crossed.to];
+    void loadArea({ title: zone.name, subtitle: zone.subtitle, detail: `Inimigos nível ${zone.levels[0]} a ${zone.levels[1]}` }, crossed.to, () => travel(world, player, crossed));
+  }
 
   // Passos enquanto anda no chão (sem dash).
   if (isAlive(player) && !player.abilities?.dash && (player.movement.intent.x !== 0 || player.movement.intent.z !== 0)) {
@@ -1076,7 +1117,9 @@ function frame(): void {
   if (current) {
     current.environment.update(cam.camera);
     current.foliage.update(world.time, p);
-    for (const gate of current.gates) gate.update(world.time);
+    for (const marker of current.passages) marker.update(world.time);
+    const known = knownVillages(player);
+    for (const s of current.stones) s.glow.update(world.time, known.includes(s.village));
     if (zoneId === "vale") {
       braziers.update(world.time, sky.night);
       entrancePortal.update(world.time);

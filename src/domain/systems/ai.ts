@@ -3,7 +3,6 @@ import { directionXZ, distanceXZ, lerpAngle, yawFromDirection, clamp } from "../
 import type { World } from "../world";
 import { BOSS_MINION, raiseCarapace, resetBoss, updateBossPhase } from "../boss";
 import { createEnemy } from "../factories";
-import { scaleToWorldTier } from "../worldTier";
 import { startAttack } from "./combat";
 import { isStunned } from "../status";
 import { hasLineOfSight, steerToward } from "../dungeon";
@@ -144,7 +143,6 @@ function bossBehavior(world: World, e: Entity, dt: number, player: Entity | unde
       const spawnAt = { x: pos.x - Math.sin(angle) * 2.5, y: pos.y, z: pos.z - Math.cos(angle) * 2.5 };
       const minion = world.spawn((id) => createEnemy(id, kind, spawnAt));
       minion.ai!.respawnSeconds = Infinity; // lacaios não renascem
-      scaleToWorldTier(world, minion);
       minion.ai!.state = "chase";
       minion.ai!.leashRange = 60;
       return minion.id;

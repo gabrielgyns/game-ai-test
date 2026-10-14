@@ -78,22 +78,26 @@ Grito deixa todos lentos, o Segundo Fôlego dispara sozinho quando a vida fica c
 vira uma rajada de três flechas que atordoam, a Chuva de Flechas vira tempestade, a Bola de Fogo dobra e
 deixa o chão em chamas, a Nova Gélida congela, o Teleporte explode na partida e o Escudo Arcano explode
 ao acabar. Chefes resistem a atordoamento e lentidão (metade do tempo). Reiniciar a árvore custa ouro.
-O mundo é feito de **zonas** ligadas por portões, como os mapas do Ragnarok. Ao norte do vale, perto do
-platô do Rei Goblin, uma passagem na muralha leva à **Floresta Ancestral** (inimigos do nível 12 ao 20):
+O mundo é feito de **áreas** ligadas pelas bordas, como os mapas do Ragnarok: você anda até a beira do
+mapa, atravessa a névoa entre os dois postes com lanterna e, depois de uma tela de carregamento com o
+nome e a faixa de nível da área, chega do outro lado. Cada área tem inimigos, chefe, quests e uma
+**vila** própria. Ao norte do vale, perto do platô do Rei Goblin, uma trilha leva à **Floresta
+Ancestral** (inimigos do nível 12 ao 20):
 uma mata escura e enevoada cortada por um rio, com árvores ancestrais de raízes expostas, samambaias e
 cogumelos que brilham, as ruínas élficas de Elar a leste e, ao norte, a clareira do **Ente Ancião**
 (chicote de vinhas, raízes que esmagam o chão, nuvens de esporos que envenenam o terreno e lobos na
 fúria). Lobos cinzentos caçam em matilha, entes jovens batem devagar e forte, e espíritos élficos
-atiram das ruínas. No acampamento ao sul, a **Guardiã Lyra** tem quatro quests. O Ente Ancião guarda o
+atiram das ruínas. A vila do acampamento, ao sul, tem a **Guardiã Lyra** (quests), o **Mascate
+Faelan** (loja própria, com estoque da região: mais itens, mais raros, nunca abaixo do nível 12) e a
+**Armeira Kaia** (quests de cerne de ente, inclusive uma depois do chefe). O Ente Ancião guarda o
 conjunto **Coração da Floresta** (3 peças: quem te fere leva 30% do dano de volta). Cair na floresta
 leva ao acampamento, não ao santuário.
 
-No santuário ficam o **baú**, compartilhado entre todos os seus heróis (3 abas de 30 espaços: guarde
-num e tire no outro), e o **Altar das Eras**, onde se escolhe a **dificuldade do mundo**: Aventureiro,
-Veterano (+10 níveis), Apocalipse (+20) e Pesadelo (+30). Vencer os três chefes numa era abre a
-seguinte. Inimigos e chefes sobem de nível, dão bem mais XP e ouro, e todo item tem o **nível** de quem
-o derrubou: acima do nível 10, dano e vida dele crescem junto (a cripta e a Mercadora acompanham o seu
-nível).
+Toda vila tem o **baú**, o mesmo em todas e compartilhado entre os seus heróis (3 abas de 30 espaços:
+guarde num e tire no outro), e uma **Pedra de Teleporte**, como a Kafra: passar perto dela pela
+primeira vez a ativa (o cristal acende), e de qualquer pedra dá para ir a outra vila já visitada por
+um pouco de ouro (20 + 3 por nível). Todo item tem o **nível** de quem o derrubou: acima do nível 10,
+dano e vida dele crescem junto (a cripta e as lojas acompanham o seu nível).
 
 Cada chefe guarda um **conjunto de itens** de três peças (arma, armadura e acessório), em verde-água:
 os Espólios do Rei Goblin, a Seda da Rainha, a Armadura do Imperador e as Relíquias do Lorde Esqueleto.

@@ -1,9 +1,9 @@
 import { isAlive, type Entity, type EntityId } from "./components";
 import { DUNGEON_ENTRANCE } from "./dungeon";
-import { ALTAR_SPOT, STASH_SPOT } from "./sanctuary";
+import { VILLAGE_LIST } from "./villages";
 import { questsForNpc } from "./quests";
 import { DUNGEON_REGION_X } from "./terrain";
-import { ZONE_GATES, ZONES, zoneAt } from "./zones";
+import { ZONE_PASSAGES, ZONES, zoneAt } from "./zones";
 import type { World } from "./world";
 
 /**
@@ -18,13 +18,13 @@ export type MarkerKind =
   | "questOffer"
   | "questTurnIn"
   | "portal"
-  /** Baú compartilhado e Altar das Eras, no santuário. */
+  /** Baú compartilhado e Pedra de Teleporte, nas vilas. */
   | "stash"
-  | "altar"
+  | "waystone"
   /** Na cripta: escada para o próximo andar e santuário ainda não usado. */
   | "stairs"
   | "shrine"
-  /** Portão para outra zona. */
+  /** Passagem para outra zona, na borda do mapa. */
   | "gate"
   | "chest"
   | "exit"
@@ -63,12 +63,15 @@ export function mapMarkers(world: World, player: Entity): MapMarker[] {
     if ((d.item.rarity === "rare" || d.item.rarity === "epic") && at(d.position.x, d.position.z)) out.push({ kind: "loot", x: d.position.x, z: d.position.z, label: d.item.name });
   }
 
-  for (const g of ZONE_GATES) if (at(g.at.x, g.at.z)) out.push({ kind: "gate", x: g.at.x, z: g.at.z, label: ZONES[g.to].name });
+  for (const g of ZONE_PASSAGES) if (at(g.at.x, g.at.z)) out.push({ kind: "gate", x: g.at.x, z: g.at.z, label: ZONES[g.to].name });
+  for (const v of VILLAGE_LIST) {
+    if (!at(v.stone.x, v.stone.z)) continue;
+    out.push({ kind: "stash", x: v.stash.x, z: v.stash.z, label: "Baú" });
+    out.push({ kind: "waystone", x: v.stone.x, z: v.stone.z, label: "Pedra de Teleporte" });
+  }
   const run = world.dungeon;
   if (at(DUNGEON_ENTRANCE.x, DUNGEON_ENTRANCE.z)) {
     out.push({ kind: "portal", x: DUNGEON_ENTRANCE.x, z: DUNGEON_ENTRANCE.z, label: "Cripta Esquecida" });
-    out.push({ kind: "stash", x: STASH_SPOT.x, z: STASH_SPOT.z, label: "Baú" });
-    out.push({ kind: "altar", x: ALTAR_SPOT.x, z: ALTAR_SPOT.z, label: "Altar das Eras" });
   }
   if (run && place === "cripta") {
     // A saída da entrada só existe no primeiro andar; no último, o portal aparece depois do chefe.

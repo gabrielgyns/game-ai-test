@@ -54,8 +54,8 @@ export type GameEvent =
   | { type: "shrineBlessing"; entity: EntityId; seconds: number }
   | { type: "trapSpring" }
   | { type: "zoneTravel"; from: string; to: string }
-  | { type: "worldTierChanged"; tier: number }
-  | { type: "worldTierUnlocked"; tier: number }
+  | { type: "villageAttuned"; village: string }
+  | { type: "teleport"; village: string; gold: number }
   | { type: "chestOpened"; gold: number; items: string[] }
   | { type: "sell"; entity: EntityId; itemName: string; gold: number }
   | { type: "buy"; entity: EntityId; itemName: string; gold: number }

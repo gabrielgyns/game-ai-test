@@ -17,7 +17,6 @@ import type { World } from "./world";
 export const SELL_RATE = 0.35;
 export const BUY_RATE = 3;
 export const POTION_PRICES: Record<PotionSize, number> = { small: 15, large: 40 };
-export const OFFERS_PER_DAY = 4;
 export const BUYBACK_LIMIT = 6;
 
 export interface ShopOffer {
@@ -44,25 +43,47 @@ export function stockTier(level: number): 1 | 2 | 3 {
   return level <= 3 ? 1 : level <= 7 ? 2 : 3;
 }
 
-/** Estoque do dia: determinístico por dia e nível, com ao menos um raro e chance de épico. */
-export function rollStock(day: number, level: number): ShopOffer[] {
-  const rand = seededRandom(day * 7919 + level * 131 + 17);
-  const tier = stockTier(level);
-  const rarities: Rarity[] = ["uncommon", "uncommon", "rare", rand() < 0.2 ? "epic" : "rare"];
-  return rarities.slice(0, OFFERS_PER_DAY).map((rarity) => {
-    // A Mercadora acompanha o herói: o estoque tem o nível dele.
-    const item = createEquipment(rand, tier, rarity, level);
+/**
+ * Cada vila tem a sua loja, com estoque próprio: a da região mais perigosa vende mais coisa e melhor,
+ * e nunca abaixo do nível da região (o herói que chega fraco vê o que precisa caçar para usar).
+ */
+export interface ShopProfile {
+  /** Nível mínimo do estoque. */
+  minLevel: number;
+  /** Raridades do dia (uma oferta por raridade). */
+  rarities(rand: () => number): Rarity[];
+  /** Semente própria, para duas lojas não venderem as mesmas coisas. */
+  salt: number;
+}
+
+export const SHOPS: Record<string, ShopProfile> = {
+  /** Mercadora Zuri, no santuário do vale. */
+  merchant: { minLevel: 1, salt: 17, rarities: (rand) => ["uncommon", "uncommon", "rare", rand() < 0.2 ? "epic" : "rare"] },
+  /** Mascate Faelan, no acampamento da floresta. */
+  peddler: { minLevel: 12, salt: 911, rarities: (rand) => ["uncommon", "rare", "rare", "rare", rand() < 0.45 ? "epic" : "rare"] },
+};
+
+/** Estoque do dia: determinístico por dia, nível e loja, com ao menos um raro e chance de épico. */
+export function rollStock(day: number, level: number, shopId = "merchant"): ShopOffer[] {
+  const profile = SHOPS[shopId] ?? SHOPS.merchant!;
+  const rand = seededRandom(day * 7919 + level * 131 + profile.salt);
+  // A loja acompanha o herói: o estoque tem o nível dele (ou o da região, se for maior).
+  const itemLevel = Math.max(level, profile.minLevel);
+  const tier = stockTier(itemLevel);
+  return profile.rarities(rand).map((rarity) => {
+    const item = createEquipment(rand, tier, rarity, itemLevel);
     return { item, price: Math.round(item.value * BUY_RATE), sold: false };
   });
 }
 
-/** Garante o estoque do dia atual (troca à meia-noite do relógio do mundo). */
-export function ensureShop(world: World, player: Entity): ShopState {
+/** Garante o estoque do dia atual da loja (troca à meia-noite do relógio do mundo). */
+export function ensureShop(world: World, player: Entity, shopId = "merchant"): ShopState {
   const day = clockAt(world.time).day;
-  if (!world.shop || world.shop.day !== day) {
-    world.shop = { day, offers: rollStock(day, player.progression?.level ?? 1), buyback: world.shop?.buyback ?? [] };
+  const current = world.shops[shopId];
+  if (!current || current.day !== day) {
+    world.shops[shopId] = { day, offers: rollStock(day, player.progression?.level ?? 1, shopId), buyback: current?.buyback ?? [] };
   }
-  return world.shop;
+  return world.shops[shopId]!;
 }
 
 export type ShopResult = "ok" | "noGold" | "bagFull" | "unavailable";
@@ -75,7 +96,7 @@ function pay(player: Entity, price: number): boolean {
 }
 
 /** Vende o item da posição da mochila: uma unidade de uma pilha, ou o equipamento inteiro. */
-export function sellFromInventory(world: World, player: Entity, index: number): number {
+export function sellFromInventory(world: World, player: Entity, index: number, shopId = "merchant"): number {
   const inv = player.inventory;
   const item = inv?.items[index];
   if (!inv || !item || !player.wallet) return 0;
@@ -89,7 +110,7 @@ export function sellFromInventory(world: World, player: Entity, index: number): 
     sold = item;
   }
   player.wallet.gold += price;
-  const shop = ensureShop(world, player);
+  const shop = ensureShop(world, player, shopId);
   shop.buyback.unshift({ item: sold, price });
   shop.buyback.length = Math.min(shop.buyback.length, BUYBACK_LIMIT);
   world.emit({ type: "sell", entity: player.id, itemName: sold.name, gold: price });
@@ -97,18 +118,18 @@ export function sellFromInventory(world: World, player: Entity, index: number): 
 }
 
 /** Vende de uma vez todos os equipamentos comuns da mochila (lixo de começo de jogo). */
-export function sellAllCommon(world: World, player: Entity): number {
+export function sellAllCommon(world: World, player: Entity, shopId = "merchant"): number {
   const inv = player.inventory;
   if (!inv) return 0;
   let total = 0;
   inv.items.forEach((item, i) => {
-    if (item && item.kind === "equipment" && item.rarity === "common") total += sellFromInventory(world, player, i);
+    if (item && item.kind === "equipment" && item.rarity === "common") total += sellFromInventory(world, player, i, shopId);
   });
   return total;
 }
 
-export function buyOffer(world: World, player: Entity, index: number): ShopResult {
-  const shop = ensureShop(world, player);
+export function buyOffer(world: World, player: Entity, index: number, shopId = "merchant"): ShopResult {
+  const shop = ensureShop(world, player, shopId);
   const offer = shop.offers[index];
   if (!offer || offer.sold) return "unavailable";
   if ((player.wallet?.gold ?? 0) < offer.price) return "noGold";
@@ -130,8 +151,8 @@ export function buyPotion(world: World, player: Entity, size: PotionSize): ShopR
   return "ok";
 }
 
-export function buyBack(world: World, player: Entity, index: number): ShopResult {
-  const shop = ensureShop(world, player);
+export function buyBack(world: World, player: Entity, index: number, shopId = "merchant"): ShopResult {
+  const shop = ensureShop(world, player, shopId);
   const entry = shop.buyback[index];
   if (!entry) return "unavailable";
   if ((player.wallet?.gold ?? 0) < entry.price) return "noGold";

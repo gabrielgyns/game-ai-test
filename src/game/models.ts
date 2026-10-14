@@ -5,7 +5,7 @@ import { createHero } from "./characters/hero";
 import { createBandit, createBogZombie, createGoblin, createOrc, createScorpion, createSkeleton, createSlime, createSpider } from "./characters/mobs";
 import { createGoblinKing, createScorpionEmperor, createSkeletonLord, createSpiderQueen } from "./characters/bosses";
 import { createVillager } from "./characters/npcs";
-import { createAncientTreant, createElvenSpirit, createEnt, createRanger, createWolf } from "./characters/forest";
+import { createAncientTreant, createArmorer, createElvenSpirit, createEnt, createPeddler, createRanger, createWolf } from "./characters/forest";
 
 export type { CharacterModel } from "./characters/common";
 export { equipmentSignature, createHero, paintWeapon } from "./characters/hero";
@@ -17,7 +17,7 @@ export { createVillager } from "./characters/npcs";
 export const ARCHETYPES = [
   "hero", "slime", "goblin", "goblinArcher", "orc", "spider", "bogZombie", "scorpion", "bandit", "banditArcher",
   "goblinKing", "spiderQueen", "scorpionEmperor", "skeleton", "skeletonArcher", "skeletonLord", "wolf", "ent", "elvenSpirit", "ancientTreant",
-  "elder", "smith", "guard", "merchant", "ranger",
+  "elder", "smith", "guard", "merchant", "ranger", "peddler", "armorer",
 ] as const;
 
 export function createModel(archetype: string, equipment?: Equipment, classId?: ClassId): CharacterModel {
@@ -43,6 +43,8 @@ export function createModel(archetype: string, equipment?: Equipment, classId?: 
     case "elvenSpirit": return createElvenSpirit();
     case "ancientTreant": return createAncientTreant();
     case "ranger": return createRanger();
+    case "peddler": return createPeddler();
+    case "armorer": return createArmorer();
     case "elder": return createVillager("elder");
     case "smith": return createVillager("smith");
     case "guard": return createVillager("guard");
