@@ -164,12 +164,45 @@ export function createOrc(): CharacterModel {
   return { root, weaponArm, height: 25 * V + 0.1 };
 }
 
+export function createGoblinKing(): CharacterModel {
+  const skin = "#6a9c3c", armor = "#5a2e2e", gold = "#e0b43a", eye = "#ffd54a", cape = "#7a1f2b";
+  const b = new VoxelBuilder();
+  b.box(-4, 0, -2, -1, 8, 2, skin).box(1, 0, -2, 4, 8, 2, skin); // pernas
+  b.box(-4, 0, -2, -1, 2, 2, "#2b2b2b").box(1, 0, -2, 4, 2, 2, "#2b2b2b"); // botas
+  b.box(-7, 8, -4, 7, 20, 4, armor); // tronco largo
+  b.box(-7, 8, -4, 7, 10, 4, gold); // cinto dourado
+  b.box(-8, 10, 4, 8, 20, 6, cape); // capa nas costas
+  b.box(-10, 12, -2, -7, 20, 2, skin); // braço esquerdo
+  b.box(-5, 20, -5, 5, 29, 5, skin); // cabeça
+  b.box(-9, 24, -1, -5, 26, 1, skin).box(5, 24, -1, 9, 26, 1, skin); // orelhas
+  b.set(-3, 25, -5, eye).set(-2, 25, -5, eye).set(2, 25, -5, eye).set(3, 25, -5, eye);
+  b.box(-2, 21, -6, 2, 22, -5, "#f1ead6"); // dentes
+  b.box(-5, 29, -5, 5, 30, 5, gold); // coroa: base
+  for (const x of [-5, -2, 1, 4]) b.box(x, 30, -5, x + 1, 32, -4, gold).box(x, 30, 4, x + 1, 32, 5, gold);
+  b.box(-5, 30, -5, -4, 32, 5, gold).box(4, 30, -5, 5, 32, 5, gold);
+  b.set(0, 30, -5, "#e5484d"); // rubi
+
+  const root = new THREE.Group();
+  root.add(mesh(b));
+  const arm = new VoxelBuilder();
+  arm.box(-2, -9, -2, 2, 0, 2, skin);
+  arm.box(-1, -24, -1, 1, -9, 1, "#5a3d2b"); // cabo do machado real
+  arm.box(-1, -22, -8, 1, -12, -1, "#aab0b8"); // lâmina grande
+  arm.box(-1, -21, -9, 1, -13, -8, gold); // fio dourado
+  const weaponArm = new THREE.Group();
+  weaponArm.position.set(9 * V, 20 * V, 0);
+  weaponArm.add(mesh(arm));
+  root.add(weaponArm);
+  return { root, weaponArm, height: 32 * V + 0.2 };
+}
+
 export function createModel(archetype: string, equipment?: Equipment): CharacterModel {
   switch (archetype) {
     case "hero": return createHero(equipment);
     case "slime": return createSlime();
     case "goblin": return createGoblin();
     case "orc": return createOrc();
+    case "goblinKing": return createGoblinKing();
     default: return createSlime();
   }
 }

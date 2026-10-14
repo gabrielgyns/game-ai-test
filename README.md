@@ -28,7 +28,9 @@ Gosmas vivem perto do santuário central, goblins mais longe e orcs na borda do 
 Derrote inimigos para ganhar XP, ouro e loot: equipamentos de três slots (arma, armadura,
 acessório) em quatro raridades (comum, incomum, raro, épico) e poções pequenas e grandes,
 que se empilham na mochila. Itens caem no chão e são coletados ao passar por cima.
-Inimigos avisam o golpe com uma área vermelha que se preenche: saia dela ou role (Espaço) para evitar. Subir de nível cura por completo e aumenta vida e dano.
+Inimigos avisam o golpe com uma área vermelha que se preenche: saia dela ou role (Espaço) para evitar.
+No platô ao norte, cercado de totens, vive o **Rei Goblin**: um chefe com Golpe Pesado, Pisão em área e
+Investida Real em linha, três fases que aceleram os avisos, lacaios na fúria final e loot épico garantido. Subir de nível cura por completo e aumenta vida e dano.
 Se cair, você renasce no santuário depois de alguns segundos. Inimigos renascem em casa.
 
 Veja o [ROADMAP](ROADMAP.md) para a visão e os próximos marcos.
@@ -60,6 +62,7 @@ src/
     inventory.ts   mochila, equipamento e recálculo de atributos
     loot.ts        tabelas de drop por inimigo
     skills.ts      definições das habilidades, esquiva e buffs
+    boss.ts        chefes: padrões de golpe (melee, área, investida), formas de telegraph e fases
     terrain.ts     função de altura do terreno (compartilhada com a malha visual)
     worldgen.ts    geração determinística do mundo por anéis de dificuldade
   game/            apresentação em Three.js e HUD em HTML

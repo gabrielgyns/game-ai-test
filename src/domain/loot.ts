@@ -18,14 +18,21 @@ const LOOT_TABLES: Record<string, LootTable> = {
 
 /** Sorteia e espalha os drops de um inimigo morto ao redor de onde ele caiu. */
 export function rollLoot(world: World, victim: Entity): void {
+  const rand = world.random;
+  const scatter = (spread = 1.6) => ({
+    x: victim.transform.position.x + (rand() - 0.5) * spread,
+    y: victim.transform.position.y,
+    z: victim.transform.position.z + (rand() - 0.5) * spread,
+  });
+  if (victim.boss) {
+    // Chefe: loot garantido e generoso.
+    world.addDrop(createEquipment(rand, 3, "epic"), scatter(3));
+    world.addDrop(createEquipment(rand, 3, rand() < 0.5 ? "rare" : "epic"), scatter(3));
+    world.addDrop(createPotion("large", 2), scatter(3));
+    return;
+  }
   const table = LOOT_TABLES[victim.archetype];
   if (!table) return;
-  const rand = world.random;
-  const scatter = () => ({
-    x: victim.transform.position.x + (rand() - 0.5) * 1.6,
-    y: victim.transform.position.y,
-    z: victim.transform.position.z + (rand() - 0.5) * 1.6,
-  });
   if (rand() < table.equipmentChance) {
     world.addDrop(createEquipment(rand, table.tier, rollRarity(rand, table.tier)), scatter());
   }

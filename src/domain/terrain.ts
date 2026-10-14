@@ -22,13 +22,19 @@ export function terrainHeightSmooth(x: number, z: number): number {
     Math.cos((x - z) * 0.017 - 1.1) * 2.1;
 
   const distFromCenter = Math.hypot(x, z);
-  const flatten = smoothstep(SPAWN_FLAT_RADIUS, SPAWN_FLAT_RADIUS + 22, distFromCenter);
+  const distFromArena = Math.hypot(x - 0, z - -82);
+  const flatten = Math.min(
+    smoothstep(SPAWN_FLAT_RADIUS, SPAWN_FLAT_RADIUS + 22, distFromCenter),
+    smoothstep(13, 24, distFromArena),
+  );
 
   // Bordas sobem para formar uma "muralha" natural, mantendo o jogador dentro.
   const edge = Math.max(Math.abs(x), Math.abs(z));
   const wall = smoothstep(WORLD_HALF - 18, WORLD_HALF, edge) * 14;
 
-  return hills * flatten + wall;
+  // A arena do chefe fica num platô fixo de 6 m para se destacar na paisagem.
+  const plateau = 6 * (1 - smoothstep(13, 24, distFromArena));
+  return hills * flatten + wall + plateau;
 }
 
 /**

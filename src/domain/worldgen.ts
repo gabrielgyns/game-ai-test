@@ -1,6 +1,7 @@
 import { createEnemy, createPlayer, type EnemyKind } from "./factories";
 import { terrainHeight, SPAWN_FLAT_RADIUS, WORLD_HALF } from "./terrain";
 import { World } from "./world";
+import { createGoblinKing } from "./boss";
 
 /** Gerador pseudoaleatório determinístico (mulberry32) para o mundo ser igual a cada partida. */
 export function seededRandom(seed: number): () => number {
@@ -13,6 +14,11 @@ export function seededRandom(seed: number): () => number {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+/** Centro da arena do chefe, no extremo norte do mapa. */
+export const BOSS_HOME = { x: 0, z: -82 };
+/** Raio livre de inimigos comuns em volta da arena. */
+export const BOSS_ARENA_RADIUS = 16;
 
 export interface WorldGenOptions {
   seed?: number;
@@ -40,8 +46,10 @@ export function generateWorld(options: WorldGenOptions = {}): World {
       const radius = ring.min + rand() * (ring.max - ring.min);
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
+      if (Math.hypot(x - BOSS_HOME.x, z - BOSS_HOME.z) < BOSS_ARENA_RADIUS) continue; // arena limpa
       world.spawn((id) => createEnemy(id, ring.kind, { x, y: terrainHeight(x, z), z }));
     }
   }
+  world.spawn((id) => createGoblinKing(id, { x: BOSS_HOME.x, y: terrainHeight(BOSS_HOME.x, BOSS_HOME.z), z: BOSS_HOME.z }));
   return world;
 }

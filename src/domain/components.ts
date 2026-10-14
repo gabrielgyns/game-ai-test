@@ -1,6 +1,7 @@
 import type { Vec2, Vec3 } from "./math";
 import type { Equipment, Inventory } from "./inventory";
 import type { Abilities } from "./skills";
+import type { AttackPattern, Boss } from "./boss";
 
 export type EntityId = number;
 export type EntityKind = "player" | "enemy";
@@ -53,6 +54,8 @@ export interface Combat {
   windupTime: number;
   /** Tempo restante do aviso em curso (0 = nenhum ataque em preparação). */
   windupLeft: number;
+  /** Golpe em preparação: padrão e direção fixada no início do aviso. */
+  pending?: { pattern: AttackPattern; direction: Vec2 };
 }
 
 export interface Progression {
@@ -103,6 +106,7 @@ export interface Entity {
   inventory?: Inventory;
   equipment?: Equipment;
   abilities?: Abilities;
+  boss?: Boss;
 }
 
 export function isAlive(e: Entity): boolean {

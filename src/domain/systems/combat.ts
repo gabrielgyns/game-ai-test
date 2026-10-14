@@ -1,5 +1,7 @@
 import { isAlive, type Entity } from "../components";
-import { distanceXZ } from "../math";
+import type { AttackPattern, TelegraphShape } from "../boss";
+import { directionFromYaw, directionXZ, distanceXZ } from "../math";
+import { CHARGE } from "../skills";
 import { grantXp } from "../progression";
 import { rollLoot } from "../loot";
 import type { World } from "../world";
@@ -23,36 +25,94 @@ export function combatSystem(world: World, dt: number): void {
     if (e.abilities?.dash) continue; // não ataca no meio de uma esquiva ou investida
 
     c.cooldownLeft = c.cooldown;
-    if (c.windupTime > 0) {
-      c.windupLeft = c.windupTime;
-      world.emit({ type: "windup", source: e.id, duration: c.windupTime });
-    } else {
-      resolveAttack(world, e);
-    }
+    startAttack(world, e, defaultPattern(e), c.windupTime);
   }
 
   regenerate(world, dt);
 }
 
+/** Golpe básico de quem não tem padrões próprios. */
+function defaultPattern(e: Entity): AttackPattern {
+  return { id: "basic", name: "Golpe", kind: "melee", range: e.combat.range, windup: e.combat.windupTime, damageMultiplier: 1, cooldown: e.combat.cooldown, minPhase: 1 };
+}
+
+export function telegraphShape(pattern: AttackPattern, direction: { x: number; z: number }): TelegraphShape {
+  if (pattern.kind === "charge") return { kind: "line", length: pattern.range, width: 2.4, direction };
+  return { kind: "circle", radius: pattern.range };
+}
+
+/** Inicia um golpe: com aviso (windup > 0) ou imediato. A direção é fixada agora. */
+export function startAttack(world: World, e: Entity, pattern: AttackPattern, windup: number): void {
+  const player = world.player;
+  const direction =
+    e.kind === "enemy" && player ? directionXZ(e.transform.position, player.transform.position) : directionFromYaw(e.transform.yaw);
+  if (windup > 0) {
+    e.combat.windupLeft = windup;
+    e.combat.pending = { pattern, direction };
+    world.emit({ type: "windup", source: e.id, duration: windup, shape: telegraphShape(pattern, direction), patternName: pattern.id === "basic" ? undefined : pattern.name });
+  } else {
+    e.combat.pending = { pattern, direction };
+    resolveAttack(world, e);
+  }
+}
+
 function resolveAttack(world: World, e: Entity): void {
-  const target = findTarget(world, e);
-  world.emit({ type: "attack", source: e.id, target: target?.id });
-  if (target) applyDamage(world, e, target, effectiveDamage(e));
+  const pending = e.combat.pending;
+  e.combat.pending = undefined;
+  const pattern = pending?.pattern ?? defaultPattern(e);
+  const damage = Math.round(effectiveDamage(e) * pattern.damageMultiplier);
+
+  switch (pattern.kind) {
+    case "melee": {
+      const target = findTarget(world, e, pattern.range);
+      world.emit({ type: "attack", source: e.id, target: target?.id });
+      if (target) applyDamage(world, e, target, damage);
+      break;
+    }
+    case "slam": {
+      let hit: Entity | undefined;
+      for (const other of world.alive()) {
+        if (other.kind === e.kind) continue;
+        if (distanceXZ(e.transform.position, other.transform.position) > pattern.range) continue;
+        hit = other;
+        applyDamage(world, e, other, damage);
+      }
+      world.emit({ type: "attack", source: e.id, target: hit?.id });
+      break;
+    }
+    case "charge": {
+      const ab = e.abilities;
+      if (!ab) break;
+      const duration = CHARGE.duration * (pattern.range / CHARGE.distance);
+      ab.dash = {
+        kind: "charge",
+        timeLeft: duration,
+        duration,
+        direction: pending?.direction ?? directionFromYaw(e.transform.yaw),
+        speed: pattern.range / duration,
+        invulnerable: false,
+        damageMultiplier: pattern.damageMultiplier,
+        hitEntityIds: [],
+      };
+      world.emit({ type: "attack", source: e.id });
+      break;
+    }
+  }
 }
 
 /** Jogador acerta o inimigo vivo mais próximo em alcance; inimigo só acerta o jogador. */
-export function findTarget(world: World, attacker: Entity): Entity | undefined {
+export function findTarget(world: World, attacker: Entity, range = attacker.combat.range): Entity | undefined {
   const pos = attacker.transform.position;
   if (attacker.kind === "enemy") {
     const p = world.player;
-    return p && isAlive(p) && distanceXZ(pos, p.transform.position) <= attacker.combat.range ? p : undefined;
+    return p && isAlive(p) && distanceXZ(pos, p.transform.position) <= range ? p : undefined;
   }
   let best: Entity | undefined;
   let bestDist = Infinity;
   for (const other of world.alive()) {
     if (other.kind !== "enemy") continue;
     const d = distanceXZ(pos, other.transform.position);
-    if (d <= attacker.combat.range && d < bestDist) {
+    if (d <= range && d < bestDist) {
       best = other;
       bestDist = d;
     }
@@ -85,6 +145,9 @@ export function applyDamage(world: World, source: Entity, target: Entity, amount
 function kill(world: World, victim: Entity, killer: Entity): void {
   world.emit({ type: "death", entity: victim.id, killer: killer.id });
   victim.movement.intent = { x: 0, z: 0 };
+  victim.combat.windupLeft = 0;
+  victim.combat.pending = undefined;
+  if (victim.abilities) victim.abilities.dash = null;
 
   if (victim.ai) {
     victim.ai.state = "idle";

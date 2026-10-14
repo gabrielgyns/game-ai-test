@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { isAlive, type Entity, type EntityId } from "../domain/components";
 import type { World } from "../domain/world";
 import { createModel, equipmentSignature, type CharacterModel } from "./models";
+import type { TelegraphShape } from "../domain/boss";
 import { clamp } from "../domain/math";
 
 /** Liga uma entidade do domínio a um modelo na cena, com animação procedural. */
@@ -17,9 +18,12 @@ class EntityView {
   private visualY: number | null = null;
   private spinTime = Infinity;
   private windupTotal = 0;
+  private windupShape: TelegraphShape | null = null;
   private readonly telegraph: THREE.Group;
   private readonly telegraphFill: THREE.Mesh;
   private readonly telegraphRing: THREE.Mesh;
+  private readonly telegraphLine: THREE.Mesh;
+  private readonly telegraphLineFill: THREE.Mesh;
   private readonly scene: THREE.Scene;
 
   constructor(readonly entity: Entity, scene: THREE.Scene) {
@@ -59,15 +63,21 @@ class EntityView {
       new THREE.CircleGeometry(1, 32),
       new THREE.MeshBasicMaterial({ color: "#ff3b3b", transparent: true, opacity: 0.3, side: THREE.DoubleSide, depthWrite: false }),
     );
-    this.telegraph.add(this.telegraphRing, this.telegraphFill);
+    // Versão em linha (investidas): retângulo partindo do atacante na direção do avanço.
+    const lineMat = () => new THREE.MeshBasicMaterial({ color: "#ff3b3b", transparent: true, opacity: 0.3, side: THREE.DoubleSide, depthWrite: false });
+    this.telegraphLine = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), lineMat());
+    (this.telegraphLine.material as THREE.MeshBasicMaterial).opacity = 0.2;
+    this.telegraphLineFill = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), lineMat());
+    this.telegraph.add(this.telegraphRing, this.telegraphFill, this.telegraphLine, this.telegraphLineFill);
     this.telegraph.rotation.x = -Math.PI / 2;
     this.telegraph.visible = false;
     this.telegraph.renderOrder = 5;
     scene.add(this.telegraph);
   }
 
-  triggerWindup(duration: number): void {
+  triggerWindup(duration: number, shape: TelegraphShape): void {
     this.windupTotal = duration;
+    this.windupShape = shape;
   }
 
   triggerSwing(): void {
@@ -110,6 +120,7 @@ class EntityView {
       root.visible = t < 1;
       this.healthBar.visible = false;
       this.targetRing.visible = false;
+      this.telegraph.visible = false; // morreu no meio do aviso: a marca some junto
       return;
     }
     this.deathTime = 0;
@@ -183,15 +194,30 @@ class EntityView {
     if (isTarget) this.targetRing.position.set(p.x, p.y + 0.05, p.z);
 
     // Aviso de golpe: anel no alcance e preenchimento crescendo até o impacto; o corpo recua.
-    const windingUp = e.combat.windupLeft > 0 && this.windupTotal > 0;
+    const windingUp = e.combat.windupLeft > 0 && this.windupTotal > 0 && this.windupShape !== null;
     this.telegraph.visible = windingUp;
     if (windingUp) {
       const progress = 1 - e.combat.windupLeft / this.windupTotal;
-      const r = e.combat.range;
+      const shape = this.windupShape!;
       this.telegraph.position.set(p.x, p.y + 0.06, p.z);
-      this.telegraphRing.scale.setScalar(r);
-      this.telegraphFill.scale.setScalar(Math.max(0.05, r * progress));
-      (this.telegraphFill.material as THREE.MeshBasicMaterial).opacity = 0.18 + progress * 0.3;
+      const circle = shape.kind === "circle";
+      this.telegraphRing.visible = this.telegraphFill.visible = circle;
+      this.telegraphLine.visible = this.telegraphLineFill.visible = !circle;
+      if (circle) {
+        const r = shape.radius;
+        this.telegraphRing.scale.setScalar(r);
+        this.telegraphFill.scale.setScalar(Math.max(0.05, r * progress));
+        (this.telegraphFill.material as THREE.MeshBasicMaterial).opacity = 0.18 + progress * 0.3;
+      } else {
+        // Plano no XZ (grupo já rotacionado): eixo Y local aponta para -Z do mundo.
+        const angle = Math.atan2(shape.direction.x, -shape.direction.z);
+        for (const [mesh, len] of [[this.telegraphLine, shape.length], [this.telegraphLineFill, shape.length * progress]] as const) {
+          mesh.scale.set(shape.width, Math.max(0.05, len), 1);
+          mesh.rotation.z = -angle;
+          mesh.position.set(Math.sin(angle) * (len / 2), Math.cos(angle) * (len / 2), 0);
+        }
+        (this.telegraphLineFill.material as THREE.MeshBasicMaterial).opacity = 0.2 + progress * 0.3;
+      }
       root.rotation.x += 0.25 * Math.sin(progress * Math.PI / 2); // recua antes de bater
       if (this.model.weaponArm) this.model.weaponArm.rotation.x = -1.2 * progress; // arma erguida
       if (!this.model.weaponArm) root.scale.y = 1 - progress * 0.25; // gosma se comprime

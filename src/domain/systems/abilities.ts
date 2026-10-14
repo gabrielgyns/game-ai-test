@@ -115,8 +115,8 @@ function useSkill(world: World, e: Entity, id: SkillId): boolean {
 function chargeHits(world: World, e: Entity): void {
   const dash = e.abilities!.dash!;
   for (const other of world.alive()) {
-    if (other.kind !== "enemy" || dash.hitEntityIds.includes(other.id)) continue;
-    if (distanceXZ(e.transform.position, other.transform.position) > 1.6) continue;
+    if (other.kind === e.kind || dash.hitEntityIds.includes(other.id)) continue;
+    if (distanceXZ(e.transform.position, other.transform.position) > (e.boss ? 2.4 : 1.6)) continue;
     dash.hitEntityIds.push(other.id);
     applyDamage(world, e, other, Math.round(effectiveDamage(e) * dash.damageMultiplier));
   }

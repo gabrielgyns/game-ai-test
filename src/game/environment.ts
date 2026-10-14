@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { terrainHeight, SPAWN_FLAT_RADIUS, WORLD_HALF } from "../domain/terrain";
-import { seededRandom } from "../domain/worldgen";
+import { BOSS_HOME, seededRandom } from "../domain/worldgen";
 import { VoxelBuilder, voxelMaterial } from "./voxel";
 
 /** Voxel de cenário: 4 por metro (mais grosso que os personagens, como blocos de mundo). */
@@ -79,6 +79,27 @@ export function createEnvironment(seed = 4242): THREE.Group {
     pillars.setMatrixAt(i, dummy.matrix);
   }
   group.add(pillars);
+
+  // Arena do chefe: anel de totens goblin com crânios, no platô norte.
+  const totem = new VoxelBuilder()
+    .box(-1, 0, -1, 1, 7, 1, "#5a3d2b")
+    .box(-2, 7, -2, 2, 10, 2, "#e8dcc0")
+    .set(-1, 8, -3, "#1b1b1b").set(0, 8, -3, "#1b1b1b")
+    .box(-3, 4, -1, 3, 5, 1, "#7a1f2b")
+    .build(V, 0.08);
+  const totems = new THREE.InstancedMesh(totem, voxelMaterial(), 10);
+  totems.castShadow = totems.receiveShadow = true;
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2;
+    const x = BOSS_HOME.x + Math.cos(a) * 12;
+    const z = BOSS_HOME.z + Math.sin(a) * 12;
+    dummy.position.set(Math.floor(x) + 0.5, terrainHeight(x, z), Math.floor(z) + 0.5);
+    dummy.rotation.set(0, -a + Math.PI / 2, 0);
+    dummy.scale.setScalar(1);
+    dummy.updateMatrix();
+    totems.setMatrixAt(i, dummy.matrix);
+  }
+  group.add(totems);
   return group;
 }
 
@@ -86,6 +107,8 @@ function randomPoint(rand: () => number, minRadius: number): { x: number; z: num
   for (;;) {
     const x = (rand() * 2 - 1) * (WORLD_HALF - 6);
     const z = (rand() * 2 - 1) * (WORLD_HALF - 6);
-    if (Math.hypot(x, z) >= minRadius) return { x, z };
+    if (Math.hypot(x, z) < minRadius) continue;
+    if (Math.hypot(x - BOSS_HOME.x, z - BOSS_HOME.z) < 15) continue; // arena do chefe livre
+    return { x, z };
   }
 }

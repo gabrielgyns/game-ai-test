@@ -40,7 +40,7 @@ describe("IA de inimigos", () => {
     stepWorld(world, 0.016); // idle -> chase
     stepWorld(world, 0.016); // chase -> attack
     const events = stepWorld(world, 0.016); // começa o aviso
-    expect(events).toContainEqual({ type: "windup", source: slime.id, duration: slime.combat.windupTime });
+    expect(events).toContainEqual(expect.objectContaining({ type: "windup", source: slime.id, duration: slime.combat.windupTime }));
     expect(player.health.current).toBe(player.health.max);
     for (let t = 0; t < slime.combat.windupTime + 0.02; t += 0.016) stepWorld(world, 0.016);
     expect(player.health.current).toBeLessThan(player.health.max);

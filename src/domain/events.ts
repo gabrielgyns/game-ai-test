@@ -1,6 +1,7 @@
 import type { EntityId } from "./components";
 import type { EquipSlot } from "./items";
 import type { SkillId } from "./skills";
+import type { TelegraphShape } from "./boss";
 
 export type GameEvent =
   | { type: "damage"; source: EntityId; target: EntityId; amount: number }
@@ -10,7 +11,10 @@ export type GameEvent =
   | { type: "loot"; entity: EntityId; gold: number }
   | { type: "respawn"; entity: EntityId }
   | { type: "attack"; source: EntityId; target?: EntityId }
-  | { type: "windup"; source: EntityId; duration: number }
+  | { type: "windup"; source: EntityId; duration: number; shape: TelegraphShape; patternName?: string }
+  | { type: "bossEngage"; entity: EntityId }
+  | { type: "bossPhase"; entity: EntityId; phase: number }
+  | { type: "bossSummon"; entity: EntityId; minions: EntityId[] }
   | { type: "drop"; dropId: number }
   | { type: "pickup"; entity: EntityId; itemId: number; dropId: number }
   | { type: "inventoryFull"; entity: EntityId }

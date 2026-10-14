@@ -1,5 +1,7 @@
 import type { Entity } from "../domain/components";
 import { countItems } from "../domain/inventory";
+import { isAlive } from "../domain/components";
+import type { World } from "../domain/world";
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -18,6 +20,11 @@ export class Hud {
   private readonly potions = el("hud-potions");
   private readonly bag = el("hud-bag");
   private readonly target = el("target");
+  private readonly bossBar = el("bossbar");
+  private readonly bossName = el("boss-name");
+  private readonly bossPhase = el("boss-phase");
+  private readonly bossFill = el("boss-hp-fill");
+  private readonly bossText = el("boss-hp-text");
   private readonly targetName = el("target-name");
   private readonly targetHpFill = el("target-hp-fill");
   private readonly targetHpText = el("target-hp-text");
@@ -42,6 +49,25 @@ export class Hud {
     this.log.appendChild(line);
     while (this.log.childElementCount > 7) this.log.firstElementChild?.remove();
     setTimeout(() => line.remove(), 6000);
+  }
+
+  /** Barra grande do chefe engajado; esconde o painel de alvo comum enquanto aparece. */
+  updateBoss(world: World): void {
+    let boss: Entity | undefined;
+    for (const e of world.enemies()) {
+      if (e.boss?.engaged && isAlive(e)) {
+        boss = e;
+        break;
+      }
+    }
+    this.bossBar.classList.toggle("hidden", !boss);
+    if (!boss) return;
+    this.target.classList.add("hidden");
+    this.bossName.textContent = boss.boss!.title;
+    const phases = boss.boss!.phaseThresholds.length + 1;
+    this.bossPhase.textContent = `Fase ${boss.boss!.phase} / ${phases}`;
+    this.bossFill.style.width = `${(boss.health.current / boss.health.max) * 100}%`;
+    this.bossText.textContent = `${Math.ceil(boss.health.current)} / ${boss.health.max}`;
   }
 
   update(player: Entity, target: Entity | undefined): void {

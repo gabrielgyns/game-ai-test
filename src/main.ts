@@ -141,7 +141,28 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         views.get(ev.source)?.triggerSwing();
         break;
       case "windup":
-        views.get(ev.source)?.triggerWindup(ev.duration);
+        views.get(ev.source)?.triggerWindup(ev.duration, ev.shape);
+        if (ev.patternName) {
+          const src = world.get(ev.source);
+          if (src) floats.spawn(src.transform.position, ev.patternName, "#ff6b6b", 1.1);
+        }
+        break;
+      case "bossEngage": {
+        const boss = world.get(ev.entity);
+        if (boss) hud.pushLog(`${boss.name} entrou em combate!`, "level");
+        break;
+      }
+      case "bossPhase": {
+        const boss = world.get(ev.entity);
+        if (boss) {
+          floats.spawn(boss.transform.position, ev.phase === 3 ? "FÚRIA!" : `FASE ${ev.phase}`, "#ff9f43", 1.5);
+          hud.pushLog(ev.phase === 3 ? `${boss.name} está furioso: mais dano e lacaios!` : `${boss.name} entrou na fase ${ev.phase}: golpes mais rápidos.`, "dmg-in");
+        }
+        break;
+      }
+      case "bossSummon":
+        views.sync(world);
+        hud.pushLog("Goblins foram convocados!", "dmg-in");
         break;
       case "damage": {
         const target = world.get(ev.target);
@@ -238,6 +259,7 @@ function frame(): void {
   }
   if (paused) {
     hud.update(player, currentTarget());
+    hud.updateBoss(world);
     renderer.render(scene, cam.camera);
     return;
   }
@@ -287,6 +309,7 @@ function frame(): void {
   dropViews.update(world, world.time);
   floats.update(frameDt);
   hud.update(player, target);
+  hud.updateBoss(world);
   skillBar.update(player);
   renderer.render(scene, cam.camera);
 }

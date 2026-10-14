@@ -1,6 +1,9 @@
-import { isAlive } from "../components";
+import { isAlive, type Entity } from "../components";
 import { directionXZ, distanceXZ, lerpAngle, yawFromDirection, clamp } from "../math";
 import type { World } from "../world";
+import { resetBoss, updateBossPhase } from "../boss";
+import { createEnemy } from "../factories";
+import { startAttack } from "./combat";
 
 /**
  * Máquina de estados simples por inimigo:
@@ -19,6 +22,11 @@ export function aiSystem(world: World, dt: number): void {
 
     const distHome = distanceXZ(pos, ai.home);
     const distPlayer = playerAlive ? distanceXZ(pos, player.transform.position) : Infinity;
+
+    if (e.boss) {
+      bossBehavior(world, e, dt, playerAlive ? player : undefined, distPlayer, distHome);
+      continue;
+    }
 
     switch (ai.state) {
       case "idle":
@@ -58,5 +66,91 @@ export function aiSystem(world: World, dt: number): void {
         }
         break;
     }
+  }
+}
+
+/**
+ * Chefe: alterna padrões de golpe telegrafados conforme a distância e os cooldowns,
+ * muda de fase com a vida e invoca lacaios na fase final.
+ */
+function bossBehavior(world: World, e: Entity, dt: number, player: Entity | undefined, distPlayer: number, distHome: number): void {
+  const ai = e.ai!;
+  const boss = e.boss!;
+  const pos = e.transform.position;
+  for (const id of Object.keys(boss.cooldowns)) boss.cooldowns[id] = Math.max(0, (boss.cooldowns[id] ?? 0) - dt);
+
+  if (ai.state === "idle") {
+    if (player && distPlayer <= ai.aggroRange) {
+      ai.state = "chase";
+      boss.engaged = true;
+      world.emit({ type: "bossEngage", entity: e.id });
+    }
+    return;
+  }
+
+  if (ai.state === "return") {
+    if (distHome < 1.5) {
+      ai.state = "idle";
+      e.health.current = e.health.max;
+      resetBoss(e);
+    } else {
+      e.movement.intent = directionXZ(pos, ai.home);
+    }
+    return;
+  }
+
+  // Em combate (chase/attack).
+  if (!player || distHome > ai.leashRange) {
+    ai.state = "return";
+    e.combat.windupLeft = 0;
+    e.combat.pending = undefined;
+    return;
+  }
+
+  const newPhase = updateBossPhase(e);
+  if (newPhase !== null) world.emit({ type: "bossPhase", entity: e.id, phase: newPhase });
+  if (boss.phase >= 3 && !boss.summoned) {
+    boss.summoned = true;
+    const minions = [0, 1].map((i) => {
+      const angle = e.transform.yaw + (i === 0 ? 1 : -1) * 1.3;
+      const spawnAt = { x: pos.x - Math.sin(angle) * 2.5, y: pos.y, z: pos.z - Math.cos(angle) * 2.5 };
+      const minion = world.spawn((id) => createEnemy(id, "goblin", spawnAt));
+      minion.ai!.respawnSeconds = Infinity; // lacaios não renascem
+      minion.ai!.state = "chase";
+      minion.ai!.leashRange = 60;
+      return minion.id;
+    });
+    world.emit({ type: "bossSummon", entity: e.id, minions });
+  }
+
+  // Preparando ou executando um golpe: fica parado encarando o alvo.
+  if (e.combat.windupLeft > 0 || e.abilities?.dash) {
+    if (e.combat.windupLeft > 0) {
+      const dir = directionXZ(pos, player.transform.position);
+      e.transform.yaw = lerpAngle(e.transform.yaw, yawFromDirection(dir), clamp(6 * dt, 0, 1));
+    }
+    return;
+  }
+
+  const ready = boss.patterns.filter((p) => p.minPhase <= boss.phase && (boss.cooldowns[p.id] ?? 0) <= 0);
+  const choose = () => {
+    // Longe: investida. Perto: golpe básico; o pisão entra quando o golpe está em recarga
+    // ou quando o jogador fica a meia distância (fora do melee, dentro do raio).
+    const charge = ready.find((p) => p.kind === "charge");
+    if (charge && distPlayer > 5 && distPlayer <= charge.range) return charge;
+    const melee = ready.find((p) => p.kind === "melee");
+    if (melee && distPlayer <= melee.range) return melee;
+    const slam = ready.find((p) => p.kind === "slam");
+    if (slam && distPlayer <= slam.range * 0.8) return slam;
+    return undefined;
+  };
+  const pattern = choose();
+  if (pattern) {
+    ai.state = "attack";
+    boss.cooldowns[pattern.id] = pattern.cooldown;
+    startAttack(world, e, pattern, pattern.windup * boss.windupScale);
+  } else {
+    ai.state = "chase";
+    if (distPlayer > 2.4) e.movement.intent = directionXZ(pos, player.transform.position);
   }
 }
