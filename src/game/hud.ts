@@ -34,6 +34,17 @@ export class Hud {
   private readonly death = el("death");
   private readonly deathTimer = el("death-timer");
 
+  private readonly clock = el("hud-clock");
+  private clockText = "";
+
+  /** Relógio do mundo no painel de status, com sol ou lua. */
+  setClock(text: string, night: boolean): void {
+    const full = `${night ? "☾" : "☀"} ${text}`;
+    if (full === this.clockText) return;
+    this.clockText = full;
+    this.clock.textContent = full;
+  }
+
   hideIntro(): void {
     this.overlay.classList.add("hidden");
   }

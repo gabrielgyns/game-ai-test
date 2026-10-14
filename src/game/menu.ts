@@ -5,6 +5,7 @@ function el<T extends HTMLElement>(id: string): T {
 }
 
 const SENS_KEY = "vale.sensibilidade";
+const SHAKE_KEY = "vale.tremor";
 
 /** Menu de pausa (ESC). Abre sempre que o pointer lock é perdido depois do jogo começar. */
 export class PauseMenu {
@@ -12,6 +13,8 @@ export class PauseMenu {
   private readonly sens = el<HTMLInputElement>("menu-sens");
   private readonly sensValue = el("menu-sens-value");
   sensitivity = 1;
+  /** Multiplicador do tremor de câmera (0 desliga). */
+  shakeIntensity = 1;
   onResume: () => void = () => {};
   onSave: () => void = () => {};
   onSlots: () => void = () => {};
@@ -27,6 +30,25 @@ export class PauseMenu {
     } catch {
       /* armazenamento indisponível: usa o padrão */
     }
+    try {
+      const savedShake = localStorage.getItem(SHAKE_KEY);
+      if (savedShake !== null && Number.isFinite(Number(savedShake))) this.shakeIntensity = Number(savedShake);
+    } catch {
+      /* padrão */
+    }
+    const shakeInput = el<HTMLInputElement>("menu-shake");
+    const shakeValue = el("menu-shake-value");
+    shakeInput.value = String(this.shakeIntensity);
+    shakeValue.textContent = `${Math.round(this.shakeIntensity * 100)}%`;
+    shakeInput.addEventListener("input", () => {
+      this.shakeIntensity = Number(shakeInput.value);
+      shakeValue.textContent = `${Math.round(this.shakeIntensity * 100)}%`;
+      try {
+        localStorage.setItem(SHAKE_KEY, String(this.shakeIntensity));
+      } catch {
+        /* ignora */
+      }
+    });
     this.sens.value = String(this.sensitivity);
     this.sensValue.textContent = this.sensitivity.toFixed(1);
 

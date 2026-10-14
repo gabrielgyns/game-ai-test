@@ -10,7 +10,9 @@ import { SKILLS, type SkillId } from "../domain/skills";
 import { RARITY_LABEL } from "../domain/items";
 import { DropView } from "../game/dropViews";
 import { createProjectileMesh } from "../game/projectileViews";
-import { PROP_BUILDERS } from "../game/environment";
+import { createBraziers, PROP_BUILDERS } from "../game/environment";
+import { FOLIAGE_BUILDERS } from "../game/foliage";
+import { terrainHeight } from "../domain/terrain";
 import { voxelMaterial } from "../game/voxel";
 
 /** Um item da vitrine: um personagem vivo (passa pelas views do jogo) ou um objeto parado. */
@@ -230,6 +232,37 @@ export function buildCatalog(): Exhibit[] {
     });
   }
 
+  for (const [label, build] of Object.entries(FOLIAGE_BUILDERS)) {
+    out.push({
+      kind: "object",
+      id: `foliage.${label}`,
+      group: "Cenário",
+      label,
+      description: "Vegetação rasteira em voxels de 6 cm. No jogo são dezenas de milhares, balançando ao vento.",
+      size: 0.7,
+      build: () => {
+        const m = new THREE.Mesh(build(), voxelMaterial());
+        m.castShadow = m.receiveShadow = true;
+        return { object: m };
+      },
+    });
+  }
+  out.push({
+    kind: "object",
+    id: "prop.braseiro",
+    group: "Cenário",
+    label: "Braseiro do santuário",
+    description: "Chama que tremula sobre os pilares; à noite brilha e ilumina a praça.",
+    size: 1.2,
+    build: () => {
+      const b = createBraziers();
+      // Mostra só o primeiro braseiro, centrado: o grupo inteiro está no anel do santuário.
+      const holder = new THREE.Group();
+      b.group.position.set(-8.5, -(terrainHeight(0, 0) + 1.5), -0.5);
+      holder.add(b.group);
+      return { object: holder, update: (t: number) => b.update(t, 1) };
+    },
+  });
   for (const [label, build] of Object.entries(PROP_BUILDERS)) {
     out.push({
       kind: "object",

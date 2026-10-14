@@ -32,6 +32,12 @@ import { ProjectileViews } from "./game/projectileViews";
 import { directionFromYaw } from "./domain/math";
 import { useFirstPotion } from "./domain/inventory";
 import { createTerrainMesh } from "./game/terrainMesh";
+import { DayNightSky } from "./game/sky";
+import { Foliage } from "./game/foliage";
+import { HIT_COLORS, Particles } from "./game/particles";
+import { attenuate, CameraShake, traumaFromDamage } from "./game/shake";
+import { createBraziers } from "./game/environment";
+import { clockAt, DAY_LENGTH, formatClock, START_HOUR } from "./domain/dayCycle";
 
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -42,28 +48,20 @@ renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.toneMapping = THREE.NoToneMapping;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color("#8fc5ee");
-scene.fog = new THREE.Fog("#8fc5ee", 70, 180);
-
-const hemi = new THREE.HemisphereLight("#cfe8ff", "#5a7a3a", 0.9);
-scene.add(hemi);
-const sun = new THREE.DirectionalLight("#fff4d6", 2.2);
-sun.position.set(40, 70, 30);
-sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
-sun.shadow.camera.near = 1;
-sun.shadow.camera.far = 220;
-const shadowSize = 45;
-sun.shadow.camera.left = -shadowSize;
-sun.shadow.camera.right = shadowSize;
-sun.shadow.camera.top = shadowSize;
-sun.shadow.camera.bottom = -shadowSize;
-sun.shadow.bias = -0.0015;
-sun.shadow.normalBias = 0.04;
-scene.add(sun, sun.target);
+// Céu, sol, lua e neblina seguem o relógio do mundo (dayCycle no domínio).
+const sky = new DayNightSky(scene);
+const foliage = new Foliage();
+scene.add(foliage.group);
+const particles = new Particles(scene);
+const shake = new CameraShake();
+/** Congela a simulação por alguns centésimos num golpe forte ("hit-stop"), para o impacto pesar. */
+let hitStop = 0;
 
 scene.add(createTerrainMesh());
 scene.add(createEnvironment());
+// Braseiros nos pilares do santuário: chamas que brilham mais à noite e uma luz quente no centro.
+const braziers = createBraziers();
+scene.add(braziers.group);
 
 // Saves em slots. Três jeitos de abrir a página:
 // - pedido de novo jogo na sessão (escolhido na tela de saves): gera o mundo com a classe e o nome;
@@ -371,6 +369,12 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
       case "attack": {
         views.get(ev.source)?.triggerSwing();
         const src = world.get(ev.source);
+        if (src?.boss) {
+          // Golpe de chefe estremece o chão mesmo quando erra.
+          shake.add(attenuate(0.3, distanceXZ(src.transform.position, player.transform.position), 20));
+          const sp = src.transform.position;
+          particles.dust({ x: sp.x, y: sp.y + 0.1, z: sp.z }, "#a89878");
+        }
         if (src) {
           const ranged = src.classId && CLASSES[src.classId].attackStyle !== "melee";
           audio.play(ranged ? "shoot" : "swing", { ...spatial(src.transform.position), pitch: src.boss ? 0.6 : src.kind === "player" ? 1.1 : 0.85 });
@@ -394,6 +398,7 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
       case "bossPhase": {
         const boss = world.get(ev.entity);
         if (boss) {
+          shake.add(attenuate(ev.phase === 3 ? 0.5 : 0.3, distanceXZ(boss.transform.position, player.transform.position), 30));
           audio.play(ev.phase === 3 ? "bossRoar" : "bossPhase");
           floats.spawn(boss.transform.position, ev.phase === 3 ? "FÚRIA!" : `FASE ${ev.phase}`, "#ff9f43", 1.5);
           hud.pushLog(ev.phase === 3 ? `${boss.name} está furioso: mais dano e lacaios!` : `${boss.name} entrou na fase ${ev.phase}: golpes mais rápidos.`, "dmg-in");
@@ -434,6 +439,17 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         const source = world.get(ev.source);
         if (!target || !source) break;
         const toPlayer = ev.target === player.id;
+        const tview = views.get(ev.target);
+        tview?.flash();
+        const tp = target.transform.position;
+        const heavy = ev.amount >= target.health.max * 0.2;
+        particles.hit({ x: tp.x, y: tp.y + (tview?.model.height ?? 1.6) * 0.55, z: tp.z }, HIT_COLORS[target.archetype] ?? ["#cccccc"], heavy);
+        if (toPlayer) shake.add(traumaFromDamage(ev.amount, player.health.max));
+        else if (ev.source === player.id) {
+          const melee = !player.classId || CLASSES[player.classId].attackStyle === "melee";
+          shake.add(heavy ? 0.16 : 0.07);
+          if (melee) hitStop = Math.max(hitStop, heavy ? 0.075 : 0.045);
+        }
         audio.play(toPlayer ? "hurt" : "hit", { ...spatial(target.transform.position), pitch: target.boss ? 0.7 : 1 });
         floats.spawn(target.transform.position, `${ev.amount}`, toPlayer ? "#ff7b7b" : "#ffd37a", toPlayer ? 1 : 0.9);
         hud.pushLog(toPlayer ? `${source.name} te acertou por ${ev.amount}` : `Você acertou ${target.name} por ${ev.amount}`, toPlayer ? "dmg-in" : "dmg-out");
@@ -447,6 +463,13 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
           audio.play("playerDeath");
         } else {
           hud.pushLog(`${victim.name} derrotado!`, "gain");
+          const vp = victim.transform.position;
+          particles.death({ x: vp.x, y: vp.y + 0.6, z: vp.z }, HIT_COLORS[victim.archetype] ?? ["#cccccc"], !!victim.boss);
+          if (victim.boss) shake.add(0.7);
+          else if (ev.killer === player.id) {
+            shake.add(0.12);
+            hitStop = Math.max(hitStop, 0.08);
+          }
           const pitchByType: Record<string, number> = { slime: 1.3, goblin: 1, orc: 0.7, spider: 1.5, bogZombie: 0.6, scorpion: 1.2, bandit: 0.95 };
           audio.play("enemyDeath", { ...spatial(victim.transform.position), pitch: victim.boss ? 0.5 : (pitchByType[victim.archetype] ?? 1) });
           if (victim.boss) audio.setBossMode(false);
@@ -461,6 +484,7 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         break;
       case "levelUp":
         audio.play("levelUp");
+        particles.sparkle({ x: player.transform.position.x, y: player.transform.position.y + 1.2, z: player.transform.position.z }, ["#ffe57a", "#fff3c4", "#ffb84a"], 36);
         floats.spawn(player.transform.position, `NÍVEL ${ev.level}!`, "#ffe57a", 1.4);
         hud.pushLog(`Você alcançou o nível ${ev.level}!`, "level");
         saveGame("auto");
@@ -482,6 +506,7 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         break;
       case "heal":
         audio.play("potion");
+        particles.sparkle({ x: player.transform.position.x, y: player.transform.position.y + 1, z: player.transform.position.z }, ["#9ce39c", "#d8ffd0"]);
         floats.spawn(player.transform.position, `+${ev.amount}`, "#9ce39c", 0.9);
         hud.pushLog(`Você recuperou ${ev.amount} de vida.`, "gain");
         break;
@@ -495,12 +520,14 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         audio.play(SKILL_SFX[ev.skill]);
         if (ev.skill === "whirlwind") {
           views.get(ev.entity)?.triggerSpin();
+          if (ev.hits > 0) shake.add(0.18);
           hud.pushLog(ev.hits > 0 ? `${def.name} acertou ${ev.hits} inimigo${ev.hits > 1 ? "s" : ""}!` : `${def.name} não acertou ninguém.`, ev.hits > 0 ? "dmg-out" : "gain");
         } else if (ev.skill === "warcry") {
           floats.spawn(player.transform.position, "GRITO DE GUERRA!", "#ff9f43", 1.1);
           hud.pushLog("+50% de dano por 8 s!", "level");
         } else if (ev.skill === "charge" || ev.skill === "piercingShot" || ev.skill === "fireball" || ev.skill === "arrowRain") {
           views.get(ev.entity)?.triggerSwing();
+          if (ev.skill === "charge") particles.dust({ x: player.transform.position.x, y: player.transform.position.y + 0.1, z: player.transform.position.z });
         } else if (ev.skill === "focus") {
           floats.spawn(player.transform.position, "FOCO!", "#9ce39c", 1.0);
           hud.pushLog("+40% de dano por 8 s!", "level");
@@ -514,6 +541,8 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
       }
       case "projectileHit":
         if (ev.explodeRadius > 0) {
+          shake.add(attenuate(0.32, distanceXZ(ev.position, player.transform.position), 22));
+          particles.burst(ev.position, { count: 14, colors: ev.projectileId === -1 ? ["#9ce39c", "#6fcf5a"] : ["#ff9a3c", "#ffd37a", "#5a4a3a"], speed: [2, 5], up: [2, 5], size: [0.08, 0.16], life: [0.5, 0.9] });
           projectileViews.burst(ev.position, ev.explodeRadius, ev.projectileId === -1 ? "#9ce39c" : "#ff9a3c");
           audio.play("explode", spatial(ev.position));
         } else {
@@ -533,7 +562,10 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         }
         break;
       case "roll":
-        if (ev.entity === player.id) audio.play("roll");
+        if (ev.entity === player.id) {
+          audio.play("roll");
+          particles.dust({ x: player.transform.position.x, y: player.transform.position.y + 0.1, z: player.transform.position.z });
+        }
         break;
       case "drop": {
         const d = world.drops.get(ev.dropId);
@@ -611,7 +643,10 @@ function frame(): void {
   if (performance.now() - lastSaveAt > AUTOSAVE_MS) saveGame("auto");
 
   // Simulação em passo fixo para o combate ser previsível.
-  accumulator += frameDt;
+  // Hit-stop: a simulação e as animações param por um instante; câmera e partículas seguem.
+  const simDt = hitStop > 0 ? 0 : frameDt;
+  hitStop = Math.max(0, hitStop - frameDt);
+  accumulator += simDt;
   while (accumulator >= FIXED_DT) {
     handleEvents(stepWorld(world, FIXED_DT));
     accumulator -= FIXED_DT;
@@ -629,10 +664,16 @@ function frame(): void {
   // Apresentação.
   const target = currentTarget();
   const p = player.transform.position;
-  cam.update(new THREE.Vector3(p.x, p.y, p.z), frameDt);
-  sun.position.set(p.x + 40, p.y + 70, p.z + 30);
-  sun.target.position.set(p.x, p.y, p.z);
-  views.update(frameDt, cam.camera, target?.id, world.time, player);
+  const focus = new THREE.Vector3(p.x, p.y, p.z);
+  cam.update(focus, frameDt);
+  shake.intensity = menu.shakeIntensity;
+  cam.applyShake(shake.update(frameDt));
+  sky.update(world.time, cam.camera, focus, frameDt);
+  foliage.update(world.time, p);
+  braziers.update(world.time, sky.night);
+  particles.update(frameDt);
+  hud.setClock(formatClock(clockAt(world.time)), sky.night > 0.5);
+  views.update(simDt, cam.camera, target?.id, world.time, player);
   const npcNear = nearestNpc();
   interactEl.classList.toggle("hidden", !npcNear || dialogue.isOpen);
   if (npcNear) interactText.textContent = `Falar com ${npcNear.name}`;
@@ -660,6 +701,14 @@ if (import.meta.env.DEV) {
     },
     save: () => saveGame("manual"),
     slots: saveSlots,
+    /** Pula o relógio para uma hora do dia (só para testes e screenshots). */
+    setHour: (hour: number) => {
+      const day = Math.floor(world.time / DAY_LENGTH);
+      world.time = day * DAY_LENGTH + ((((hour - START_HOUR) % 24) + 24) % 24) / 24 * DAY_LENGTH;
+    },
+    particles,
+    shake,
+    foliage,
     activeSlot: () => activeSlot,
     audioState: () => (audio.ready ? "running" : "locked"),
     audioLevel: () => audio.measureLevel(),

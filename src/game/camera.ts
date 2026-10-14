@@ -44,6 +44,14 @@ export class ThirdPersonCamera {
     this.camera.lookAt(focus);
   }
 
+  /** Tremor: desloca e inclina a câmera no espaço dela, depois de posicionada no quadro. */
+  applyShake(o: { x: number; y: number; roll: number }): void {
+    if (o.x === 0 && o.y === 0 && o.roll === 0) return;
+    this.camera.translateX(o.x);
+    this.camera.translateY(o.y);
+    this.camera.rotateZ(o.roll);
+  }
+
   /** Yaw que uma entidade deve ter para encarar a mesma direção que a câmera olha. */
   get facingYaw(): number {
     return this.yaw;

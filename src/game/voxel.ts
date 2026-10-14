@@ -22,6 +22,8 @@ export interface BuildOptions {
   ao?: boolean;
   /** Intensidade do escurecimento por AO (0 = nenhum, 1 = forte). */
   aoStrength?: number;
+  /** Pula as faces de baixo na camada y = 0 (peças apoiadas no chão, como grama e flores). */
+  skipGroundFaces?: boolean;
 }
 
 export class VoxelBuilder {
@@ -191,6 +193,7 @@ export class VoxelBuilder {
       for (const [key, color] of this.voxels) {
         const [x, y, z] = key.split(",").map(Number) as [number, number, number];
         if (this.has(x + face.n[0], y + face.n[1], z + face.n[2])) continue;
+        if (opts.skipGroundFaces && face.n[1] === -1 && y === 0) continue;
         const p: [number, number, number] = [x, y, z];
         const d = p[face.axis];
         const u = p[face.uAxis];

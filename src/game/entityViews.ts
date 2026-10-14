@@ -6,6 +6,9 @@ import type { TelegraphShape } from "../domain/boss";
 import { questsForNpc } from "../domain/quests";
 import { clamp } from "../domain/math";
 
+const FLASH_TIME = 0.14;
+const WHITE = new THREE.Color("#ffffff");
+
 /** Liga uma entidade do domínio a um modelo na cena, com animação procedural. */
 class EntityView {
   model: CharacterModel;
@@ -31,6 +34,9 @@ class EntityView {
   private shieldMesh!: THREE.Mesh;
   private markerKind: "" | "!" | "?" = "";
   private readonly scene: THREE.Scene;
+  /** Clarão branco ao levar um golpe: segundos restantes e materiais com o emissivo original. */
+  private flashLeft = 0;
+  private flashMaterials: { material: THREE.MeshStandardMaterial; emissive: THREE.Color; intensity: number }[] = [];
 
   constructor(readonly entity: Entity, scene: THREE.Scene) {
     this.scene = scene;
@@ -38,6 +44,7 @@ class EntityView {
     this.model = createModel(entity.archetype, entity.equipment, entity.classId);
     this.model.root.rotation.order = "YXZ"; // yaw primeiro, depois a cambalhota em torno do próprio eixo
     scene.add(this.model.root);
+    this.collectMaterials();
     this.shieldMesh = new THREE.Mesh(
       new THREE.SphereGeometry(1.5, 12, 8),
       new THREE.MeshBasicMaterial({ color: new THREE.Color("#8fb3ff").multiplyScalar(1.4), transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false, wireframe: true }),
@@ -132,6 +139,36 @@ class EntityView {
     this.model = createModel(this.entity.archetype, this.entity.equipment, this.entity.classId);
     this.model.root.rotation.order = "YXZ";
     this.scene.add(this.model.root);
+    this.collectMaterials();
+  }
+
+  private collectMaterials(): void {
+    const seen = new Set<THREE.Material>();
+    this.flashMaterials = [];
+    this.model.root.traverse((o) => {
+      const m = (o as THREE.Mesh).material;
+      if (!(m instanceof THREE.MeshStandardMaterial) || seen.has(m)) return;
+      seen.add(m);
+      this.flashMaterials.push({ material: m, emissive: m.emissive.clone(), intensity: m.emissiveIntensity });
+    });
+  }
+
+  /** Clarão rápido de "acertou". */
+  flash(): void {
+    this.flashLeft = FLASH_TIME;
+  }
+
+  private applyFlash(dt: number): void {
+    if (this.flashLeft <= 0) return;
+    this.flashLeft = Math.max(0, this.flashLeft - dt);
+    const k = this.flashLeft / FLASH_TIME;
+    const glow = new Set(this.model.glowMaterials?.map((g) => g.material));
+    for (const f of this.flashMaterials) {
+      // Materiais com glow já tiveram a intensidade do pulso escrita neste quadro.
+      const base = glow.has(f.material) ? f.material.emissiveIntensity : f.intensity;
+      f.material.emissive.copy(f.emissive).lerp(WHITE, k);
+      f.material.emissiveIntensity = base + (0.75 - base) * k;
+    }
   }
 
   update(dt: number, camera: THREE.Camera, isTarget: boolean, time: number, player?: Entity): void {
@@ -195,6 +232,7 @@ class EntityView {
       const pulse = 1 + Math.sin(time * 2.4) * 0.12;
       for (const g of this.model.glowMaterials) g.material.emissiveIntensity = g.baseIntensity * pulse;
     }
+    this.applyFlash(dt);
 
     // Caminhada: pernas e braços alternam como um pêndulo; o corpo sobe no apoio de cada passo.
     const moving = e.movement.intent.x !== 0 || e.movement.intent.z !== 0;

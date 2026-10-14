@@ -59,6 +59,16 @@ com screenshots antes de serem considerados prontos.
     substitui a escolha de classe do overlay e os botões de exportar/importar/novo jogo do menu.
     Trocar de slot salva o atual e recarrega a página (o mundo nasce uma vez no boot). Verificado com
     11 testes de domínio e um roteiro headless de 15 checagens (criar, trocar, apagar, migrar).
+18. **Mais vida no mundo** (pedido do dono, "puro visual, muito impacto"). Domínio: `dayCycle.ts`
+    (relógio sobre `world.time`, então o horário é salvo; dia de 12 min começando às 8h; altura do sol,
+    luz do dia e crepúsculo). Apresentação: `sky.ts` (uma direcional que é sol de dia e lua à noite,
+    trocando de lado quando a intensidade é zero; céu, neblina, hemisférica, estrelas, discos de sol e
+    lua, vaga-lumes), `foliage.ts` (~15 mil tufos de grama, ~1.600 flores, ~1.100 juncos em blocos de
+    24 m, com LOD por fração de instâncias embaralhadas e vento/pisada no vertex shader),
+    `particles.ts` (pool de 700 cubos instanciados), clarão branco nos materiais do alvo, `shake.ts`
+    (trauma² com decaimento, regulável no menu) e hit-stop de 45–80 ms nos golpes corpo a corpo.
+    Braseiros no santuário com luz pontual à noite. Custo medido: ~830k triângulos por quadro no spawn
+    (antes ~620k).
 
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).

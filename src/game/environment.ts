@@ -226,3 +226,60 @@ function randomPoint(rand: () => number, minRadius: number, biome?: "meadow" | "
     return { x, z };
   }
 }
+
+/**
+ * Braseiros sobre os pilares do santuário: uma cuba de ferro e uma chama que tremula. De dia a
+ * chama é discreta; à noite ela brilha (bloom) e uma luz quente ilumina a praça.
+ */
+export function createBraziers(): { group: THREE.Group; update: (time: number, night: number) => void } {
+  const group = new THREE.Group();
+  const bowl = new VoxelBuilder()
+    .box(-2, 0, -2, 2, 1, 2, "#3a3632")
+    .box(-3, 1, -3, 3, 2, 3, "#4a4540")
+    .carve(-2, 1, -2, 2, 2, 2)
+    .box(-2, 1, -2, 2, 2, 2, "#2a1a12")
+    .build(1 / 8, { jitter: 0.04 });
+  const flame = new VoxelBuilder()
+    .box(-2, 0, -2, 2, 2, 2, "#ff7a1a")
+    .box(-1, 2, -1, 2, 4, 1, "#ffb43a")
+    .box(-1, 4, 0, 1, 5, 1, "#ffe08a")
+    .set(1, 3, 1, "#ffb43a")
+    .build(1 / 8, { jitter: 0, ao: false });
+  const flameMaterial = new THREE.MeshBasicMaterial({ vertexColors: true });
+  const count = 8;
+  const bowls = new THREE.InstancedMesh(bowl, voxelMaterial(), count);
+  const flames = new THREE.InstancedMesh(flame, flameMaterial, count);
+  bowls.castShadow = true;
+  const dummy = new THREE.Object3D();
+  const top = terrainHeight(0, 0) + 1.5; // altura do pilar (6 voxels de 1/4 m)
+  const spots: THREE.Vector3[] = [];
+  for (let i = 0; i < count; i++) {
+    const a = (i / count) * Math.PI * 2;
+    const p = new THREE.Vector3(Math.round(Math.cos(a) * 8) + 0.5, top, Math.round(Math.sin(a) * 8) + 0.5);
+    spots.push(p);
+    dummy.position.copy(p);
+    dummy.updateMatrix();
+    bowls.setMatrixAt(i, dummy.matrix);
+  }
+  const light = new THREE.PointLight("#ff9a4a", 0, 26, 1.4);
+  light.position.set(0, top + 1.5, 0);
+  group.add(bowls, flames, light);
+
+  const update = (time: number, night: number): void => {
+    for (let i = 0; i < count; i++) {
+      const p = spots[i]!;
+      const flick = 1 + Math.sin(time * 9 + i * 1.7) * 0.12 + Math.sin(time * 15.3 + i) * 0.06;
+      dummy.position.set(p.x, p.y + 0.25, p.z);
+      dummy.rotation.set(0, time * 0.8 + i, 0);
+      dummy.scale.set(1, flick * (0.85 + night * 0.35), 1);
+      dummy.updateMatrix();
+      flames.setMatrixAt(i, dummy.matrix);
+    }
+    flames.instanceMatrix.needsUpdate = true;
+    // De dia, cor normal; à noite, acima de 1 para acender no bloom.
+    flameMaterial.color.setScalar(1 + night * 1.4);
+    light.intensity = night * (14 + Math.sin(time * 11) * 1.5);
+  };
+  update(0, 0);
+  return { group, update };
+}

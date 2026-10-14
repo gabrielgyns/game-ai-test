@@ -89,3 +89,11 @@ slot ou criar um herói recarrega a página com o pedido na `sessionStorage`, co
 já fazia; refazer o `main.ts` para trocar o mundo em memória custaria mais do que um recarregamento
 de meio segundo. O pedido de novo jogo só some quando o jogo começa (o primeiro save ocupa o slot).
 O nome do herói é opcional no `SaveData`, então a versão do save não mudou.
+
+## D21. Ciclo de dia no domínio, efeitos na apresentação
+O relógio (`dayCycle.ts`) é uma função pura de `world.time`: testável, salvo de graça e pronto para
+regras futuras (inimigos noturnos). Céu, luz, partículas, tremor e grama são só apresentação. A
+grama usa instâncias em blocos com LOD por "primeiras N instâncias de uma lista embaralhada" em vez
+de geometrias de LOD separadas: zero memória extra e nenhuma troca visível.
+O hit-stop congela a simulação (o acumulador do passo fixo não recebe tempo), não só a animação;
+é single-player, então pausar o mundo por 50 ms é seguro e dá mais peso ao golpe.

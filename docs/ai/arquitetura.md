@@ -63,6 +63,8 @@ o servidor roda `stepWorld` e o cliente roda só `src/game`.
   do centro com ordem de rotação YXZ, giro), barras de vida, telegraph (círculo ou linha), marcadores
   de quest sobre NPCs.
 - `terrainMesh.ts` / `environment.ts`: terreno em blocos e props instanciados por variante.
+- `sky.ts`, `foliage.ts`, `particles.ts`, `shake.ts`: ambiente e "sensação de jogo". O céu lê o
+  relógio do domínio; partículas, clarão e tremor reagem aos eventos em `handleEvents`.
 - `audio.ts`: tudo sintetizado com Web Audio; música generativa com modo de chefe.
 - UI em HTML sobre o canvas: `hud.ts`, `inventoryUI.ts`, `dialogueUI.ts`, `questTracker.ts`,
   `skillBar.ts`, `menu.ts`. Painéis modais (mochila, diálogo, menu) pausam a simulação e soltam o

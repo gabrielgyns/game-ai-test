@@ -15,6 +15,7 @@
           <span id="hud-name">Herói</span>
           <span id="hud-level">Nv 1</span>
         </div>
+        <div class="row small clock"><span id="hud-clock"></span></div>
         <div class="bar hp"><div id="hud-hp-fill"></div><span id="hud-hp-text"></span></div>
         <div class="bar xp"><div id="hud-xp-fill"></div><span id="hud-xp-text"></span></div>
         <div class="row small"><span id="hud-gold">0 ouro</span><span id="hud-kills">0 abates</span></div>
@@ -102,6 +103,10 @@
           <label class="slider">
             <span>Sensibilidade do mouse <b id="menu-sens-value">1.0</b></span>
             <input id="menu-sens" type="range" min="0.3" max="2.5" step="0.1" value="1" />
+          </label>
+          <label class="slider">
+            <span>Tremor de câmera <b id="menu-shake-value">100%</b></span>
+            <input id="menu-shake" type="range" min="0" max="1.5" step="0.1" value="1" />
           </label>
           <div class="menu-row sliders">
             <label class="slider"><span>Música <b id="menu-music-value"></b></span><input id="menu-music" type="range" min="0" max="1" step="0.05" /></label>

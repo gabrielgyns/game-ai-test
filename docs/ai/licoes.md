@@ -65,3 +65,13 @@
   `document.exitPointerLock()` (o mesmo caminho do ESC) em vez de só mostrar o painel.
 - Campos de texto em painéis precisam parar a propagação do `keydown`, senão digitar "Iva" no nome
   do herói abre a mochila (I) e bebe poção (Q).
+
+## Sobre efeitos e desempenho
+- Voxel de 10 cm na grama vira "estaca" perto da câmera; 6 cm (1/16) e 5 lâminas por tufo leem como
+  capim. Densidade importa mais que tamanho: manchas por ruído ficam mais naturais que tapete uniforme.
+- Para medir triângulos com o `EffectComposer`, desligue `info.autoReset`, zere num RAF e leia no
+  seguinte: soma o quadro inteiro (incluindo a passada de sombra).
+- `InstancedMesh.computeBoundingSphere()` depois de posicionar as instâncias habilita o recorte de
+  câmera por bloco; sem ele, o mesh inteiro é desenhado mesmo fora da tela.
+- Uma luz direcional que vira sol e lua precisa trocar de lado com intensidade zero, senão as sombras
+  "pulam" no horizonte.

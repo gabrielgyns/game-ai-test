@@ -52,6 +52,14 @@ ESC → Saves) mostra herói, classe, nível, ouro, quests e tempo de jogo de ca
 criar um herói novo, apagar, exportar o slot como `.json` e importar um arquivo num slot vazio.
 Saves antigos, de antes dos slots, migram sozinhos para o slot 1.
 
+O mundo tem um **ciclo de dia e noite** de 12 minutos (o relógio fica no painel do herói e vem junto
+no save): amanhecer e pôr do sol alaranjados, noite azulada com lua, estrelas e vaga-lumes, e braseiros
+que acendem no santuário. As campinas têm grama e canteiros de flores que balançam ao vento e se abrem
+quando o herói passa; o pântano tem juncos e o deserto, capim seco. Golpes soltam lascas em voxel na
+cor da criatura, faíscas e um clarão branco no alvo; inimigos se desfazem em blocos ao morrer. A câmera
+treme com golpes sofridos, pancadas de chefe e explosões (ajuste ou desligue em ESC → Tremor de câmera),
+e golpes corpo a corpo têm um "hit-stop" curtinho para pesar na mão.
+
 Todo o áudio é sintetizado em tempo real com Web Audio, sem arquivos: efeitos de golpe, dano, passos,
 esquiva, coleta (acorde por raridade), poção, nível, quests e habilidades, mais uma trilha ambiente
 generativa que vira um tema pulsante quando um chefe entra em combate. Volumes no menu (ESC).
@@ -108,6 +116,7 @@ src/
     boss.ts        chefes: padrões de golpe (melee, área, investida), formas de telegraph e fases
     npc.ts         NPCs do santuário e suas falas
     quests.ts      definições de quests, diário do jogador, aceitar/avançar/entregar
+    dayCycle.ts    relógio do mundo: hora, dia, altura do sol, luz do dia e crepúsculo
     save.ts        snapshot serializável do progresso e reconstrução do mundo a partir dele
     saveSlots.ts   slots de save sobre uma porta chave-valor (localStorage no jogo, Map nos testes)
     terrain.ts     função de altura do terreno (compartilhada com a malha visual), água do pântano
@@ -132,7 +141,11 @@ src/
     dropViews.ts   itens caídos no chão: ícone extrudado em voxel, anel e feixe por raridade
     projectileViews.ts flechas, raios e bolas de fogo em voo, explosões
     terrainMesh.ts terreno em blocos (colunas por célula, degraus de 0,5 m)
-    environment.ts árvores, pedras e santuário em voxels (instanciados)
+    environment.ts árvores, pedras, santuário e braseiros em voxels (instanciados)
+    foliage.ts     grama, flores e juncos em blocos instanciados, com vento e pisada no shader
+    sky.ts         céu, sol, lua, estrelas, neblina e vaga-lumes seguindo o relógio do domínio
+    particles.ts   partículas em voxel (acerto, morte, poeira, brilho) num pool instanciado
+    shake.ts       tremor de câmera por trauma
   main.ts          bootstrap e loop com passo fixo de simulação
 ```
 

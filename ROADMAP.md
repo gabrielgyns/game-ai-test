@@ -29,14 +29,14 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 - [x] 3 quests novas (Rainha, escorpiões, salteadores); o Guarda passa a dar quest
 - [x] Classes: Guerreiro, Arqueiro (flechas, ajuda de mira) e Mago (raios, Bola de Fogo, Escudo Arcano), cada uma com 4 habilidades
 - [x] Voxel rico: personagens em 16 voxels/m com rosto, roupa, armas e acessórios detalhados, AO e grão; membros articulados com ciclo de caminhada
+- [x] Mais vida no mundo: ciclo de dia e noite (céu, sol, lua, estrelas, vaga-lumes, braseiros), grama e flores com vento, partículas de acerto e morte, clarão no alvo, tremor de câmera e hit-stop
 - [x] Saves em 5 slots locais, com nome do herói, resumo de progresso, exportar/importar por slot e migração do save antigo
 - [x] Lab de modelos (`/lab.html`): vitrine de tudo que aparece no jogo, luz, animações e comparação com a versão anterior
 
 ## Próximos
 
-1. **Mais vida no mundo voxel.** Cenário na mesma resolução dos personagens (árvores com galhos, pedras
-   com musgo, grama e flores), ciclo de dia e noite, partículas e tremor de câmera, e suporte a
-   modelos `.vox` (MagicaVoxel) para quem quiser desenhar personagens num editor.
+1. **Cenário em alta resolução.** Árvores com galhos e pedras com musgo na mesma resolução dos
+   personagens, e suporte a modelos `.vox` (MagicaVoxel) para desenhar num editor.
 2. **Loot mais rico.** Afixos aleatórios (ex.: "da Serpente": +regeneração), conjuntos, venda de itens
    por ouro num mercador.
 3. **Chefe do deserto** e mecânicas novas de padrão (projéteis, poças que ficam, escudos).
