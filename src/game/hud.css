@@ -122,9 +122,9 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0d12; col
 .cell:hover { background: rgba(255,255,255,0.14); }
 .cell.empty { cursor: default; }
 .cell[data-rarity="common"] { border-color: var(--r-common); }
-.cell[data-rarity="uncommon"] { border-color: var(--r-uncommon); box-shadow: 0 0 8px rgba(95,211,107,0.35); }
-.cell[data-rarity="rare"] { border-color: var(--r-rare); box-shadow: 0 0 10px rgba(91,141,239,0.45); }
-.cell[data-rarity="epic"] { border-color: var(--r-epic); box-shadow: 0 0 12px rgba(176,108,240,0.55); }
+.cell[data-rarity="uncommon"] { border-color: var(--r-uncommon); box-shadow: 0 0 6px rgba(95,211,107,0.45), inset 0 0 6px rgba(95,211,107,0.18); }
+.cell[data-rarity="rare"] { border-color: var(--r-rare); box-shadow: 0 0 6px rgba(91,141,239,0.5), inset 0 0 6px rgba(91,141,239,0.2); }
+.cell[data-rarity="epic"] { border-color: var(--r-epic); box-shadow: 0 0 7px rgba(176,108,240,0.55), inset 0 0 6px rgba(176,108,240,0.22); }
 .cell .icon { width: 44px; height: 44px; image-rendering: pixelated; }
 .stats { margin-top: 6px; font-size: 13px; color: var(--muted); display: grid; gap: 4px; }
 .stats b { color: var(--text); float: right; }
@@ -195,10 +195,6 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0d12; col
   text-shadow: 0 1px 3px #000, 0 0 2px #000;
 }
 .qty-inline { color: var(--muted); font-weight: 400; font-size: 12px; }
-/* Brilho leve por raridade nas células (gradiente interno discreto). */
-.cell[data-rarity="uncommon"] { background: radial-gradient(circle at 50% 60%, rgba(95,211,107,0.22), rgba(255,255,255,0.06) 70%); }
-.cell[data-rarity="rare"] { background: radial-gradient(circle at 50% 60%, rgba(91,141,239,0.26), rgba(255,255,255,0.06) 70%); }
-.cell[data-rarity="epic"] { background: radial-gradient(circle at 50% 60%, rgba(176,108,240,0.3), rgba(255,255,255,0.06) 70%); }
 
 #bossbar {
   position: absolute; top: 16px; left: 50%; transform: translateX(-50%); width: 520px;

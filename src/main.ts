@@ -1,4 +1,8 @@
 import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { isAlive, type Entity } from "./domain/components";
 import { distanceXZ, normalizeXZ } from "./domain/math";
 import { stepWorld } from "./domain/simulation";
@@ -24,6 +28,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.toneMapping = THREE.NoToneMapping;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("#8fc5ee");
@@ -113,8 +118,17 @@ input.onEscape = () => {
   else if (menu.isOpen) resume();
 };
 
+// Pós-processamento: bloom só no que passa de 1.0 de brilho (os itens de raridade têm emissivo
+// acima disso); o resto da cena fica intocado. Força baixa para um neon leve.
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, cam.camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.45, 0.35, 1.0);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
 window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
   cam.camera.aspect = window.innerWidth / window.innerHeight;
   cam.camera.updateProjectionMatrix();
 });
@@ -260,7 +274,7 @@ function frame(): void {
   if (paused) {
     hud.update(player, currentTarget());
     hud.updateBoss(world);
-    renderer.render(scene, cam.camera);
+    composer.render();
     return;
   }
   if (potion && isAlive(player)) {
@@ -311,7 +325,7 @@ function frame(): void {
   hud.update(player, target);
   hud.updateBoss(world);
   skillBar.update(player);
-  renderer.render(scene, cam.camera);
+  composer.render();
 }
 
 // Gancho de depuração só em desenvolvimento (testes automatizados e console).

@@ -27,29 +27,6 @@ function dropGeometry(icon: string): THREE.BufferGeometry {
   return geometry;
 }
 
-let haloTexture: THREE.Texture | null = null;
-
-/** Sprite suave e aditivo atrás do item: o "brilho leve". */
-function createHalo(color: THREE.Color): THREE.Sprite {
-  if (!haloTexture) {
-    const canvas = document.createElement("canvas");
-    canvas.width = canvas.height = 64;
-    const ctx = canvas.getContext("2d")!;
-    const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-    g.addColorStop(0, "rgba(255,255,255,1)");
-    g.addColorStop(0.5, "rgba(255,255,255,0.35)");
-    g.addColorStop(1, "rgba(255,255,255,0)");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, 64, 64);
-    haloTexture = new THREE.CanvasTexture(canvas);
-  }
-  const sprite = new THREE.Sprite(
-    new THREE.SpriteMaterial({ map: haloTexture, color, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending, depthWrite: false }),
-  );
-  sprite.scale.set(1.6, 1.6, 1);
-  return sprite;
-}
-
 class DropView {
   readonly group = new THREE.Group();
   private readonly card: THREE.Mesh;
@@ -57,28 +34,25 @@ class DropView {
   private readonly beam: THREE.Mesh;
   private readonly phase = Math.random() * Math.PI * 2;
 
-  private readonly halo: THREE.Sprite | null;
 
   constructor(icon: string, rarity: Rarity) {
     const color = new THREE.Color(RARITY_COLOR[rarity]);
     const material = voxelMaterial();
     if (rarity !== "common") {
-      // Brilho leve: emissivo fraco na cor da raridade.
+      // Neon leve: o emissivo passa do limiar do bloom (1.0) e o pós-processamento faz o glow.
       material.emissive = color.clone();
-      material.emissiveIntensity = 0.18;
+      material.emissiveIntensity = 1.15;
     }
     this.card = new THREE.Mesh(dropGeometry(icon), material);
     this.card.castShadow = true;
     this.card.position.y = 0.35;
-    this.halo = rarity === "common" ? null : createHalo(color);
-    if (this.halo) this.halo.position.y = 0.6;
     this.ring = new THREE.Mesh(
       new THREE.RingGeometry(0.35, 0.5, 20),
       new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.8, side: THREE.DoubleSide }),
     );
     this.ring.rotation.x = -Math.PI / 2;
     this.ring.position.y = 0.04;
-    const beamHeight = rarity === "common" ? 0 : rarity === "uncommon" ? 2 : rarity === "rare" ? 3.5 : 5;
+    const beamHeight = rarity === "common" ? 0 : rarity === "uncommon" ? 1.6 : rarity === "rare" ? 2.6 : 3.6;
     this.beam = new THREE.Mesh(
       new THREE.CylinderGeometry(0.08, 0.2, Math.max(beamHeight, 0.01), 8, 1, true),
       new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.35, depthWrite: false }),
@@ -86,14 +60,12 @@ class DropView {
     this.beam.position.y = beamHeight / 2;
     this.beam.visible = beamHeight > 0;
     this.group.add(this.card, this.ring, this.beam);
-    if (this.halo) this.group.add(this.halo);
   }
 
   update(time: number): void {
     this.card.rotation.y = time * 1.5 + this.phase;
     this.card.position.y = 0.35 + Math.sin(time * 2.2 + this.phase) * 0.08;
     (this.ring.material as THREE.MeshBasicMaterial).opacity = 0.6 + Math.sin(time * 3 + this.phase) * 0.2;
-    if (this.halo) (this.halo.material as THREE.SpriteMaterial).opacity = 0.22 + Math.sin(time * 2.5 + this.phase) * 0.06;
   }
 }
 
