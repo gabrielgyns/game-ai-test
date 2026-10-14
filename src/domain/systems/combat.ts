@@ -7,6 +7,7 @@ import { CLASSES } from "../classes";
 import { fireProjectile } from "./projectiles";
 import { vulnerability } from "../status";
 import { hasTalent } from "../skillTree";
+import { playerRespawnPoint } from "../dungeon";
 import { grantXp } from "../progression";
 import { rollLoot } from "../loot";
 import type { World } from "../world";
@@ -298,8 +299,8 @@ function kill(world: World, victim: Entity, killer: Entity): void {
       }
     }
   } else {
-    // Jogador renasce no centro do mundo.
-    victim.respawn = { timeLeft: 5, at: { x: 0, y: 0, z: 0 } };
+    // Jogador renasce no santuário, ou na sala inicial da cripta enquanto houver vidas.
+    victim.respawn = { timeLeft: 5, at: playerRespawnPoint(world, victim) };
   }
 }
 

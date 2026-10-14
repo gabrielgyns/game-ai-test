@@ -8,6 +8,7 @@ import { projectileSystem } from "./systems/projectiles";
 import { hazardSystem } from "./systems/hazards";
 import { respawnSystem } from "./systems/respawn";
 import { statusSystem } from "./status";
+import { dungeonSystem } from "./dungeon";
 import type { World } from "./world";
 
 /** Avança o mundo um passo e devolve os eventos gerados nesse passo. */
@@ -22,5 +23,6 @@ export function stepWorld(world: World, dt: number): GameEvent[] {
   projectileSystem(world, dt);
   hazardSystem(world, dt);
   pickupSystem(world, dt);
+  dungeonSystem(world);
   return world.drainEvents();
 }

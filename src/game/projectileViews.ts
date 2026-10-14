@@ -41,6 +41,20 @@ export function createProjectileMesh(kind: ProjectileKind): THREE.Object3D {
       g.add(body, tip, ring);
       return g;
     }
+    case "bone": {
+      // Osso girando: haste com nós nas pontas, com um rastro roxo leve.
+      const g = new THREE.Group();
+      const mat = new THREE.MeshStandardMaterial({ color: "#e8e0c8" });
+      const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.6), mat);
+      for (const z of [-0.32, 0.32]) {
+        const knob = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.2, 0.16), mat);
+        knob.position.z = z;
+        g.add(knob);
+      }
+      const glow = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.8), new THREE.MeshBasicMaterial({ color: new THREE.Color("#9a4ad8").multiplyScalar(1.3), transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending, depthWrite: false }));
+      g.add(shaft, glow);
+      return g;
+    }
     case "acidGlob": {
       const g = new THREE.Group();
       const core = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.45, 0.45), new THREE.MeshBasicMaterial({ color: new THREE.Color("#8ee04a").multiplyScalar(1.5) }));
@@ -85,6 +99,7 @@ export class ProjectileViews {
       view.position.set(p.position.x, p.position.y + (p.lob ? lobHeight(p.traveled, p.maxDistance) : 0), p.position.z);
       view.rotation.y = Math.atan2(-p.direction.x, -p.direction.z);
       if (p.kind === "fireball" || p.kind === "bolt" || p.kind === "acidGlob") view.rotation.z = time * 6;
+      if (p.kind === "bone") view.rotation.x = time * 14;
     }
     for (const [id, view] of this.views) {
       if (!world.projectiles.has(id)) {

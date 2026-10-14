@@ -34,6 +34,20 @@ export class Hud {
   private readonly death = el("death");
   private readonly deathTimer = el("death-timer");
 
+  private readonly dungeonEl = el("dungeon-hud");
+  private dungeonText = "";
+
+  /** Painel da cripta: nome, nível, salas limpas e vidas. */
+  updateDungeon(d: { name: string; level: number; cleared: number; total: number; lives: number; maxLives: number; boss: boolean } | null): void {
+    const text = d
+      ? `<b>${d.name}</b> · nível ${d.level}<br>Salas ${d.cleared}/${d.total}${d.boss ? " · Lorde vencido!" : ""} · ${"♥".repeat(d.lives)}<span class="lost">${"♥".repeat(d.maxLives - d.lives)}</span>`
+      : "";
+    if (text === this.dungeonText) return;
+    this.dungeonText = text;
+    this.dungeonEl.innerHTML = text;
+    this.dungeonEl.classList.toggle("hidden", !d);
+  }
+
   private readonly clock = el("hud-clock");
   private clockText = "";
 

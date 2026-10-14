@@ -83,3 +83,12 @@
 - Itens de vitrine (ex.: a poção desenhada na loja) consomem ids se criados a cada render; crie uma
   vez no construtor do painel.
 - Heurística de gênero do nome do item precisa de número também: "Botas" pede "Reforçadas".
+
+## Sobre a cripta
+- Teleportar o herói 1 km faz a câmera suavizada "voar" pelo mapa: chame `cam.snap()` ao entrar, sair
+  e renascer.
+- No headless, depois de soltar o pointer lock o menu de pausa reabre sozinho e engole o F. Nos
+  roteiros, feche o menu pelo gancho (`setPaused(false)` e esconder `#menu`) antes de testar
+  interações.
+- Luzes pontuais que entram e saem da cena recompilam shaders: mantenha um conjunto fixo (as 6 das
+  tochas) e só mude intensidade e posição.

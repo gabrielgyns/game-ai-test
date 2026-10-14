@@ -27,7 +27,7 @@ export interface AttackPattern {
   /** aoe: distância máxima para mirar. */
   castRange?: number;
   /** projectile/fan/lob: tipo do projétil. */
-  projectile?: "arrow" | "bolt" | "fireball" | "piercingArrow" | "stinger" | "acidGlob";
+  projectile?: "arrow" | "bolt" | "fireball" | "piercingArrow" | "stinger" | "acidGlob" | "bone";
   /** fan: quantos projéteis; lob: quantos arremessos (o primeiro no alvo, os outros em volta). */
   count?: number;
   /** fan: abertura total do leque, em graus. */
@@ -236,5 +236,44 @@ export function raiseCarapace(entity: Entity): boolean {
   return true;
 }
 
+export const SKELETON_LORD_PATTERNS: AttackPattern[] = [
+  { id: "cleaveBone", name: "Golpe Sepulcral", kind: "melee", range: 3.4, windup: 0.85, damageMultiplier: 1, cooldown: 2.1, minPhase: 1 },
+  { id: "boneFan", name: "Rajada de Ossos", kind: "fan", range: 16, projectile: "bone", count: 7, spreadDeg: 80, windup: 1.0, damageMultiplier: 0.7, cooldown: 6, minPhase: 1 },
+  { id: "graveStomp", name: "Pisão Sepulcral", kind: "slam", range: 6, windup: 1.4, damageMultiplier: 1.7, cooldown: 7, minPhase: 1 },
+  { id: "phantomRush", name: "Investida Fantasma", kind: "charge", range: 12, windup: 0.75, damageMultiplier: 1.4, cooldown: 7, minPhase: 2 },
+];
+
+/** Chefe das dungeons: escala com o nível da dungeon (o `level` multiplica vida e dano). */
+export function createSkeletonLord(id: EntityId, position: Vec3, level = 5): Entity {
+  const k = 0.7 + 0.1 * Math.max(1, level);
+  const maxHealth = Math.round(1100 * k);
+  const damage = Math.round(24 * k);
+  const boss: Boss = {
+    title: "Lorde Esqueleto",
+    patterns: SKELETON_LORD_PATTERNS,
+    cooldowns: {},
+    phase: 1,
+    phaseThresholds: [0.6, 0.3],
+    windupScale: 1,
+    summoned: false,
+    engaged: false,
+  };
+  return {
+    id,
+    kind: "enemy",
+    name: "Lorde Esqueleto",
+    archetype: "skeletonLord",
+    transform: { position: { ...position }, yaw: Math.PI / 2 },
+    movement: { speed: 4.6, speedMultiplier: 1, intent: { x: 0, z: 0 } },
+    health: { current: maxHealth, max: maxHealth, baseMax: maxHealth, regenPerSecond: 0, lastDamagedAt: -Infinity },
+    combat: { damage, baseDamage: damage, range: 3.4, cooldown: 2.1, cooldownLeft: 0, wantsAttack: false, windupTime: 0.85, windupLeft: 0 },
+    ai: { state: "idle", home: { ...position }, aggroRange: 13, leashRange: 30, xpReward: Math.round(600 * k), goldReward: Math.round(200 * k), respawnSeconds: Infinity, needsSight: true },
+    boss,
+    abilities: { ...createAbilities(), skills: [] },
+    inventory: createInventory(0),
+    equipment: createEquipmentSlots(),
+  };
+}
+
 /** Que lacaio cada chefe convoca na fase final. */
-export const BOSS_MINION: Record<string, string> = { goblinKing: "goblin", spiderQueen: "spider", scorpionEmperor: "banditArcher" };
+export const BOSS_MINION: Record<string, string> = { goblinKing: "goblin", spiderQueen: "spider", scorpionEmperor: "banditArcher", skeletonLord: "skeleton" };

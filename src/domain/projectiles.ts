@@ -2,7 +2,7 @@ import type { EntityId } from "./components";
 import type { Vec2, Vec3 } from "./math";
 import type { PoolSpec } from "./hazards";
 
-export type ProjectileKind = "arrow" | "bolt" | "fireball" | "piercingArrow" | "stinger" | "acidGlob";
+export type ProjectileKind = "arrow" | "bolt" | "fireball" | "piercingArrow" | "stinger" | "acidGlob" | "bone";
 
 export interface Projectile {
   id: number;
@@ -37,4 +37,5 @@ export const PROJECTILE_SPECS: Record<ProjectileKind, { speed: number; hitRadius
   fireball: { speed: 14, hitRadius: 1.0 },
   stinger: { speed: 17, hitRadius: 0.8 },
   acidGlob: { speed: 15, hitRadius: 1.0 },
+  bone: { speed: 15, hitRadius: 0.8 },
 };

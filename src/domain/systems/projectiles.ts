@@ -5,6 +5,7 @@ import { terrainHeight } from "../terrain";
 import type { World } from "../world";
 import { applyDamage } from "./combat";
 import { applyStun } from "../status";
+import { isWalkable } from "../dungeon";
 
 /** Move projéteis, resolve acertos (primeiro hostil no raio) e explosões. */
 export function projectileSystem(world: World, dt: number): void {
@@ -43,6 +44,14 @@ export function projectileSystem(world: World, dt: number): void {
         world.projectiles.delete(p.id);
         continue;
       }
+    }
+
+    // Bateu numa parede da cripta (arremessos em arco passam por cima).
+    if (!p.lob && !isWalkable(world, p.position.x, p.position.z)) {
+      if (p.explodeRadius > 0) explode(world, owner, p);
+      else world.emit({ type: "projectileHit", projectileId: p.id, position: { ...p.position }, explodeRadius: 0 });
+      world.projectiles.delete(p.id);
+      continue;
     }
 
     if (p.traveled >= p.maxDistance) {

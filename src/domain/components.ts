@@ -101,6 +101,10 @@ export interface EnemyAI {
   respawnSeconds: number;
   /** Atiradores: distância que tentam manter do jogador (recuam se ele chegar mais perto). */
   keepDistance?: number;
+  /** Só começa a perseguir se enxergar o jogador (dungeons, onde há paredes). */
+  needsSight?: boolean;
+  /** Tier do loot, quando difere da tabela do arquétipo (inimigos de dungeon). */
+  lootTier?: 1 | 2 | 3;
 }
 
 export interface Wallet {

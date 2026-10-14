@@ -136,6 +136,20 @@ export const QUESTS: QuestDefinition[] = [
     },
   },
   {
+    id: "crypt",
+    title: "A Cripta Esquecida",
+    giver: "elder",
+    description: "Um portal antigo se abriu a nordeste do santuário. Desça à cripta e derrote o Lorde Esqueleto.",
+    objective: { kind: "kill", archetype: "skeletonLord", count: 1, label: "Lorde Esqueleto derrotado" },
+    reward: { xp: 900, gold: 300, item: { kind: "equipment", tier: 3, rarity: "epic" } },
+    requires: ["goblins"],
+    dialogue: {
+      offer: "Um portal de pedra acordou a nordeste daqui. Leva a uma cripta que muda de forma toda vez que alguém entra. Lá dentro, você tem três chances: caia três vezes e a cripta te expulsa. No fundo dorme um Lorde Esqueleto, e um baú que ninguém nunca abriu.",
+      progress: "A cripta fica a nordeste do santuário: procure o arco de pedra com a luz roxa. Limpe as salas, ache o Lorde, e não esqueça do baú.",
+      complete: "Você voltou da cripta! Leve isto. E volte lá quando quiser: ela nunca é a mesma, e o baú sempre se enche de novo.",
+    },
+  },
+  {
     id: "orcs",
     title: "Orcs da Borda",
     giver: "smith",

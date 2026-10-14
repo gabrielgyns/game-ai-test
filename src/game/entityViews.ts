@@ -511,6 +511,15 @@ export class EntityViews {
     return this.views.get(id);
   }
 
+  /** Remove views de entidades que saíram do mundo (dungeon fechada). */
+  prune(world: World): void {
+    for (const [id, v] of this.views) {
+      if (world.entities.has(id)) continue;
+      v.dispose(this.scene);
+      this.views.delete(id);
+    }
+  }
+
   update(dt: number, camera: THREE.Camera, targetId: EntityId | undefined, time: number, player?: Entity): void {
     for (const v of this.views.values()) v.update(dt, camera, v.entity.id === targetId, time, player);
   }

@@ -18,6 +18,8 @@ const LOOT_TABLES: Record<string, LootTable> = {
   bogZombie: { tier: 3, equipmentChance: 0.6, potionChance: 0.4, largePotionChance: 0.6 },
   scorpion: { tier: 3, equipmentChance: 0.5, potionChance: 0.3, largePotionChance: 0.6 },
   bandit: { tier: 3, equipmentChance: 0.7, potionChance: 0.35, largePotionChance: 0.6 },
+  skeleton: { tier: 2, equipmentChance: 0.4, potionChance: 0.3, largePotionChance: 0.4 },
+  skeletonArcher: { tier: 2, equipmentChance: 0.4, potionChance: 0.3, largePotionChance: 0.4 },
   goblinArcher: { tier: 2, equipmentChance: 0.45, potionChance: 0.3, largePotionChance: 0.25 },
   banditArcher: { tier: 3, equipmentChance: 0.7, potionChance: 0.35, largePotionChance: 0.6 },
 };
@@ -39,8 +41,10 @@ export function rollLoot(world: World, victim: Entity): void {
   }
   const table = LOOT_TABLES[victim.archetype];
   if (!table) return;
+  // Inimigos de dungeon carregam o tier do nível da dungeon.
+  const tier = victim.ai?.lootTier ?? table.tier;
   if (rand() < table.equipmentChance) {
-    world.addDrop(createEquipment(rand, table.tier, rollRarity(rand, table.tier)), scatter());
+    world.addDrop(createEquipment(rand, tier, rollRarity(rand, tier)), scatter());
   }
   if (rand() < table.potionChance) {
     world.addDrop(createPotion(rand() < table.largePotionChance ? "large" : "small"), scatter());

@@ -5,6 +5,7 @@ import type { Vec3 } from "./math";
 import type { Projectile } from "./projectiles";
 import type { Hazard, PoolSpec } from "./hazards";
 import type { ShopState } from "./shop";
+import type { DungeonRun } from "./dungeon";
 
 /**
  * Agregado raiz do jogo. Guarda o estado completo e a fila de eventos do tick.
@@ -34,6 +35,8 @@ export class World {
   readonly hazards = new Map<number, Hazard>();
   /** Estoque e recompra da Mercadora (montado na primeira visita de cada dia). */
   shop?: ShopState;
+  /** Dungeon em andamento (instanciada; não vai para o save). */
+  dungeon?: DungeonRun;
   private nextHazardId = 1;
   /** Gerador determinístico usado por loot e outras decisões aleatórias do domínio. */
   random: () => number = Math.random;
@@ -49,6 +52,11 @@ export class World {
     this.entities.set(id, entity);
     if (entity.kind === "player") this.playerId = id;
     return entity;
+  }
+
+  /** Remove uma entidade do mundo (usado ao fechar uma dungeon). */
+  despawn(id: EntityId): void {
+    this.entities.delete(id);
   }
 
   get(id: EntityId): Entity | undefined {

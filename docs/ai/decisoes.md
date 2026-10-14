@@ -130,3 +130,15 @@ anularem as lutas.
 `applyDamage` só zera o escudo; quem encerra (e dispara o talento Retorno) é o `abilitySystem`, no
 passo seguinte. Assim combate não importa habilidades (evita ciclo de import) e o fim do escudo tem
 um lugar só, seja por tempo ou por dano.
+
+## D28. Dungeon no mesmo World, numa região distante
+A alternativa (um `World` por dungeon) exigiria refazer o boot: views, UI e sistemas nascem amarrados
+a um mundo só. Em vez disso, a cripta é gerada em x ≥ 1000 e apagada ao sair, como um set de
+filmagem nos fundos do estúdio. `terrainHeight` devolve chão plano ali e as paredes vêm da planta via
+`isWalkable`. O vale continua simulando longe (ninguém de lá chega a 1 km). O save nunca guarda a
+cripta: dentro dela, o herói é salvo na porta.
+
+## D29. Recorte de paredes no shader
+Com paredes, a câmera de terceira pessoa fica atrás delas. Em vez de mover a câmera (que brigaria com
+o mouse), o shader das paredes descarta pixels num funil entre a câmera e o herói, e a câmera da
+cripta tem inclinação mínima maior. Barato, sem física de câmera, e o herói nunca some atrás de tijolo.

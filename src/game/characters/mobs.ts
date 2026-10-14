@@ -323,3 +323,65 @@ export function createScorpion(): CharacterModel {
   root.add(weaponArm);
   return { root, weaponArm, height: 22 * V + 0.2 };
 }
+
+/* ---------- Esqueletos da cripta: osso amarelado, costelas vazadas, olhos que brilham ---------- */
+
+const BONE = shades("#e4dcc4", 0.1);
+
+/** Crânio por cima do rosto padrão: frente toda em osso, órbitas fundas com brilho e dentes. */
+function paintSkull(b: VoxelBuilder, hw: number, hd: number, eye: string): void {
+  b.box(-hw, 0, -hd - 1, hw, 10, -hd, BONE.base); // máscara de osso cobrindo o rosto padrão
+  b.box(-hw, 0, -hd - 1, hw, 1, -hd, BONE.dark);
+  for (const x of [-hw + 1, hw - 4]) {
+    b.box(x, 5, -hd - 1, x + 3, 8, -hd, "#1b1612"); // órbita
+    b.set(x + 1, 6, -hd - 1, eye);
+  }
+  b.box(-1, 3, -hd - 1, 1, 5, -hd, "#2a221a"); // nariz
+  b.box(-hw + 2, 1, -hd - 1, hw - 2, 2, -hd, "#2a221a");
+  for (let x = -hw + 2; x < hw - 2; x += 2) b.set(x, 1, -hd - 1, BONE.light); // dentes
+}
+
+export function createSkeleton(archer = false): CharacterModel {
+  const rag = shades(archer ? "#3a4a2a" : "#4a2f5a", 0.1);
+  return buildHumanoid({
+    skin: BONE,
+    legs: { hw: 1, hd: 1, length: 12 },
+    arms: { hw: 1, hd: 1, length: 12 },
+    head: { hw: 5, h: 11, hd: 5 },
+    torso: { hw: 5, h: 13, hd: 3 },
+    legX: 3,
+    armX: 7,
+    pants: BONE,
+    boots: BONE,
+    bootH: 1,
+    sleeve: BONE,
+    sleeveLen: 0,
+    face: { eye: "#1b1612", mouth: "flat" },
+    mouthY: 2,
+    neck: 1,
+    torsoPaint: (b, y) => {
+      // Costelas: faixas de osso com vãos escuros, espinha no meio, bacia embaixo.
+      b.box(-5, y + 3, -4, 5, y + 13, 4, "#1b1612");
+      b.carve(-4, y + 3, -3, 4, y + 12, 3);
+      for (let r = y + 5; r < y + 13; r += 2) b.box(-5, r, -4, 5, r + 1, 4, BONE.base).carve(-4, r, -3, 4, r + 1, 3);
+      b.box(-1, y, -1, 1, y + 13, 1, BONE.dark); // espinha
+      b.box(-5, y, -4, 5, y + 3, 4, BONE.base).box(-5, y + 2, -4, 5, y + 3, 4, BONE.light); // bacia
+      b.box(-6, y - 1, -5, 6, y + 2, 5, rag.base); // trapo na cintura
+      for (const x of [-5, -2, 2, 4]) b.box(x, y - 4, -5, x + 1, y - 1, -4, rag.dark); // franjas
+      if (archer) paintMobQuiver(b, y + 2, 3, 10);
+    },
+    headPaint: (b) => {
+      paintSkull(b, 5, 5, archer ? "#9cff7a" : "#7af0ff");
+      if (archer) b.box(-6, 8, -6, 6, 12, 6, rag.base).box(-6, 11, -6, 6, 12, 6, rag.light).box(-5, 2, 5, 5, 9, 6, rag.dark); // capuz
+    },
+    weaponPaint: archer
+      ? (b) => paintMobBow(b, 18, shades("#5a4632", 0.1))
+      : (b) => {
+          // Espada enferrujada.
+          b.box(-1, -14, -1, 1, -10, 0, PAL.leather.dark);
+          b.box(-3, -15, -1, 3, -14, 0, "#7a5a3a");
+          b.box(-1, -27, -1, 1, -15, 0, "#8a8a82").box(-1, -27, -1, 0, -15, 0, "#a8a89e");
+          b.set(0, -21, -1, "#8a4a2a").set(-1, -24, -1, "#8a4a2a"); // ferrugem
+        },
+  });
+}

@@ -5,6 +5,7 @@ import { BOSS_MINION, raiseCarapace, resetBoss, updateBossPhase } from "../boss"
 import { createEnemy } from "../factories";
 import { startAttack } from "./combat";
 import { isStunned } from "../status";
+import { hasLineOfSight } from "../dungeon";
 
 /**
  * Máquina de estados simples por inimigo:
@@ -33,7 +34,7 @@ export function aiSystem(world: World, dt: number): void {
 
     switch (ai.state) {
       case "idle":
-        if (playerAlive && distPlayer <= ai.aggroRange) ai.state = "chase";
+        if (playerAlive && distPlayer <= ai.aggroRange && (!ai.needsSight || hasLineOfSight(world, pos, player.transform.position))) ai.state = "chase";
         break;
 
       case "chase":
@@ -91,7 +92,7 @@ function bossBehavior(world: World, e: Entity, dt: number, player: Entity | unde
   for (const id of Object.keys(boss.cooldowns)) boss.cooldowns[id] = Math.max(0, (boss.cooldowns[id] ?? 0) - dt);
 
   if (ai.state === "idle") {
-    if (player && distPlayer <= ai.aggroRange) {
+    if (player && distPlayer <= ai.aggroRange && (!ai.needsSight || hasLineOfSight(world, pos, player.transform.position))) {
       ai.state = "chase";
       boss.engaged = true;
       world.emit({ type: "bossEngage", entity: e.id });

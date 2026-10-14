@@ -97,8 +97,31 @@ export class DayNightSky {
     this.fireflies = new Fireflies(scene);
   }
 
+  /** Dentro da cripta: escuro, neblina curta, só uma luz fria de cima; as tochas fazem o resto. */
+  private updateIndoor(focus: THREE.Vector3): void {
+    this.night = 1;
+    this.sky.set("#08070c");
+    (this.scene.background as THREE.Color).copy(this.sky);
+    const fog = this.scene.fog as THREE.Fog;
+    fog.color.copy(this.sky);
+    fog.near = 14;
+    fog.far = 46;
+    this.hemi.color.set("#6a6a9a");
+    this.hemi.groundColor.set("#1a1620");
+    this.hemi.intensity = 0.55;
+    this.sun.color.set("#8a90c8");
+    this.sun.intensity = 0.45;
+    this.lightDir.set(0.25, 1, 0.35).normalize();
+    this.sun.position.copy(focus).addScaledVector(this.lightDir, 80);
+    this.sun.target.position.copy(focus);
+    this.sunDisc.visible = this.moonDisc.visible = false;
+    (this.stars.material as THREE.PointsMaterial).opacity = 0;
+    this.fireflies.hide();
+  }
+
   /** `time`: tempo do mundo (relógio); `camera`: para manter o céu centrado; `focus`: o herói. */
-  update(time: number, camera: THREE.Camera, focus: THREE.Vector3, dt: number): void {
+  update(time: number, camera: THREE.Camera, focus: THREE.Vector3, dt: number, indoor = false): void {
+    if (indoor) return this.updateIndoor(focus);
     const { hour } = clockAt(time);
     const elev = sunElevation(hour);
     const day = daylight(hour);
@@ -174,6 +197,10 @@ class Fireflies {
     this.points = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.09, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
     this.points.frustumCulled = false;
     scene.add(this.points);
+  }
+
+  hide(): void {
+    this.points.visible = false;
   }
 
   update(dt: number, time: number, focus: THREE.Vector3, night: number): void {

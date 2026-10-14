@@ -4,6 +4,9 @@ import { biomeWeights, DESERT_BOSS_HOME, SWAMP_BOSS_HOME } from "./biomes";
 /** Metade do tamanho do mundo. O mundo vai de -WORLD_HALF a +WORLD_HALF em X e Z. */
 export const WORLD_HALF = 110;
 
+/** A partir deste X fica o "espaço das dungeons": chão plano em y = 0, paredes vêm da planta. */
+export const DUNGEON_REGION_X = 500;
+
 /** Raio da área plana central onde o jogador nasce. */
 export const SPAWN_FLAT_RADIUS = 14;
 
@@ -59,6 +62,7 @@ export function terrainHeightSmooth(x: number, z: number): number {
  * é exatamente onde as entidades pisam.
  */
 export function terrainHeight(x: number, z: number): number {
+  if (x >= DUNGEON_REGION_X) return 0;
   const cx = Math.floor(x / CELL_SIZE) * CELL_SIZE + CELL_SIZE / 2;
   const cz = Math.floor(z / CELL_SIZE) * CELL_SIZE + CELL_SIZE / 2;
   const h = Math.round(terrainHeightSmooth(cx, cz) / STEP_HEIGHT) * STEP_HEIGHT;

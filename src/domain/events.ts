@@ -42,6 +42,12 @@ export type GameEvent =
   | { type: "status"; entity: EntityId; effect: "stun" | "slow" | "vulnerable"; seconds: number }
   | { type: "talentLearned"; entity: EntityId; skill: SkillId; rank: number }
   | { type: "talentReset"; entity: EntityId; gold: number }
+  | { type: "dungeonEnter"; level: number; rooms: number }
+  | { type: "dungeonExit"; reason: "complete" | "leave" | "failed" }
+  | { type: "dungeonLifeLost"; livesLeft: number }
+  | { type: "roomCleared"; cleared: number; total: number }
+  | { type: "dungeonComplete"; level: number }
+  | { type: "chestOpened"; gold: number; items: string[] }
   | { type: "sell"; entity: EntityId; itemName: string; gold: number }
   | { type: "buy"; entity: EntityId; itemName: string; gold: number }
   | { type: "hazardSpawn"; hazardId: number }

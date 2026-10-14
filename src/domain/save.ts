@@ -8,6 +8,7 @@ import { isClassId, type ClassId } from "./classes";
 import type { World } from "./world";
 import type { ShopState } from "./shop";
 import type { TalentRanks } from "./skillTree";
+import { DUNGEON_REGION_X } from "./terrain";
 
 export const SAVE_VERSION = 1;
 
@@ -53,7 +54,8 @@ export function serializeGame(world: World, seed: number): SaveData {
     player: {
       classId: p.classId ?? "warrior",
       heroName: p.name,
-      position: { ...p.transform.position },
+      // Dentro de uma dungeon, salva como se estivesse na porta: a cripta não vai para o save.
+      position: world.dungeon ? { ...world.dungeon.returnPoint } : { ...p.transform.position },
       yaw: p.transform.yaw,
       health: p.health.current,
       level: p.progression?.level ?? 1,
@@ -68,7 +70,7 @@ export function serializeGame(world: World, seed: number): SaveData {
       quests: structuredClone(p.quests ?? {}),
       talents: { ...(p.talents ?? {}) },
     },
-    drops: [...world.drops.values()].map((d) => ({ item: structuredClone(d.item), position: { ...d.position }, age: d.age, requireLeave: d.requireLeave })),
+    drops: [...world.drops.values()].filter((d) => d.position.x < DUNGEON_REGION_X).map((d) => ({ item: structuredClone(d.item), position: { ...d.position }, age: d.age, requireLeave: d.requireLeave })),
     shop: world.shop ? structuredClone(world.shop) : undefined,
   };
 }

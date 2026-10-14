@@ -51,6 +51,10 @@ o servidor roda `stepWorld` e o cliente roda só `src/game`.
   Item novo com atributo novo: some em `itemBonus` e leia de `bonuses` no sistema certo.
 - **Habilidades e talentos**: `useSkill` lê `skillMods(e, id)` e combina primitivas de `status.ts`.
   A recarga efetiva é `effectiveCooldown` (ranks + afixo). `statusSystem` roda antes da IA.
+- **Dungeon**: `world.dungeon` existe só durante uma corrida e nunca é salvo. Tudo em x ≥ 1000
+  (`DUNGEON_REGION_X` = 500 separa as regiões) é da cripta: `closeDungeon` remove entidades, drops,
+  poças e projéteis de lá. Movimento, projéteis e aggro consultam `isWalkable`/`hasLineOfSight`.
+  `EntityViews.prune` tira das views o que saiu do mundo.
 - **Loja**: `world.shop` (estoque do dia e recompra) é salvo; regras só em `domain/shop.ts`.
 - **Poças** vivem em `world.hazards` e não são salvas (somem em segundos).
 - **Direção de mira do jogador** é `abilities.aimDirection` (câmera), escrita por `main.ts` a cada

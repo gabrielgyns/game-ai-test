@@ -4,7 +4,7 @@ import type { Item, Rarity } from "../domain/items";
 import type { ClassId } from "../domain/classes";
 import { CLASSES, CLASS_ORDER } from "../domain/classes";
 import { ENEMY_TEMPLATES, createEnemy, createPlayer, type EnemyKind } from "../domain/factories";
-import { createGoblinKing, createScorpionEmperor, createSpiderQueen } from "../domain/boss";
+import { createGoblinKing, createScorpionEmperor, createSkeletonLord, createSpiderQueen } from "../domain/boss";
 import { NPC_DEFS, createNpc } from "../domain/npc";
 import { SKILLS, type SkillId } from "../domain/skills";
 import { RARITY_LABEL } from "../domain/items";
@@ -12,6 +12,7 @@ import { DropView } from "../game/dropViews";
 import { createProjectileMesh } from "../game/projectileViews";
 import { createBraziers, PROP_BUILDERS } from "../game/environment";
 import { FOLIAGE_BUILDERS } from "../game/foliage";
+import { createPortal } from "../game/portal";
 import { terrainHeight } from "../domain/terrain";
 import { voxelMaterial } from "../game/voxel";
 
@@ -88,6 +89,8 @@ const ENEMY_DESCRIPTIONS: Record<EnemyKind, string> = {
   scorpion: "Escorpião do deserto: carapaça segmentada, pinças e cauda com ferrão que levanta no aviso.",
   bandit: "Salteador do deserto: lenço, turbante, cimitarra curva e uma adaga de reserva no peito.",
   goblinArcher: "Goblin com capuz de folhas, arco curto e aljava. Atira de longe e recua se você chegar perto.",
+  skeleton: "Esqueleto da cripta: costelas vazadas, trapo roxo na cintura, olhos azuis nas órbitas e espada enferrujada.",
+  skeletonArcher: "Esqueleto com capuz e aljava. Atira de longe na cripta; os olhos verdes entregam a posição.",
   banditArcher: "Salteador de roupa anil, arco longo e aljava. O aviso é uma linha no chão: saia dela de lado.",
 };
 
@@ -97,6 +100,7 @@ const PROJECTILE_DESCRIPTIONS: Record<string, string> = {
   bolt: "Raio arcano do Mago. Ataque básico, 16 m.",
   fireball: "Bola de Fogo: lenta, explode em 2,8 m.",
   stinger: "Espinho do Imperador Escorpião, disparado em leque.",
+  bone: "Osso girando da Rajada de Ossos do Lorde Esqueleto.",
   acidGlob: "Cuspe Ácido: voa em arco até o ponto avisado e deixa uma poça que queima por 8 s.",
 };
 
@@ -164,6 +168,15 @@ export function buildCatalog(): Exhibit[] {
       size: 5.2,
       spawn: (id) => createScorpionEmperor(id, { x: 0, y: 0, z: 0 }),
     },
+    {
+      kind: "character",
+      id: "boss.skeletonLord",
+      group: "Chefes",
+      label: "Lorde Esqueleto",
+      description: "Chefe da Cripta Esquecida. Armadura negra sobre costelas expostas, capa roxa rasgada, coroa enferrujada e montante de osso com runa. Golpe Sepulcral, Rajada de Ossos em leque, Pisão Sepulcral, Investida Fantasma e esqueletos na fúria. Escala com o nível da cripta.",
+      size: 5,
+      spawn: (id) => createSkeletonLord(id, { x: 0, y: 0, z: 0 }),
+    },
   );
 
   for (const def of NPC_DEFS) {
@@ -229,7 +242,7 @@ export function buildCatalog(): Exhibit[] {
     });
   }
 
-  for (const kind of ["arrow", "piercingArrow", "bolt", "fireball", "stinger", "acidGlob"] as const) {
+  for (const kind of ["arrow", "piercingArrow", "bolt", "fireball", "stinger", "acidGlob", "bone"] as const) {
     out.push({
       kind: "object",
       id: `projectile.${kind}`,
@@ -260,6 +273,18 @@ export function buildCatalog(): Exhibit[] {
       },
     });
   }
+  out.push({
+    kind: "object",
+    id: "prop.portal",
+    group: "Cenário",
+    label: "Portal da cripta",
+    description: "Arco de pedra com runas e véu roxo que gira. Leva à Cripta Esquecida; o verde, dentro dela, traz de volta depois da vitória.",
+    size: 3.4,
+    build: () => {
+      const p = createPortal();
+      return { object: p.group, update: (t: number) => p.update(t) };
+    },
+  });
   out.push({
     kind: "object",
     id: "prop.braseiro",

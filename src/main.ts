@@ -34,6 +34,12 @@ import { directionFromYaw } from "./domain/math";
 import { useFirstPotion } from "./domain/inventory";
 import { createTerrainMesh } from "./game/terrainMesh";
 import { HazardViews } from "./game/hazardViews";
+import { DungeonView } from "./game/dungeonView";
+import { createPortal } from "./game/portal";
+import { terrainHeight } from "./domain/terrain";
+import {
+  DUNGEON_ENTRANCE, DUNGEON_LIVES, DUNGEON_NAME, dungeonInteraction, enterDungeon, exitDungeon, inDungeonSpace, openChest,
+} from "./domain/dungeon";
 import { ShopUI } from "./game/shopUI";
 import { SkillTreeUI } from "./game/skillTreeUI";
 import { DayNightSky } from "./game/sky";
@@ -61,8 +67,15 @@ const shake = new CameraShake();
 /** Congela a simulação por alguns centésimos num golpe forte ("hit-stop"), para o impacto pesar. */
 let hitStop = 0;
 
-scene.add(createTerrainMesh());
-scene.add(createEnvironment());
+const terrainMesh = createTerrainMesh();
+scene.add(terrainMesh);
+const environment = createEnvironment();
+scene.add(environment);
+// Cripta: desenhada a partir da planta do domínio ao entrar; o portal de entrada fica no mapa.
+const dungeonView = new DungeonView(scene);
+const entrancePortal = createPortal();
+entrancePortal.group.position.set(DUNGEON_ENTRANCE.x, terrainHeight(DUNGEON_ENTRANCE.x, DUNGEON_ENTRANCE.z), DUNGEON_ENTRANCE.z);
+scene.add(entrancePortal.group);
 // Braseiros nos pilares do santuário: chamas que brilham mais à noite e uma luz quente no centro.
 const braziers = createBraziers();
 scene.add(braziers.group);
@@ -162,6 +175,34 @@ function nearestNpc(): Entity | undefined {
     }
   }
   return best;
+}
+
+/** O que o F faz agora: portais e baú da cripta têm prioridade sobre conversar. */
+function currentInteraction(): { label: string; act: () => void } | null {
+  const d = dungeonInteraction(world, player);
+  const level = player.progression?.level ?? 1;
+  if (d === "enter") return { label: `Entrar na ${DUNGEON_NAME} (nível ${level})`, act: () => afterDungeonChange(() => enterDungeon(world, player)) };
+  if (d === "chest") return { label: "Abrir o baú", act: () => { openChest(world, player); handleEvents(world.drainEvents()); } };
+  if (d === "exit") return { label: "Voltar ao vale (vitória)", act: () => afterDungeonChange(() => exitDungeon(world, player, "complete")) };
+  if (d === "leave") {
+    return {
+      label: "Sair da cripta (desistir)",
+      act: () => {
+        if (confirm("Sair agora fecha a cripta. Na próxima entrada ela será outra. Sair?")) afterDungeonChange(() => exitDungeon(world, player, "leave"));
+      },
+    };
+  }
+  const npc = nearestNpc();
+  return npc ? { label: `Falar com ${npc.name}`, act: () => openDialogue(npc) } : null;
+}
+
+/** Entrar ou sair muda o mundo inteiro de lugar: novas entidades, câmera sem viagem, eventos na hora. */
+function afterDungeonChange(change: () => void): void {
+  change();
+  views.sync(world);
+  views.prune(world);
+  cam.snap();
+  handleEvents(world.drainEvents());
 }
 
 function openDialogue(npc: Entity): void {
@@ -540,7 +581,10 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         saveGame("auto");
         break;
       case "respawn":
-        if (ev.entity === player.id) hud.pushLog("Você renasceu no santuário.", "level");
+        if (ev.entity === player.id) {
+          hud.pushLog(inDungeonSpace(player.transform.position.x) ? "Você voltou à sala inicial da cripta." : "Você renasceu no santuário.", "level");
+          cam.snap();
+        }
         break;
       case "pickup": {
         const item = player.inventory?.items.find((i) => i?.id === ev.itemId);
@@ -695,6 +739,34 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         if (t?.boss && ev.effect === "stun") floats.spawn(t.transform.position, "ATORDOADO", "#ffe57a", 1);
         break;
       }
+      case "dungeonEnter":
+        audio.play("bossPhase");
+        hud.pushLog(`Você entrou na ${DUNGEON_NAME} (nível ${ev.level}): ${ev.rooms} salas e um chefe. Três vidas.`, "level");
+        floats.spawn(player.transform.position, DUNGEON_NAME.toUpperCase(), "#c08aff", 1.4);
+        break;
+      case "roomCleared":
+        audio.play("questAccept");
+        hud.pushLog(`Sala limpa (${ev.cleared}/${ev.total}).`, "gain");
+        break;
+      case "dungeonComplete":
+        audio.play("questComplete");
+        floats.spawn(player.transform.position, "CRIPTA VENCIDA!", "#ffe57a", 1.5);
+        hud.pushLog("O Lorde caiu! Abra o baú e use o portal verde para voltar.", "level");
+        break;
+      case "chestOpened":
+        audio.play("pickupRare");
+        hud.pushLog(`Baú aberto: +${ev.gold} ouro, ${ev.items.join(", ")}.`, "level");
+        break;
+      case "dungeonLifeLost":
+        hud.pushLog(ev.livesLeft > 0 ? `Você perdeu uma vida na cripta. Restam ${ev.livesLeft}.` : "Sem vidas: a cripta te expulsa.", "dmg-in");
+        break;
+      case "dungeonExit":
+        audio.setBossMode(false);
+        hud.pushLog(ev.reason === "complete" ? "De volta ao vale, vitorioso." : ev.reason === "failed" ? "A cripta se fechou. Ela será outra na próxima vez." : "Você saiu da cripta.", ev.reason === "failed" ? "dmg-in" : "gain");
+        views.prune(world);
+        cam.snap();
+        saveGame("auto");
+        break;
       case "sell":
         audio.play("coin");
         hud.pushLog(`Vendido: ${ev.itemName} (+${ev.gold} ouro)`, "gain");
@@ -734,9 +806,9 @@ function frame(): void {
   if (interact && started && !menu.isOpen && !inventoryUI.isOpen && !treeUI.isOpen) {
     if (shopUI.isOpen) closeShop();
     else if (dialogue.isOpen) closeDialogue();
-    else {
-      const npc = nearestNpc();
-      if (npc && isAlive(player)) openDialogue(npc);
+    else if (isAlive(player)) {
+      const action = currentInteraction();
+      action?.act();
     }
   }
   if (paused) {
@@ -804,15 +876,26 @@ function frame(): void {
   cam.update(focus, frameDt);
   shake.intensity = menu.shakeIntensity;
   cam.applyShake(shake.update(frameDt));
-  sky.update(world.time, cam.camera, focus, frameDt);
-  foliage.update(world.time, p);
-  braziers.update(world.time, sky.night);
+  // Na cripta: o vale some (economiza e não vaza luz), a câmera fica mais de cima e o céu escurece.
+  const indoor = inDungeonSpace(p.x);
+  terrainMesh.visible = environment.visible = foliage.group.visible = braziers.group.visible = entrancePortal.group.visible = !indoor;
+  cam.minPitch = indoor ? 0.8 : -0.15;
+  cam.maxDistance = indoor ? 13 : 18;
+  sky.update(world.time, cam.camera, focus, frameDt, indoor);
+  if (!indoor) {
+    foliage.update(world.time, p);
+    braziers.update(world.time, sky.night);
+    entrancePortal.update(world.time);
+  }
+  dungeonView.update(world.dungeon, focus, world.time, cam.camera);
+  views.prune(world);
+  hud.updateDungeon(world.dungeon ? { name: DUNGEON_NAME, level: world.dungeon.level, cleared: world.dungeon.clearedRooms.length, total: Object.keys(world.dungeon.roomEnemies).length, lives: world.dungeon.livesLeft, maxLives: DUNGEON_LIVES, boss: world.dungeon.bossDefeated } : null);
   particles.update(frameDt);
   hud.setClock(formatClock(clockAt(world.time)), sky.night > 0.5);
   views.update(simDt, cam.camera, target?.id, world.time, player);
-  const npcNear = nearestNpc();
-  interactEl.classList.toggle("hidden", !npcNear || dialogue.isOpen || shopUI.isOpen);
-  if (npcNear) interactText.textContent = `Falar com ${npcNear.name}`;
+  const action = isAlive(player) ? currentInteraction() : null;
+  interactEl.classList.toggle("hidden", !action || dialogue.isOpen || shopUI.isOpen);
+  if (action && interactText.textContent !== action.label) interactText.textContent = action.label;
   questTracker.update(player);
   dropViews.update(world, world.time);
   projectileViews.update(world, frameDt, world.time);
@@ -846,6 +929,8 @@ if (import.meta.env.DEV) {
     particles,
     shake,
     foliage,
+    enterDungeon: (seed?: number) => afterDungeonChange(() => enterDungeon(world, player, seed)),
+    exitDungeon: () => afterDungeonChange(() => exitDungeon(world, player, "leave")),
     activeSlot: () => activeSlot,
     audioState: () => (audio.ready ? "running" : "locked"),
     audioLevel: () => audio.measureLevel(),

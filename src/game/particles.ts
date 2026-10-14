@@ -185,4 +185,7 @@ export const HIT_COLORS: Record<string, string[]> = {
   goblinArcher: ["#7bb04a", "#3d6b2a"],
   banditArcher: ["#2f4f7a", "#d9a070"],
   scorpionEmperor: ["#5a2a1e", "#d4a92a", "#2e1a14"],
+  skeleton: ["#e4dcc4", "#c8bfa4", "#4a2f5a"],
+  skeletonArcher: ["#e4dcc4", "#c8bfa4", "#3a4a2a"],
+  skeletonLord: ["#e8e0c8", "#2e2a34", "#4a2a6a", "#9a4ad8"],
 };

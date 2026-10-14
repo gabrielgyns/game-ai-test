@@ -99,6 +99,19 @@ com screenshots antes de serem considerados prontos.
     primitivas. Talentos salvos no `SaveData.player.talents`. Apresentação: painel (K) com 4 colunas,
     aviso de pontos sobre a barra, estrelas de atordoamento para qualquer criatura, tom azul (lento)
     e roxo (vulnerável), poças de fogo e chuva de flechas. 19 testes novos.
+22. **Dungeons** (pedido do dono: "áreas instanciadas com chefe e loot garantido, estilo Minecraft
+    Dungeons"). Domínio: `dungeonLayout.ts` (planta 96×96 por seed: sala inicial, 5 de combate e a do
+    chefe encadeadas por corredores retos, pilares 2×2 nas salas grandes) e `dungeon.ts` (a cripta
+    vive no mesmo `World` em x ≥ 1000; `enterDungeon` povoa as salas com inimigos escalados pelo
+    nível e tier de loot, `closeDungeon` apaga tudo da região, `isWalkable`/`canStand` dão paredes ao
+    movimento e aos projéteis, `hasLineOfSight` controla o aggro, `playerRespawnPoint` conta 3 vidas,
+    `dungeonSystem` detecta salas limpas e a vitória, `openChest` dá ouro e loot garantido). Save
+    dentro da cripta guarda o herói na porta. Esqueleto, Esqueleto Arqueiro, Lorde Esqueleto
+    (`createSkeletonLord`, escala com o nível) e projétil de osso. Quest "A Cripta Esquecida" da
+    Anciã. Apresentação: portal de pedra no mapa, `dungeonView.ts` (piso, paredes de tijolo, pilares,
+    tochas com 6 luzes que seguem o herói, baú que abre, portais), vale escondido e céu escuro dentro
+    da cripta, câmera mais de cima, recorte de paredes em funil no shader, painel da cripta no HUD.
+    Custo: ~340k triângulos dentro da cripta. 15 testes novos.
 
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).

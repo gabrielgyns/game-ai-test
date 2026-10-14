@@ -414,3 +414,10 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0d12; col
   position: absolute; bottom: 92px; left: 50%; transform: translateX(-50%); font-size: 12px; font-weight: 700;
   color: #1a1408; background: #ffd37a; border-radius: 999px; padding: 3px 10px; animation: pulse 1.4s infinite;
 }
+
+#dungeon-hud {
+  position: absolute; top: 150px; left: 16px; width: 280px; background: var(--panel); border: 1px solid rgba(192,138,255,0.35);
+  border-radius: 12px; padding: 8px 12px; font-size: 13px; line-height: 1.5; color: var(--muted);
+}
+#dungeon-hud b { color: #d8b8ff; }
+#dungeon-hud .lost { color: rgba(255,255,255,0.2); }

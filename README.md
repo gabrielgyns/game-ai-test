@@ -23,7 +23,7 @@ Abra `http://localhost:5173` e clique na tela para começar.
 | Q | beber poção (escolhe a menor que cobre o que falta) |
 | I | abrir a mochila (clique equipa ou usa, botão direito larga no chão) |
 | K | árvore de habilidades (um ponto por nível) |
-| F | falar com o NPC mais próximo |
+| F | falar com o NPC mais próximo, entrar e sair da cripta, abrir o baú |
 | ESC | menu de pausa |
 
 Gosmas vivem perto do santuário central, goblins mais longe e orcs na borda do mapa.
@@ -59,6 +59,15 @@ andam pelo mapa (goblins na mata, salteadores no deserto): mantêm distância, r
 perto e avisam o tiro com uma linha no chão; saia dela de lado.
 No platô ao norte, cercado de totens, vive o **Rei Goblin**: um chefe com Golpe Pesado, Pisão em área e
 Investida Real em linha, três fases que aceleram os avisos, lacaios na fúria final e loot épico garantido. Subir de nível cura por completo e aumenta vida e dano.
+A nordeste do santuário, um arco de pedra com véu roxo leva à **Cripta Esquecida**, uma dungeon no
+estilo Minecraft Dungeons: a cada entrada a planta é outra (sala inicial, cinco salas de combate
+ligadas por corredores e a sala do chefe), os inimigos (esqueletos, esqueletos arqueiros, aranhas e
+zumbis) escalam com o seu nível, e as paredes bloqueiam passos, flechas e a visão dos inimigos. No
+fundo espera o **Lorde Esqueleto** (Golpe Sepulcral, Rajada de Ossos em leque, Pisão, Investida
+Fantasma e esqueletos na fúria). Vencido, ele solta loot épico e abre um **baú** com ouro, dois itens
+raros ou épicos e poções, além de um portal verde de volta ao vale. Você tem **três vidas** lá dentro:
+caindo, volta à sala inicial; sem vidas, a cripta te expulsa e se fecha. A câmera fica mais de cima e
+as paredes entre ela e o herói se recortam sozinhas para não tapar a luta.
 Cada nível dá **1 ponto de habilidade** (K): cada uma das quatro habilidades da classe tem 5 ranks.
 Os ranks 1, 2 e 4 melhoram números (dano, raio, recarga, duração); os ranks 3 e 5 são **talentos** que
 mudam o jeito de jogar: a Investida atordoa, o Golpe Giratório cura e deixa os inimigos vulneráveis, o
@@ -139,6 +148,8 @@ src/
     boss.ts        chefes: padrões de golpe (melee, área, investida), formas de telegraph e fases
     npc.ts         NPCs do santuário e suas falas
     quests.ts      definições de quests, diário do jogador, aceitar/avançar/entregar
+    dungeonLayout.ts planta da cripta gerada por seed (salas, corredores, pilares)
+    dungeon.ts     cripta instanciada: entrar, salas, chefe, baú, vidas, paredes e linha de visão
     skillTree.ts   árvore: 5 ranks por habilidade, talentos, pontos por nível e reinício por ouro
     status.ts      efeitos de status (atordoado, lento, vulnerável) usados pelos talentos
     affixes.ts     afixos sorteados nos equipamentos (Serpente, Águia, Vampiro, Sábio...)
@@ -163,6 +174,8 @@ src/
     dialogueUI.ts  painel de conversa com NPCs
     questTracker.ts lista de quests ativas
     storage.ts     localStorage como porta dos slots, pedido de novo jogo, exportar e importar arquivo
+    dungeonView.ts cripta desenhada da planta: piso, tijolos, pilares, tochas com luz, baú, recorte de paredes
+    portal.ts      portal de pedra com véu girando (entrada no mapa e saídas da cripta)
     skillTreeUI.ts painel da árvore de habilidades (K) e aviso de pontos sobre a barra
     shopUI.ts      painel da Mercadora (à venda, recompra, mochila que vende no clique)
     itemTooltip.ts tooltip de item compartilhado (afixos e comparação com o equipado)

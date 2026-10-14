@@ -8,6 +8,9 @@ export class ThirdPersonCamera {
   yaw = 0;
   pitch = 0.35;
   distance = 9;
+  /** Inclinação mínima (na cripta a câmera fica mais de cima, para enxergar por cima das paredes). */
+  minPitch = -0.15;
+  maxDistance = 18;
   private readonly smoothedTarget = new THREE.Vector3();
   private initialized = false;
 
@@ -17,11 +20,19 @@ export class ThirdPersonCamera {
 
   applyLook(dx: number, dy: number, zoom: number): void {
     this.yaw -= dx * 0.0032;
-    this.pitch = clamp(this.pitch + dy * 0.0028, -0.15, 1.2);
-    this.distance = clamp(this.distance + zoom * 0.9, 3.5, 18);
+    this.pitch = clamp(this.pitch + dy * 0.0028, this.minPitch, 1.2);
+    this.distance = clamp(this.distance + zoom * 0.9, 3.5, this.maxDistance);
+  }
+
+  /** Pula direto para o alvo (teleporte para dentro ou fora da cripta), sem atravessar o mapa. */
+  snap(): void {
+    this.initialized = false;
   }
 
   update(target: THREE.Vector3, dt: number): void {
+    // A inclinação mínima pode ter subido (entrou na cripta): ajusta aos poucos.
+    if (this.pitch < this.minPitch) this.pitch += (this.minPitch - this.pitch) * clamp(dt * 4, 0, 1);
+    if (this.distance > this.maxDistance) this.distance += (this.maxDistance - this.distance) * clamp(dt * 4, 0, 1);
     if (!this.initialized) {
       this.smoothedTarget.copy(target);
       this.initialized = true;

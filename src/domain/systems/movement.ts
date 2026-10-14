@@ -2,6 +2,7 @@ import { clamp, lerpAngle, yawFromDirection } from "../math";
 import { isWater, terrainHeight, WORLD_HALF } from "../terrain";
 import type { World } from "../world";
 import { speedFactor } from "../status";
+import { canStand, inDungeonSpace } from "../dungeon";
 
 const TURN_SPEED = 14; // quão rápido a entidade gira para a direção de movimento
 
@@ -16,8 +17,16 @@ export function movementSystem(world: World, dt: number): void {
     const moving = intent.x !== 0 || intent.z !== 0;
 
     if (moving) {
-      pos.x = clamp(pos.x + intent.x * speed * dt, -WORLD_HALF + 2, WORLD_HALF - 2);
-      pos.z = clamp(pos.z + intent.z * speed * dt, -WORLD_HALF + 2, WORLD_HALF - 2);
+      const nx = pos.x + intent.x * speed * dt;
+      const nz = pos.z + intent.z * speed * dt;
+      if (inDungeonSpace(pos.x)) {
+        // Dentro da cripta: paredes de verdade. Cada eixo separado, para deslizar rente à parede.
+        if (canStand(world, nx, pos.z)) pos.x = nx;
+        if (canStand(world, pos.x, nz)) pos.z = nz;
+      } else {
+        pos.x = clamp(nx, -WORLD_HALF + 2, WORLD_HALF - 2);
+        pos.z = clamp(nz, -WORLD_HALF + 2, WORLD_HALF - 2);
+      }
     }
     const targetYaw = dash ? yawFromDirection(intent) : (e.movement.faceYaw ?? (moving ? yawFromDirection(intent) : undefined));
     if (targetYaw !== undefined) {
