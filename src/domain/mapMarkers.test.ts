@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { mapMarkers } from "./mapMarkers";
-import { DUNGEON_ENTRANCE, enterDungeon } from "./dungeon";
+import { descend, DUNGEON_ENTRANCE, enterDungeon } from "./dungeon";
 import { generateWorld } from "./worldgen";
 import { acceptQuest, questsForNpc } from "./quests";
 import { createEquipment, resetItemIds } from "./items";
@@ -34,20 +34,28 @@ describe("marcadores do mapa", () => {
     expect(mapMarkers(world, p).some((k) => k.id === enemy.id)).toBe(false);
   });
 
-  it("na cripta: só o que é da cripta, com saída e baú depois do chefe", () => {
+  it("na cripta: só o que é da cripta; escada, santuário, e saída e baú depois do chefe", () => {
     const world = generateWorld({ seed: 3 });
     const p = world.player!;
     p.transform.position = { x: DUNGEON_ENTRANCE.x, y: 0, z: DUNGEON_ENTRANCE.z };
     const run = enterDungeon(world, p, 9);
     let m = mapMarkers(world, p);
     expect(m.every((k) => k.x >= 500)).toBe(true);
-    expect(m.filter((k) => k.kind === "boss")).toHaveLength(1);
     expect(m.filter((k) => k.kind === "exit")).toHaveLength(1);
-    applyDamage(world, p, world.get(run.bossId)!, 999999);
+    expect(m.find((k) => k.kind === "stairs")?.label).toBe("Escada (selada)");
+    expect(m.some((k) => k.kind === "shrine")).toBe(true);
+    applyDamage(world, p, world.get(run.guardianId!)!, 9e9);
+    stepWorld(world, 1 / 60);
+    descend(world, p);
+    m = mapMarkers(world, p);
+    expect(m.filter((k) => k.kind === "boss")).toHaveLength(1);
+    expect(m.filter((k) => k.kind === "exit")).toHaveLength(0);
+    applyDamage(world, p, world.get(run.bossId!)!, 999999);
     stepWorld(world, 1 / 60);
     m = mapMarkers(world, p);
     expect(m.some((k) => k.kind === "chest")).toBe(true);
-    expect(m.filter((k) => k.kind === "exit")).toHaveLength(2);
+    expect(m.filter((k) => k.kind === "exit")).toHaveLength(1);
+    expect(m.some((k) => k.kind === "stairs")).toBe(false);
   });
 
   it("itens raros e épicos no chão aparecem; comuns não", () => {

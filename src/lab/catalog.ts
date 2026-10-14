@@ -14,6 +14,7 @@ import { createBraziers, stallGeometry } from "../game/environment";
 import { buildLods, PROP_MODELS, propVoxels, type PropKind, type PropLods } from "../game/props/catalog";
 import { LEGACY_PROPS } from "./legacyProps";
 import { createSetPiece } from "../domain/sets";
+import { DECOR_BUILDERS, DECOR_VOXEL, type DecorKind } from "../game/dungeonDecor";
 import type { VoxelBuilder } from "../game/voxel";
 import { FOLIAGE_BUILDERS } from "../game/foliage";
 import { createPortal } from "../game/portal";
@@ -367,6 +368,28 @@ export function buildCatalog(): Exhibit[] {
             return m;
           }
         : undefined,
+    });
+  }
+  const DECOR_LABEL: Record<DecorKind, string> = {
+    coffin: "Sarcófago", barrel: "Barril", bones: "Pilha de ossos", candles: "Velas", banner: "Estandarte", cobweb: "Teia",
+    rubble: "Entulho", urn: "Urna", spikes: "Espinhos da armadilha", shrine: "Santuário da cripta", brazier: "Braseiro da cripta",
+  };
+  for (const kind of Object.keys(DECOR_BUILDERS) as DecorKind[]) {
+    out.push({
+      kind: "object",
+      id: `crypt.${kind}`,
+      group: "Cripta",
+      label: DECOR_LABEL[kind],
+      description: "Adereço da Cripta Esquecida, esculpido em voxels de 1/12 m. Encosta nas paredes das salas, sem bloquear o caminho.",
+      size: kind === "banner" || kind === "cobweb" ? 2 : 1.4,
+      voxels: () => DECOR_BUILDERS[kind](),
+      voxel: DECOR_VOXEL,
+      build: () => {
+        const m = new THREE.Mesh(DECOR_BUILDERS[kind]().build(DECOR_VOXEL, { jitter: 0, aoStrength: 0.5 }), voxelMaterial());
+        if (kind === "banner" || kind === "cobweb") m.position.y = 2;
+        m.castShadow = m.receiveShadow = true;
+        return { object: m };
+      },
     });
   }
   out.push({

@@ -135,6 +135,8 @@ export interface Entity {
   progression?: Progression;
   /** Nível de inimigos e chefes (o herói usa `progression.level`). Ver `entityLevel`. */
   level?: number;
+  /** Minichefe (guardião de dungeon): mais forte, maior na tela e com loot garantido. */
+  miniboss?: boolean;
   /** Números com que o inimigo nasceu, para reescalar pela dificuldade do mundo (`worldTier.ts`). */
   tierBase?: { level: number; maxHealth: number; damage: number; xp: number; gold: number };
   /** Dificuldade do mundo escolhida e destravada (só o herói). */

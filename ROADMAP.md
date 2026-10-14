@@ -43,6 +43,7 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 - [x] Conjuntos de itens: 4 conjuntos de 3 peças (um por chefe), bônus com 2 peças e poder com 3 (Fúria Real, Veneno, Casca de Areia, Colheita de Almas); o chefe derruba a peça que falta
 - [x] Baú do santuário compartilhado entre os heróis (3 abas de 30)
 - [x] Dificuldade do mundo no Altar das Eras: Aventureiro, Veterano, Apocalipse e Pesadelo, destravados pelos três chefes; itens com nível, que crescem com quem os derrubou
+- [x] Dungeon 2.0: cripta em dois andares com salas de formas variadas, salas de tesouro e santuário, emboscadas, ondas, armadilhas de espinhos, Cavaleiro Sepulcral guardando a escada, visual esculpido (paredes em relevo, arcos, colunas, tapetes, adereços, luz colorida) e inimigos que contornam paredes (campo de fluxo)
 - [x] Lab de modelos (`/lab.html`): vitrine de tudo que aparece no jogo, luz, animações e comparação com a versão anterior
 
 ## Próximos
@@ -80,15 +81,7 @@ mais forte é 12 e só a cripta acompanha o herói. A ordem dos marcos ataca iss
 
 ### Fase 3: dungeons maiores e mais elaboradas
 
-8. **Dungeon 2.0 (a cripta refeita).** Base para todas as próximas:
-    - Planta com mais forma: salas em L, em cruz, redondas, com desníveis e rampas; ramos laterais com
-      tesouro; portas trancadas e chaves; salas secretas.
-    - Andares: 2 ou 3 níveis descendo até o chefe, com escada entre eles.
-    - Salas com evento: emboscada, ondas, armadilhas (espinhos, lâminas, chão que cai), santuário com
-      bênção, minichefe.
-    - Visual no nível do cenário novo: paredes, arcos e colunas esculpidos em 1/12 m, adereços (caixões,
-      barris, estandartes, teias, ossadas, correntes), luz colorida, névoa baixa e partículas.
-    - Inimigos que contornam paredes (depende do pathfinding do BACKLOG).
+8. ~~Dungeon 2.0~~: feita (ver acima). Ficaram para depois: portas trancadas com chave e salas secretas.
 9. **Temas de dungeon**, um por zona, cada um com inimigos, armadilhas, chefe e conjunto próprios: Mina
     Abandonada, Templo do Deserto, Covil da Rainha, Santuário Élfico, Caverna de Gelo, Forja Vulcânica.
 10. **Dungeons de fim de jogo.** Modificadores sorteados (escuridão, inimigos explosivos, sem cura),

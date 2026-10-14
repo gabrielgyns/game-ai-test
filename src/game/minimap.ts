@@ -18,7 +18,7 @@ interface MapBase {
 /** Metros visíveis do centro à borda do minimapa. */
 const MINI_RANGE = 48;
 /** Marcadores que, fora do alcance, ficam presos na borda apontando a direção. */
-const PINNED = new Set<MapMarker["kind"]>(["boss", "questOffer", "questTurnIn", "portal", "chest", "exit"]);
+const PINNED = new Set<MapMarker["kind"]>(["boss", "questOffer", "questTurnIn", "portal", "chest", "exit", "stairs"]);
 
 const LEGEND: { kind: MapMarker["kind"]; label: string }[] = [
   { kind: "questOffer", label: "Quest nova" },
@@ -29,6 +29,8 @@ const LEGEND: { kind: MapMarker["kind"]; label: string }[] = [
   { kind: "portal", label: "Portal da cripta" },
   { kind: "exit", label: "Saída" },
   { kind: "chest", label: "Baú da cripta" },
+  { kind: "stairs", label: "Escada" },
+  { kind: "shrine", label: "Santuário" },
   { kind: "stash", label: "Baú do santuário" },
   { kind: "altar", label: "Altar das Eras" },
   { kind: "loot", label: "Item raro ou épico" },
@@ -86,7 +88,7 @@ function dungeonBase(run: DungeonRun): MapBase {
     for (let i = 0; i < layout.width; i++) {
       const t = tileOf(layout, i, j);
       if (t === Tile.Void) continue;
-      ctx.fillStyle = t === Tile.Pillar ? "#3a3640" : "#8d8676";
+      ctx.fillStyle = t === Tile.Pillar ? "#3a3640" : t === Tile.Trap ? "#8a4a42" : "#8d8676";
       ctx.fillRect(i * ppc, j * ppc, ppc, ppc);
     }
   for (const room of layout.rooms) {
@@ -141,6 +143,16 @@ function drawMarker(ctx: CanvasRenderingContext2D, kind: MapMarker["kind"], x: n
       ctx.beginPath();
       ctx.arc(0, 0, r * 1.1, 0, Math.PI * 2);
       ctx.stroke();
+      break;
+    case "stairs":
+      ctx.fillStyle = "#9a6aff";
+      for (let k = 0; k < 3; k++) {
+        ctx.fillRect(-r + k * r * 0.66, -r + k * r * 0.66, r * 2 - k * r * 0.66, r * 0.6);
+        ctx.strokeRect(-r + k * r * 0.66, -r + k * r * 0.66, r * 2 - k * r * 0.66, r * 0.6);
+      }
+      break;
+    case "shrine":
+      dot("#5ab0ff", r * 1.0);
       break;
     case "altar":
       ctx.rotate(Math.PI / 4);
@@ -230,7 +242,7 @@ export class Minimap {
     const run = world.dungeon;
     if (run && player.transform.position.x >= DUNGEON_REGION_X) {
       // Redesenha quando muda a cripta ou quando uma sala é limpa.
-      const key = `${run.seed}|${run.clearedRooms.length}|${run.bossDefeated}`;
+      const key = `${run.seed}|${run.floor}|${run.clearedRooms.length}|${run.bossDefeated}`;
       if (this.dungeon?.key !== key) this.dungeon = { base: dungeonBase(run), key };
       return this.dungeon.base;
     }

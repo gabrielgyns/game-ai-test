@@ -162,6 +162,23 @@ com screenshots antes de serem considerados prontos.
     (pontos de uso). Save guarda a era e reescala o vale ao carregar. Apresentação: baú e Altar das Eras
     esculpidos na praça, painéis do baú e do altar, "Era X" no painel do herói, marcadores no mapa,
     nível do item no tooltip, baú salvo em `vale.stash`. 12 testes novos.
+28. **Pathfinding e Dungeon 2.0** (pedido do dono: "deixar a cripta grande e bonita"). Domínio:
+    `pathfinding.ts` (campo de fluxo: Dijkstra a partir da célula do herói, diagonais sem cortar quina,
+    custo extra colado em parede; cada inimigo desce o campo mirando a célula mais distante que ainda
+    vê; refeito quando o herói muda de célula), `steerToward` no AI (linha reta no vale ou com caminho
+    livre). `dungeonLayout.ts` refeito: grade 128×128, dois andares, salas retangulares, redondas, em
+    cruz e salões com colunas, corredores que entram até o centro, salas laterais de tesouro e
+    santuário, eventos por sala (emboscada, ondas, armadilhas), `Tile.Trap`. `dungeon.ts`: andares
+    (`descend`), Cavaleiro Sepulcral guardando a escada (minichefe com loot garantido), o Lorde no
+    andar 2, emboscadas que nascem ao entrar, segunda onda, espinhos em ciclo (aviso 1 s, ferem 14% da
+    vida, inimigos também), santuário (cura e +25% de dano por 60 s), baú de tesouro. Apresentação:
+    `dungeonView.ts` refeito com malhas únicas por andar em voxels de 1/6 m (pele das paredes com blocos
+    em relevo e musgo, topo, arcos nas entradas, pilares com caneluras, poço da escada com degraus,
+    piso de lajes com tapetes e grades), `dungeonDecor.ts` (sarcófago, barril, ossada, velas,
+    estandarte, teia, entulho, urna, espinhos, santuário, braseiro), luzes coloridas por fonte, poeira no
+    ar, guardião 35% maior, HUD com o andar, minimapa com armadilhas, escada e santuário. Custo: ~0,9 s
+    para montar um andar, ~140k triângulos de cenário por andar, ~430k no quadro da arena. 17 testes
+    novos ou refeitos.
 
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).

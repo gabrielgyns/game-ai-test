@@ -34,7 +34,10 @@ describe("nível das criaturas", () => {
     p.progression!.level = 8;
     p.transform.position = { x: DUNGEON_ENTRANCE.x, y: 0, z: DUNGEON_ENTRANCE.z };
     const run = enterDungeon(world, p, 5);
-    for (const id of Object.values(run.roomEnemies).flat()) expect(entityLevel(world.get(id)!)).toBe(8);
+    for (const id of Object.values(run.roomEnemies).flat()) {
+      const e = world.get(id)!;
+      expect(entityLevel(e)).toBe(e.miniboss ? 9 : 8); // o guardião fica um nível acima
+    }
   });
 
   it("dificuldade pela diferença de nível: cinza, verde, amarelo, laranja, vermelho", () => {

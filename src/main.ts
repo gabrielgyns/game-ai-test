@@ -39,8 +39,10 @@ import { DungeonView } from "./game/dungeonView";
 import { createPortal } from "./game/portal";
 import { terrainHeight } from "./domain/terrain";
 import {
-  DUNGEON_ENTRANCE, DUNGEON_LIVES, DUNGEON_NAME, dungeonInteraction, enterDungeon, exitDungeon, inDungeonSpace, openChest,
+  descend, DUNGEON_ENTRANCE, DUNGEON_LIVES, DUNGEON_NAME, DUNGEON_ORIGIN, dungeonInteraction, enterDungeon, exitDungeon, inDungeonSpace, openChest,
+  openSideChest, useShrine,
 } from "./domain/dungeon";
+import { roomAt } from "./domain/dungeonLayout";
 import { ShopUI } from "./game/shopUI";
 import { SkillTreeUI } from "./game/skillTreeUI";
 import { Minimap } from "./game/minimap";
@@ -195,6 +197,10 @@ function currentInteraction(): { label: string; act: () => void } | null {
   const level = player.progression?.level ?? 1;
   if (d === "enter") return { label: `Entrar na ${DUNGEON_NAME} (nível ${level})`, act: () => afterDungeonChange(() => enterDungeon(world, player)) };
   if (d === "chest") return { label: "Abrir o baú", act: () => { openChest(world, player); handleEvents(world.drainEvents()); } };
+  if (d === "sideChest") return { label: "Abrir o baú do tesouro", act: () => { openSideChest(world, player); handleEvents(world.drainEvents()); } };
+  if (d === "shrine") return { label: "Tocar o santuário (cura e bênção)", act: () => { useShrine(world, player); handleEvents(world.drainEvents()); } };
+  if (d === "stairs") return { label: "Descer a escada (andar 2: o Lorde)", act: () => afterDungeonChange(() => descend(world, player)) };
+  if (d === "stairsLocked") return { label: "A escada está selada: vença o Cavaleiro Sepulcral", act: () => toast("Vença o Cavaleiro Sepulcral para abrir a escada.") };
   if (d === "exit") return { label: "Voltar ao vale (vitória)", act: () => afterDungeonChange(() => exitDungeon(world, player, "complete")) };
   if (d === "leave") {
     return {
@@ -803,6 +809,39 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         hud.pushLog(`Você entrou na ${DUNGEON_NAME} (nível ${ev.level}): ${ev.rooms} salas e um chefe. Três vidas.`, "level");
         floats.spawn(player.transform.position, DUNGEON_NAME.toUpperCase(), "#c08aff", 1.4);
         break;
+      case "dungeonFloor":
+        audio.play("bossPhase");
+        floats.spawn(player.transform.position, `ANDAR ${ev.floor}`, "#c08aff", 1.4);
+        hud.pushLog(ev.floor >= ev.floors ? "Você desceu ao último andar. O Lorde Esqueleto espera no fim." : `Andar ${ev.floor} de ${ev.floors}.`, "level");
+        break;
+      case "ambush":
+        audio.play("bossPhase");
+        shake.add(0.35);
+        floats.spawn(player.transform.position, "EMBOSCADA!", "#ff6b5a", 1.3);
+        break;
+      case "wave":
+        audio.play("bossPhase");
+        floats.spawn(player.transform.position, "MAIS ESQUELETOS!", "#ff9a5a", 1.1);
+        hud.pushLog("Outra onda saiu das sombras.", "dmg-in");
+        break;
+      case "stairsOpen":
+        audio.play("questComplete");
+        floats.spawn(player.transform.position, "ESCADA ABERTA", "#c08aff", 1.2);
+        hud.pushLog("O Cavaleiro caiu. A escada para o andar de baixo está aberta.", "level");
+        break;
+      case "shrineBlessing":
+        audio.play("levelUp");
+        floats.spawn(player.transform.position, "BÊNÇÃO: +25% DANO", "#7ac8ff", 1.2);
+        hud.pushLog(`O santuário cura e abençoa: +25% de dano por ${ev.seconds} s.`, "gain");
+        break;
+      case "trapSpring":
+        if (world.dungeon && player.transform.position.x >= 500) {
+          const L = world.dungeon.layout;
+          const pi = Math.floor(player.transform.position.x - DUNGEON_ORIGIN.x), pj = Math.floor(player.transform.position.z - DUNGEON_ORIGIN.z);
+          const room = roomAt(L, pi, pj);
+          if (room?.event === "traps") audio.play("hit", { pitch: 0.6, distance: 6 });
+        }
+        break;
       case "roomCleared":
         audio.play("questAccept");
         hud.pushLog(`Sala limpa (${ev.cleared}/${ev.total}).`, "gain");
@@ -975,7 +1014,7 @@ function frame(): void {
   }
   dungeonView.update(world.dungeon, focus, world.time, cam.camera);
   views.prune(world);
-  hud.updateDungeon(world.dungeon ? { name: DUNGEON_NAME, level: world.dungeon.level, cleared: world.dungeon.clearedRooms.length, total: Object.keys(world.dungeon.roomEnemies).length, lives: world.dungeon.livesLeft, maxLives: DUNGEON_LIVES, boss: world.dungeon.bossDefeated } : null);
+  hud.updateDungeon(world.dungeon ? { name: DUNGEON_NAME, level: world.dungeon.level, floor: world.dungeon.floor, floors: world.dungeon.floors, cleared: world.dungeon.clearedRooms.length, total: world.dungeon.layout.rooms.filter((r) => r.kind === "combat" || r.kind === "stairs").length, lives: world.dungeon.livesLeft, maxLives: DUNGEON_LIVES, boss: world.dungeon.bossDefeated } : null);
   particles.update(frameDt);
   hud.setClock(formatClock(clockAt(world.time)), sky.night > 0.5);
   views.update(simDt, cam.camera, target?.id, world.time, player);
@@ -1019,6 +1058,9 @@ if (import.meta.env.DEV) {
     environment,
     minimap,
     openInventory,
+    dungeonView,
+    interact: () => currentInteraction()?.act(),
+    interactLabel: () => currentInteraction()?.label ?? null,
     enterDungeon: (seed?: number) => afterDungeonChange(() => enterDungeon(world, player, seed)),
     exitDungeon: () => afterDungeonChange(() => exitDungeon(world, player, "leave")),
     activeSlot: () => activeSlot,

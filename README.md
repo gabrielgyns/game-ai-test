@@ -60,14 +60,17 @@ perto e avisam o tiro com uma linha no chão; saia dela de lado.
 No platô ao norte, cercado de totens, vive o **Rei Goblin**: um chefe com Golpe Pesado, Pisão em área e
 Investida Real em linha, três fases que aceleram os avisos, lacaios na fúria final e loot épico garantido. Subir de nível cura por completo e aumenta vida e dano.
 A nordeste do santuário, um arco de pedra com véu roxo leva à **Cripta Esquecida**, uma dungeon no
-estilo Minecraft Dungeons: a cada entrada a planta é outra (sala inicial, cinco salas de combate
-ligadas por corredores e a sala do chefe), os inimigos (esqueletos, esqueletos arqueiros, aranhas e
-zumbis) escalam com o seu nível, e as paredes bloqueiam passos, flechas e a visão dos inimigos. No
-fundo espera o **Lorde Esqueleto** (Golpe Sepulcral, Rajada de Ossos em leque, Pisão, Investida
-Fantasma e esqueletos na fúria). Vencido, ele solta loot épico e abre um **baú** com ouro, dois itens
-raros ou épicos e poções, além de um portal verde de volta ao vale. Você tem **três vidas** lá dentro:
-caindo, volta à sala inicial; sem vidas, a cripta te expulsa e se fecha. A câmera fica mais de cima e
-as paredes entre ela e o herói se recortam sozinhas para não tapar a luta.
+estilo Minecraft Dungeons com **dois andares**, gerada de novo a cada entrada. As salas têm formas
+variadas (retangulares, redondas, em cruz, salões com colunas e tapete) e eventos: **emboscadas**
+(a sala parece vazia até você entrar), **ondas** de esqueletos e **armadilhas** de espinhos que avisam
+em vermelho antes de subir (ferem inimigos também). Salas laterais guardam um **baú de tesouro** ou um
+**santuário** que cura e dá +25% de dano por um minuto. A escada do primeiro andar é guardada pelo
+**Cavaleiro Sepulcral**; no segundo andar espera o **Lorde Esqueleto** (Golpe Sepulcral, Rajada de
+Ossos, Pisão, Investida Fantasma e esqueletos na fúria), com o baú de loot garantido e o portal verde
+de volta. Os inimigos (esqueletos, arqueiros, aranhas e zumbis) acompanham o seu nível e contornam
+paredes e colunas para chegar até você. Você tem **três vidas** para a cripta inteira. Paredes em
+relevo, arcos, colunas, sarcófagos, estandartes, velas, braseiros e poeira no ar; as paredes entre a
+câmera e o herói se recortam sozinhas.
 Cada nível dá **1 ponto de habilidade** (K): cada uma das quatro habilidades da classe tem 5 ranks.
 Os ranks 1, 2 e 4 melhoram números (dano, raio, recarga, duração); os ranks 3 e 5 são **talentos** que
 mudam o jeito de jogar: a Investida atordoa, o Golpe Giratório cura e deixa os inimigos vulneráveis, o

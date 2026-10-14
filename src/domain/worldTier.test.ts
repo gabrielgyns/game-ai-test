@@ -66,7 +66,7 @@ describe("dificuldade do mundo", () => {
     p.progression!.level = 5;
     const run = enterDungeon(world, p, 2);
     expect(setWorldTier(world, p, 2)).toBe("inDungeon");
-    expect(entityLevel(world.get(run.bossId)!)).toBe(7);
+    expect(entityLevel(world.get(run.guardianId!)!)).toBe(6); // guardião: nível da cripta + 1
   });
 
   it("a dificuldade vai no save e reescala o vale ao carregar", () => {

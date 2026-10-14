@@ -176,3 +176,16 @@ criatura que o derrubou (não da era nem do herói): uma regra só serve vale, c
 Só números absolutos crescem; porcentagens (crítico, roubo de vida, recarga) ficam, senão estourariam.
 O baú é compartilhado entre os slots e mora fora do save (`vale.stash`), como no Diablo.
 
+## D35. Caminho por campo de fluxo, não A* por inimigo
+Todos os inimigos da cripta perseguem o mesmo alvo (o herói), então um único mapa de distâncias a
+partir dele serve a todos: Dijkstra na grade, refeito quando o herói muda de célula (~16k células).
+Cada inimigo só olha os vizinhos e mira a célula mais distante do caminho que ainda vê em linha reta.
+Com caminho livre (ou no vale) continua em linha reta. Volta para casa segue deslizando nas paredes
+(raro: o leash é longo).
+
+## D36. Cripta desenhada como poucas malhas grandes
+Instanciar um bloco por célula desenha as faces internas de cada parede. A cripta 2.0 constrói a "pele"
+das paredes (só as duas camadas de voxel que dão para o chão), o topo, arcos e pilares num único
+`VoxelBuilder` por andar, e o piso noutro: o greedy meshing funde o que é igual e o recorte de paredes
+continua no shader. Custa ~0,9 s ao entrar ou descer, em troca de relevo nos blocos sem pesar no quadro.
+

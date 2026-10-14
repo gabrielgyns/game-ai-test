@@ -43,9 +43,9 @@ export class Hud {
   private dungeonText = "";
 
   /** Painel da cripta: nome, nível, salas limpas e vidas. */
-  updateDungeon(d: { name: string; level: number; cleared: number; total: number; lives: number; maxLives: number; boss: boolean } | null): void {
+  updateDungeon(d: { name: string; level: number; floor: number; floors: number; cleared: number; total: number; lives: number; maxLives: number; boss: boolean } | null): void {
     const text = d
-      ? `<b>${d.name}</b> · nível ${d.level}<br>Salas ${d.cleared}/${d.total}${d.boss ? " · Lorde vencido!" : ""} · ${"♥".repeat(d.lives)}<span class="lost">${"♥".repeat(d.maxLives - d.lives)}</span>`
+      ? `<b>${d.name}</b> · nível ${d.level} · andar ${d.floor}/${d.floors}<br>Salas ${d.cleared}/${d.total}${d.boss ? " · Lorde vencido!" : ""} · ${"♥".repeat(d.lives)}<span class="lost">${"♥".repeat(d.maxLives - d.lives)}</span>`
       : "";
     if (text === this.dungeonText) return;
     this.dungeonText = text;

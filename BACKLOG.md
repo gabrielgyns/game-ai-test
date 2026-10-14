@@ -51,7 +51,8 @@ valem a pena.
 
 ## Jogabilidade (técnico)
 
-6. [ ] **Pathfinding na cripta.**
+6. [x] **Pathfinding na cripta.** Feito (out/2026): campo de fluxo em `pathfinding.ts`; um esqueleto a
+   31 m atrás de paredes chegou a 1,9 m do herói em 15 s de jogo, no navegador.
    Hoje os inimigos andam em linha reta até o herói e deslizam nas paredes, e podem ficar presos numa
    quina. Proposta: A* na grade da planta (`dungeonLayout`), com o caminho recalculado a cada ~0,5 s ou
    quando o herói muda de célula, e linha reta quando há visão direta. Pré-requisito da Dungeon 2.0.

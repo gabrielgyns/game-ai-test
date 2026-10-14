@@ -46,6 +46,10 @@ export function rollLoot(world: World, victim: Entity): void {
     world.addDrop(createPotion("large", 2), scatter(3));
     return;
   }
+  if (victim.miniboss) {
+    // Guardião: um raro ou épico garantido, além do sorteio normal abaixo.
+    world.addDrop(createEquipment(rand, victim.ai?.lootTier ?? 3, rand() < 0.3 ? "epic" : "rare", level), scatter(2));
+  }
   const table = LOOT_TABLES[victim.archetype];
   if (!table) return;
   // Inimigos de dungeon carregam o tier do nível da dungeon; acima do nível 12 (dificuldade alta), tier 3.

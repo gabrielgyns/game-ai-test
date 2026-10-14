@@ -10,6 +10,7 @@ import { entityLevel, levelDifficulty } from "../domain/levels";
 import { levelBadgeTexture } from "./levelBadge";
 
 const FLASH_TIME = 0.14;
+const MINIBOSS_SCALE = 1.35;
 const SLOW_TINT = new THREE.Color("#3a6ad8");
 const VULN_TINT = new THREE.Color("#a03ac8");
 const WHITE = new THREE.Color("#ffffff");
@@ -305,7 +306,7 @@ class EntityView {
     if (!alive) {
       this.deathTime += dt;
       const t = clamp(this.deathTime / 1.2, 0, 1);
-      root.scale.setScalar(1 - t);
+      root.scale.setScalar((1 - t) * (e.miniboss ? MINIBOSS_SCALE : 1));
       root.position.y -= t * 0.5;
       root.visible = t < 1;
       this.healthBar.visible = false;
@@ -317,7 +318,8 @@ class EntityView {
     }
     this.deathTime = 0;
     root.visible = true;
-    root.scale.setScalar(1);
+    // Minichefe: o mesmo modelo, 35% maior.
+    root.scale.setScalar(e.miniboss ? MINIBOSS_SCALE : 1);
 
     // Esquiva: cambalhota para a frente. Investida: inclinação para a frente.
     const dash = e.abilities?.dash;
@@ -407,7 +409,7 @@ class EntityView {
     const showBar = e.kind === "enemy" && (e.health.current < e.health.max || isTarget || e.ai?.state !== "idle");
     this.healthBar.visible = showBar;
     if (showBar) {
-      this.healthBar.position.set(p.x, p.y + this.model.height + 0.35, p.z);
+      this.healthBar.position.set(p.x, p.y + this.model.height * (e.miniboss ? MINIBOSS_SCALE : 1) + 0.35, p.z);
       this.healthBar.quaternion.copy(camera.quaternion);
       const ratio = e.health.current / e.health.max;
       this.healthFill.scale.x = Math.max(ratio, 0.001);

@@ -20,6 +20,9 @@ export type MarkerKind =
   /** Baú compartilhado e Altar das Eras, no santuário. */
   | "stash"
   | "altar"
+  /** Na cripta: escada para o próximo andar e santuário ainda não usado. */
+  | "stairs"
+  | "shrine"
   | "chest"
   | "exit"
   /** Item raro ou épico no chão. */
@@ -64,9 +67,13 @@ export function mapMarkers(world: World, player: Entity): MapMarker[] {
     out.push({ kind: "altar", x: ALTAR_SPOT.x, z: ALTAR_SPOT.z, label: "Altar das Eras" });
   }
   if (run && here(run.startPortal.x)) {
-    out.push({ kind: "exit", x: run.startPortal.x, z: run.startPortal.z, label: "Saída" });
+    // A saída da entrada só existe no primeiro andar; no último, o portal aparece depois do chefe.
+    if (run.floor === 1) out.push({ kind: "exit", x: run.startPortal.x, z: run.startPortal.z, label: "Saída" });
     if (run.exitPortal) out.push({ kind: "exit", x: run.exitPortal.x, z: run.exitPortal.z, label: "Saída" });
     if (run.chest && !run.chest.opened) out.push({ kind: "chest", x: run.chest.position.x, z: run.chest.position.z, label: "Baú" });
+    for (const c of run.sideChests) if (!c.opened) out.push({ kind: "chest", x: c.position.x, z: c.position.z, label: "Tesouro" });
+    for (const s of run.shrines) if (!s.used) out.push({ kind: "shrine", x: s.position.x, z: s.position.z, label: "Santuário" });
+    if (run.stairs) out.push({ kind: "stairs", x: run.stairs.x, z: run.stairs.z, label: run.stairsOpen ? "Escada" : "Escada (selada)" });
   }
   return out;
 }

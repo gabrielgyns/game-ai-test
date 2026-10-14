@@ -23,6 +23,6 @@ export function stepWorld(world: World, dt: number): GameEvent[] {
   projectileSystem(world, dt);
   hazardSystem(world, dt);
   pickupSystem(world, dt);
-  dungeonSystem(world);
+  dungeonSystem(world, dt);
   return world.drainEvents();
 }

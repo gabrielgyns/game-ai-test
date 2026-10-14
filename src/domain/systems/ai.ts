@@ -6,7 +6,7 @@ import { createEnemy } from "../factories";
 import { scaleToWorldTier } from "../worldTier";
 import { startAttack } from "./combat";
 import { isStunned } from "../status";
-import { hasLineOfSight } from "../dungeon";
+import { hasLineOfSight, steerToward } from "../dungeon";
 
 /**
  * Máquina de estados simples por inimigo:
@@ -44,7 +44,8 @@ export function aiSystem(world: World, dt: number): void {
         } else if (distPlayer <= e.combat.range) {
           ai.state = "attack";
         } else {
-          e.movement.intent = directionXZ(pos, player.transform.position);
+          // Na cripta, contorna paredes pelo campo de fluxo; no vale, em linha reta.
+          e.movement.intent = steerToward(world, pos, player.transform.position);
         }
         break;
 
@@ -184,6 +185,6 @@ function bossBehavior(world: World, e: Entity, dt: number, player: Entity | unde
     startAttack(world, e, pattern, pattern.windup * boss.windupScale);
   } else {
     ai.state = "chase";
-    if (distPlayer > 2.4) e.movement.intent = directionXZ(pos, player.transform.position);
+    if (distPlayer > 2.4) e.movement.intent = steerToward(world, pos, player.transform.position);
   }
 }
