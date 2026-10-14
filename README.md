@@ -20,14 +20,15 @@ Abra `http://localhost:5173` e clique na tela para começar.
 | 1 a 4 | habilidades: Golpe Giratório, Investida, Grito de Guerra, Segundo Fôlego |
 | Scroll | zoom |
 | Shift | correr |
-| Q | beber poção |
+| Q | beber poção (escolhe a menor que cobre o que falta) |
 | I | abrir a mochila (clique equipa ou usa, botão direito larga no chão) |
 | ESC | menu de pausa |
 
 Gosmas vivem perto do santuário central, goblins mais longe e orcs na borda do mapa.
 Derrote inimigos para ganhar XP, ouro e loot: equipamentos de três slots (arma, armadura,
-acessório) em quatro raridades (comum, incomum, raro, épico) e poções. Itens caem no chão
-e são coletados ao passar por cima. Subir de nível cura por completo e aumenta vida e dano.
+acessório) em quatro raridades (comum, incomum, raro, épico) e poções pequenas e grandes,
+que se empilham na mochila. Itens caem no chão e são coletados ao passar por cima.
+Inimigos avisam o golpe com uma área vermelha que se preenche: saia dela ou role (Espaço) para evitar. Subir de nível cura por completo e aumenta vida e dano.
 Se cair, você renasce no santuário depois de alguns segundos. Inimigos renascem em casa.
 
 Veja o [ROADMAP](ROADMAP.md) para a visão e os próximos marcos.

@@ -12,6 +12,7 @@ export function respawnSystem(world: World, dt: number): void {
     e.health.lastDamagedAt = -Infinity;
     e.combat.cooldownLeft = 0;
     e.combat.wantsAttack = false;
+    e.combat.windupLeft = 0;
     if (e.ai) e.ai.state = "idle";
     delete e.respawn;
     world.emit({ type: "respawn", entity: e.id });

@@ -16,6 +16,9 @@ const PALETTE: Record<string, string> = {
   b: "#3b5aa6", // azul
   p: "#b06cf0", // roxo
   G: "#5fd36b",
+  d: "#b8322f", // vermelho escuro (poção grande)
+  D: "#ff6b6b",
+  S: "#aab0bc",
 };
 
 const ICONS: Record<string, string[]> = {
@@ -171,6 +174,20 @@ const ICONS: Record<string, string[]> = {
     ".....GG.....",
     "............",
     "....ssss....",
+    "............",
+  ],
+  potionLarge: [
+    ".....kk.....",
+    ".....ss.....",
+    "....ssss....",
+    "...sDDDDs...",
+    "..sDDddDDs..",
+    ".sDdddddddS.",
+    ".sddddddddS.",
+    ".sddddddddS.",
+    ".sDdddddddS.",
+    "..sDddddDs..",
+    "...ssssss...",
     "............",
   ],
   potion: [

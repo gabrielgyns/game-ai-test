@@ -18,6 +18,8 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 - [x] Equipamento visível no herói (arma, armadura, botas, amuleto, anel)
 - [x] Habilidades (1-4): Golpe Giratório, Investida, Grito de Guerra, Segundo Fôlego
 - [x] Esquiva com rolamento (Espaço) com invulnerabilidade
+- [x] Telegraph: inimigos avisam o golpe (área vermelha) antes de acertar; fugir ou rolar evita
+- [x] Poções empilhadas (pequena 30%, grande 60%) e brilho leve por raridade nos itens
 
 ## Próximos
 
@@ -25,7 +27,7 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
    e suporte a modelos `.vox` (MagicaVoxel) para quem quiser desenhar personagens num editor.
 2. **Loot mais rico.** Afixos aleatórios (ex.: "da Serpente": +regeneração), conjuntos, venda de itens
    por ouro num mercador.
-3. **Inimigos com telegraph.** Ataques com aviso visual antes de acertar, para a esquiva ter timing (Zelda).
+3. **Chefes.** Inimigos únicos com mais de um padrão de ataque telegrafado e fases de vida.
 4. **Lock-on.** Travar a câmera num alvo (Zelda) como alternativa ao modo livre.
 5. **NPCs e quests.** Vila no santuário, diálogo, quests de caça e entrega.
 6. **Salvar e carregar.** Persistir no localStorage e exportar para arquivo.

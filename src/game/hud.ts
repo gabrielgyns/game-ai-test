@@ -1,4 +1,5 @@
 import type { Entity } from "../domain/components";
+import { countItems } from "../domain/inventory";
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -54,7 +55,7 @@ export class Hud {
     this.kills.textContent = `${this.killCount} abates`;
     const inv = player.inventory;
     if (inv) {
-      this.potions.textContent = `${inv.items.filter((i) => i?.kind === "consumable").length}`;
+      this.potions.textContent = `${countItems(inv, (i) => i.kind === "consumable")}`;
       this.bag.textContent = `${inv.items.filter((i) => i !== null).length}/${inv.capacity}`;
     }
 

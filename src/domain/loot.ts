@@ -6,12 +6,14 @@ interface LootTable {
   tier: 1 | 2 | 3;
   equipmentChance: number;
   potionChance: number;
+  /** Chance de a poção ser grande em vez de pequena. */
+  largePotionChance: number;
 }
 
 const LOOT_TABLES: Record<string, LootTable> = {
-  slime: { tier: 1, equipmentChance: 0.18, potionChance: 0.3 },
-  goblin: { tier: 2, equipmentChance: 0.4, potionChance: 0.3 },
-  orc: { tier: 3, equipmentChance: 0.85, potionChance: 0.45 },
+  slime: { tier: 1, equipmentChance: 0.18, potionChance: 0.3, largePotionChance: 0 },
+  goblin: { tier: 2, equipmentChance: 0.4, potionChance: 0.3, largePotionChance: 0.25 },
+  orc: { tier: 3, equipmentChance: 0.85, potionChance: 0.45, largePotionChance: 0.7 },
 };
 
 /** Sorteia e espalha os drops de um inimigo morto ao redor de onde ele caiu. */
@@ -28,6 +30,6 @@ export function rollLoot(world: World, victim: Entity): void {
     world.addDrop(createEquipment(rand, table.tier, rollRarity(rand, table.tier)), scatter());
   }
   if (rand() < table.potionChance) {
-    world.addDrop(createPotion(), scatter());
+    world.addDrop(createPotion(rand() < table.largePotionChance ? "large" : "small"), scatter());
   }
 }

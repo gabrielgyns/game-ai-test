@@ -49,6 +49,10 @@ export interface Combat {
   cooldownLeft: number;
   /** Pedido de ataque para este tick (input ou IA). Consumido pelo sistema de combate. */
   wantsAttack: boolean;
+  /** Segundos de aviso entre iniciar o ataque e acertar (0 = instantâneo, como o jogador). */
+  windupTime: number;
+  /** Tempo restante do aviso em curso (0 = nenhum ataque em preparação). */
+  windupLeft: number;
 }
 
 export interface Progression {

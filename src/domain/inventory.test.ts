@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createEnemy, createPlayer } from "./factories";
-import { addItem, equipFromInventory, unequip, useFirstPotion, useItem } from "./inventory";
+import { addItem, countItems, equipFromInventory, unequip, useFirstPotion, useItem } from "./inventory";
 import { createEquipment, createPotion, resetItemIds, rollRarity, RARITY_MULTIPLIER } from "./items";
 import { stepWorld } from "./simulation";
 import { seededRandom } from "./worldgen";
@@ -36,11 +36,30 @@ describe("itens", () => {
 });
 
 describe("inventário e equipamento", () => {
-  it("herói começa com espada equipada e duas poções", () => {
+  it("herói começa com espada equipada e uma pilha de duas poções pequenas", () => {
     const { player } = setup();
     expect(player.equipment?.weapon?.name).toBe("Espada Velha");
     expect(player.combat.damage).toBe(player.combat.baseDamage + 4);
-    expect(player.inventory?.items.filter((i) => i?.kind === "consumable")).toHaveLength(2);
+    const potions = player.inventory!.items.filter((i) => i?.kind === "consumable");
+    expect(potions).toHaveLength(1);
+    expect(potions[0]?.quantity).toBe(2);
+    expect(countItems(player.inventory!, (i) => i.kind === "consumable")).toBe(2);
+  });
+
+  it("poções do mesmo tipo se empilham até o limite; tipos diferentes ocupam slots próprios", () => {
+    const { player } = setup();
+    const inv = player.inventory!;
+    for (let i = 0; i < 7; i++) addItem(inv, createPotion("small"));
+    addItem(inv, createPotion("large", 3));
+    const small = inv.items.filter((i) => i?.name === "Poção Pequena");
+    const large = inv.items.filter((i) => i?.name === "Poção Grande");
+    expect(small).toHaveLength(1);
+    expect(small[0]?.quantity).toBe(9);
+    expect(large).toHaveLength(1);
+    expect(large[0]?.quantity).toBe(3);
+    // 10 é o máximo por pilha: a 11ª abre uma segunda pilha.
+    addItem(inv, createPotion("small", 2));
+    expect(inv.items.filter((i) => i?.name === "Poção Pequena").map((i) => i!.quantity).sort()).toEqual([1, 10]);
   });
 
   it("equipar troca com o item anterior e recalcula atributos", () => {
@@ -77,21 +96,33 @@ describe("inventário e equipamento", () => {
     expect(player.transform.position.x).toBeCloseTo(7 * 1.08, 3);
   });
 
-  it("poção cura 40% e é consumida", () => {
+  it("poção pequena cura 30% e consome uma unidade da pilha", () => {
     const { world, player } = setup();
     player.health.current = 10;
     expect(useFirstPotion(world, player)).toBe(true);
-    expect(player.health.current).toBe(50);
-    expect(player.inventory?.items.filter((i) => i?.kind === "consumable")).toHaveLength(1);
+    expect(player.health.current).toBe(40);
+    expect(countItems(player.inventory!, (i) => i.kind === "consumable")).toBe(1);
     player.health.current = player.health.max;
     expect(useFirstPotion(world, player)).toBe(false); // vida cheia não desperdiça
   });
 
+  it("atalho Q escolhe a menor poção que cobre o que falta", () => {
+    const { world, player } = setup();
+    addItem(player.inventory!, createPotion("large"));
+    player.health.current = 80; // faltam 20%: a pequena (30%) basta
+    useFirstPotion(world, player);
+    expect(countItems(player.inventory!, (i) => i.name === "Poção Pequena")).toBe(1);
+    expect(countItems(player.inventory!, (i) => i.name === "Poção Grande")).toBe(1);
+    player.health.current = 20; // faltam 80%: nenhuma cobre, usa a maior
+    useFirstPotion(world, player);
+    expect(countItems(player.inventory!, (i) => i.name === "Poção Grande")).toBe(0);
+  });
+
   it("inventário cheio recusa itens", () => {
     const { player } = setup();
-    for (let i = 0; i < 30; i++) addItem(player.inventory!, createPotion());
+    for (let i = 0; i < 30; i++) addItem(player.inventory!, createEquipment(() => 0, 1, "common"));
     expect(player.inventory!.items.every((i) => i !== null)).toBe(true);
-    expect(addItem(player.inventory!, createPotion())).toBe(false);
+    expect(addItem(player.inventory!, createEquipment(() => 0, 1, "common"))).toBe(false);
   });
 
   it("useItem ignora equipamentos", () => {
@@ -115,7 +146,7 @@ describe("loot e coleta", () => {
     const picked = [...events, ...stepWorld(world, 0.016)].filter((e) => e.type === "pickup").length;
     expect(picked).toBe(dropped);
     expect(world.drops.size).toBe(0);
-    expect(player.inventory!.items.filter((i) => i !== null).length).toBe(2 + dropped);
+    expect(countItems(player.inventory!, () => true)).toBe(2 + dropped);
   });
 
   it("drops longe não são coletados e expiram", () => {
@@ -123,15 +154,15 @@ describe("loot e coleta", () => {
     world.addDrop(createPotion(), { x: 20, y: 0, z: 0 });
     stepWorld(world, 1);
     expect(world.drops.size).toBe(1);
-    expect(player.inventory!.items.filter((i) => i !== null)).toHaveLength(2);
+    expect(countItems(player.inventory!, () => true)).toBe(2);
     stepWorld(world, 200);
     expect(world.drops.size).toBe(0);
   });
 
   it("com inventário cheio o drop fica no chão e avisa", () => {
     const { world, player } = setup();
-    for (let i = 0; i < 30; i++) addItem(player.inventory!, createPotion());
-    world.addDrop(createPotion(), { x: 0.5, y: 0, z: 0 });
+    for (let i = 0; i < 30; i++) addItem(player.inventory!, createEquipment(() => 0, 1, "common"));
+    world.addDrop(createEquipment(() => 0, 1, "common"), { x: 0.5, y: 0, z: 0 });
     const events = stepWorld(world, 0.016);
     expect(events.some((e) => e.type === "inventoryFull")).toBe(true);
     expect(world.drops.size).toBe(1);

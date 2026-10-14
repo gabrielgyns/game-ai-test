@@ -33,13 +33,16 @@ describe("IA de inimigos", () => {
     expect(slime.transform.position.x).toBe(50);
   });
 
-  it("ataca o jogador quando em alcance", () => {
+  it("ataca o jogador quando em alcance, depois do tempo de aviso", () => {
     const world = new World();
     const player = world.spawn((id) => createPlayer(id, { x: 0, y: 0, z: 0 }));
-    world.spawn((id) => createEnemy(id, "slime", { x: 1, y: 0, z: 0 }));
+    const slime = world.spawn((id) => createEnemy(id, "slime", { x: 1, y: 0, z: 0 }));
     stepWorld(world, 0.016); // idle -> chase
     stepWorld(world, 0.016); // chase -> attack
-    stepWorld(world, 0.016); // attack
+    const events = stepWorld(world, 0.016); // começa o aviso
+    expect(events).toContainEqual({ type: "windup", source: slime.id, duration: slime.combat.windupTime });
+    expect(player.health.current).toBe(player.health.max);
+    for (let t = 0; t < slime.combat.windupTime + 0.02; t += 0.016) stepWorld(world, 0.016);
     expect(player.health.current).toBeLessThan(player.health.max);
   });
 });

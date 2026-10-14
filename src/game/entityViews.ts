@@ -16,6 +16,10 @@ class EntityView {
   private deathTime = 0;
   private visualY: number | null = null;
   private spinTime = Infinity;
+  private windupTotal = 0;
+  private readonly telegraph: THREE.Group;
+  private readonly telegraphFill: THREE.Mesh;
+  private readonly telegraphRing: THREE.Mesh;
   private readonly scene: THREE.Scene;
 
   constructor(readonly entity: Entity, scene: THREE.Scene) {
@@ -44,6 +48,26 @@ class EntityView {
     this.targetRing.rotation.x = -Math.PI / 2;
     this.targetRing.visible = false;
     scene.add(this.targetRing);
+
+    // Telegraph: área vermelha que preenche o alcance do golpe durante o aviso.
+    this.telegraph = new THREE.Group();
+    this.telegraphRing = new THREE.Mesh(
+      new THREE.RingGeometry(0.92, 1, 32),
+      new THREE.MeshBasicMaterial({ color: "#ff3b3b", transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false }),
+    );
+    this.telegraphFill = new THREE.Mesh(
+      new THREE.CircleGeometry(1, 32),
+      new THREE.MeshBasicMaterial({ color: "#ff3b3b", transparent: true, opacity: 0.3, side: THREE.DoubleSide, depthWrite: false }),
+    );
+    this.telegraph.add(this.telegraphRing, this.telegraphFill);
+    this.telegraph.rotation.x = -Math.PI / 2;
+    this.telegraph.visible = false;
+    this.telegraph.renderOrder = 5;
+    scene.add(this.telegraph);
+  }
+
+  triggerWindup(duration: number): void {
+    this.windupTotal = duration;
   }
 
   triggerSwing(): void {
@@ -157,10 +181,25 @@ class EntityView {
 
     this.targetRing.visible = isTarget;
     if (isTarget) this.targetRing.position.set(p.x, p.y + 0.05, p.z);
+
+    // Aviso de golpe: anel no alcance e preenchimento crescendo até o impacto; o corpo recua.
+    const windingUp = e.combat.windupLeft > 0 && this.windupTotal > 0;
+    this.telegraph.visible = windingUp;
+    if (windingUp) {
+      const progress = 1 - e.combat.windupLeft / this.windupTotal;
+      const r = e.combat.range;
+      this.telegraph.position.set(p.x, p.y + 0.06, p.z);
+      this.telegraphRing.scale.setScalar(r);
+      this.telegraphFill.scale.setScalar(Math.max(0.05, r * progress));
+      (this.telegraphFill.material as THREE.MeshBasicMaterial).opacity = 0.18 + progress * 0.3;
+      root.rotation.x += 0.25 * Math.sin(progress * Math.PI / 2); // recua antes de bater
+      if (this.model.weaponArm) this.model.weaponArm.rotation.x = -1.2 * progress; // arma erguida
+      if (!this.model.weaponArm) root.scale.y = 1 - progress * 0.25; // gosma se comprime
+    }
   }
 
   dispose(scene: THREE.Scene): void {
-    scene.remove(this.model.root, this.healthBar, this.targetRing);
+    scene.remove(this.model.root, this.healthBar, this.targetRing, this.telegraph);
   }
 }
 

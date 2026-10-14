@@ -19,6 +19,10 @@ export interface Item {
   stats: ItemStats;
   /** Para consumíveis: fração da vida máxima curada (0.4 = 40%). */
   healFraction?: number;
+  /** Quantidade na pilha (1 para equipamentos). */
+  quantity: number;
+  /** Tamanho máximo da pilha; itens com o mesmo nome se empilham até este limite. */
+  maxStack: number;
   /** Identificador do ícone/modelo visual. */
   icon: string;
   /** Variante visual no corpo do herói (ex.: tunic, chain, plate). */
@@ -119,20 +123,32 @@ export function createEquipment(rand: () => number, tier: 1 | 2 | 3, rarity: Rar
     icon: t.icon,
     visual: t.visual,
     value: Math.round(t.value * mult),
+    quantity: 1,
+    maxStack: 1,
   };
 }
 
-export function createPotion(): Item {
+export type PotionSize = "small" | "large";
+
+export function createPotion(size: PotionSize = "small", quantity = 1): Item {
+  const large = size === "large";
   return {
     id: nextItemId++,
-    name: "Poção de Vida",
+    name: large ? "Poção Grande" : "Poção Pequena",
     kind: "consumable",
-    rarity: "common",
+    rarity: large ? "uncommon" : "common",
     stats: {},
-    healFraction: 0.4,
-    icon: "potion",
-    value: 5,
+    healFraction: large ? 0.6 : 0.3,
+    icon: large ? "potionLarge" : "potion",
+    value: large ? 14 : 5,
+    quantity,
+    maxStack: 10,
   };
+}
+
+/** Dois itens se empilham se forem consumíveis do mesmo nome. */
+export function canStack(a: Item, b: Item): boolean {
+  return a.kind === "consumable" && b.kind === "consumable" && a.name === b.name && a.maxStack > 1;
 }
 
 /** Sorteia a raridade com pesos que melhoram com o tier. */

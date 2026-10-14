@@ -6,19 +6,38 @@ import type { World } from "../world";
 
 export function combatSystem(world: World, dt: number): void {
   for (const e of world.alive()) {
-    e.combat.cooldownLeft = Math.max(0, e.combat.cooldownLeft - dt);
-    if (!e.combat.wantsAttack) continue;
-    e.combat.wantsAttack = false;
-    if (e.combat.cooldownLeft > 0) continue;
+    const c = e.combat;
+    c.cooldownLeft = Math.max(0, c.cooldownLeft - dt);
 
+    // Golpe telegrafado: o aviso termina e só então o alcance é conferido de novo.
+    if (c.windupLeft > 0) {
+      c.windupLeft = Math.max(0, c.windupLeft - dt);
+      if (c.windupLeft === 0) resolveAttack(world, e);
+      c.wantsAttack = false;
+      continue;
+    }
+
+    if (!c.wantsAttack) continue;
+    c.wantsAttack = false;
+    if (c.cooldownLeft > 0) continue;
     if (e.abilities?.dash) continue; // não ataca no meio de uma esquiva ou investida
-    e.combat.cooldownLeft = e.combat.cooldown;
-    const target = findTarget(world, e);
-    world.emit({ type: "attack", source: e.id, target: target?.id });
-    if (target) applyDamage(world, e, target, effectiveDamage(e));
+
+    c.cooldownLeft = c.cooldown;
+    if (c.windupTime > 0) {
+      c.windupLeft = c.windupTime;
+      world.emit({ type: "windup", source: e.id, duration: c.windupTime });
+    } else {
+      resolveAttack(world, e);
+    }
   }
 
   regenerate(world, dt);
+}
+
+function resolveAttack(world: World, e: Entity): void {
+  const target = findTarget(world, e);
+  world.emit({ type: "attack", source: e.id, target: target?.id });
+  if (target) applyDamage(world, e, target, effectiveDamage(e));
 }
 
 /** Jogador acerta o inimigo vivo mais próximo em alcance; inimigo só acerta o jogador. */

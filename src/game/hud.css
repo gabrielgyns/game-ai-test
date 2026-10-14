@@ -189,3 +189,13 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0d12; col
 }
 .skill.potion.empty { opacity: 0.45; }
 .skill.potion.empty .icon { filter: grayscale(1); }
+
+.cell .qty {
+  position: absolute; right: 4px; bottom: 2px; font-size: 12px; font-weight: 700;
+  text-shadow: 0 1px 3px #000, 0 0 2px #000;
+}
+.qty-inline { color: var(--muted); font-weight: 400; font-size: 12px; }
+/* Brilho leve por raridade nas células (gradiente interno discreto). */
+.cell[data-rarity="uncommon"] { background: radial-gradient(circle at 50% 60%, rgba(95,211,107,0.22), rgba(255,255,255,0.06) 70%); }
+.cell[data-rarity="rare"] { background: radial-gradient(circle at 50% 60%, rgba(91,141,239,0.26), rgba(255,255,255,0.06) 70%); }
+.cell[data-rarity="epic"] { background: radial-gradient(circle at 50% 60%, rgba(176,108,240,0.3), rgba(255,255,255,0.06) 70%); }

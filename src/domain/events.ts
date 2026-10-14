@@ -10,6 +10,7 @@ export type GameEvent =
   | { type: "loot"; entity: EntityId; gold: number }
   | { type: "respawn"; entity: EntityId }
   | { type: "attack"; source: EntityId; target?: EntityId }
+  | { type: "windup"; source: EntityId; duration: number }
   | { type: "drop"; dropId: number }
   | { type: "pickup"; entity: EntityId; itemId: number; dropId: number }
   | { type: "inventoryFull"; entity: EntityId }

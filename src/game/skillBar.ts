@@ -1,6 +1,7 @@
 import type { Entity } from "../domain/components";
 import { SKILL_BAR, SKILLS, type SkillId } from "../domain/skills";
 import { iconCanvas } from "./itemIcons";
+import { countItems } from "../domain/inventory";
 
 /** Barra de habilidades (1 a 4) com cooldown e destaque do buff ativo. */
 export class SkillBar {
@@ -38,7 +39,7 @@ export class SkillBar {
     this.root.appendChild(gap);
     const potion = document.createElement("div");
     potion.className = "skill potion ready";
-    potion.title = "Poção de Vida: cura 40% da vida máxima.";
+    potion.title = "Poção (Q): bebe a menor que cobre o que falta. Pequena cura 30%, grande 60%.";
     const icon = document.createElement("canvas");
     icon.width = 12;
     icon.height = 12;
@@ -56,7 +57,7 @@ export class SkillBar {
   }
 
   update(player: Entity): void {
-    const potions = player.inventory?.items.filter((i) => i?.kind === "consumable").length ?? 0;
+    const potions = player.inventory ? countItems(player.inventory, (i) => i.kind === "consumable") : 0;
     this.potionCount.textContent = `×${potions}`;
     this.potionSlot.classList.toggle("ready", potions > 0);
     this.potionSlot.classList.toggle("empty", potions === 0);

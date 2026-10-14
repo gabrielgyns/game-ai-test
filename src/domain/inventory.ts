@@ -1,5 +1,5 @@
 import type { Entity } from "./components";
-import type { EquipSlot, Item, ItemStats } from "./items";
+import { canStack, type EquipSlot, type Item, type ItemStats } from "./items";
 import type { World } from "./world";
 
 export interface Inventory {
@@ -21,7 +21,19 @@ export function createEquipment(): Equipment {
   return { weapon: null, armor: null, accessory: null };
 }
 
+/** Guarda o item, empilhando em pilhas existentes do mesmo tipo antes de ocupar um slot vazio. */
 export function addItem(inv: Inventory, item: Item): boolean {
+  let remaining = item.quantity;
+  if (item.maxStack > 1) {
+    for (const existing of inv.items) {
+      if (!existing || !canStack(existing, item) || existing.quantity >= existing.maxStack) continue;
+      const moved = Math.min(remaining, existing.maxStack - existing.quantity);
+      existing.quantity += moved;
+      remaining -= moved;
+      if (remaining === 0) return true;
+    }
+  }
+  item.quantity = remaining; // parte pode ter sido empilhada; o resto segue com o item
   const i = inv.items.indexOf(null);
   if (i === -1) return false;
   inv.items[i] = item;
@@ -34,8 +46,9 @@ export function removeAt(inv: Inventory, index: number): Item | null {
   return item;
 }
 
+/** Conta unidades (somando pilhas) dos itens que satisfazem o predicado. */
 export function countItems(inv: Inventory, predicate: (item: Item) => boolean): number {
-  return inv.items.filter((i): i is Item => i !== null && predicate(i)).length;
+  return inv.items.reduce((n, i) => (i && predicate(i) ? n + i.quantity : n), 0);
 }
 
 /** Soma dos bônus de tudo que está equipado. */
@@ -110,15 +123,30 @@ export function useItem(world: World, entity: Entity, index: number): boolean {
     entity.health.current = Math.min(entity.health.max, entity.health.current + amount);
     world.emit({ type: "heal", entity: entity.id, amount });
   }
-  inv.items[index] = null;
+  item.quantity -= 1;
+  if (item.quantity <= 0) inv.items[index] = null;
   world.emit({ type: "consume", entity: entity.id, itemId: item.id });
   return true;
 }
 
-/** Usa a primeira poção encontrada (atalho rápido). */
+/**
+ * Atalho da poção: escolhe a menor que ainda cura bem o que falta, para não desperdiçar
+ * uma grande quando uma pequena resolve.
+ */
 export function useFirstPotion(world: World, entity: Entity): boolean {
   const inv = entity.inventory;
   if (!inv) return false;
-  const index = inv.items.findIndex((i) => i?.kind === "consumable");
-  return index === -1 ? false : useItem(world, entity, index);
+  const missing = 1 - entity.health.current / entity.health.max;
+  let best = -1;
+  let bestScore = Infinity;
+  inv.items.forEach((item, i) => {
+    if (!item || item.kind !== "consumable" || !item.healFraction) return;
+    // Prefere a menor poção que cobre o que falta; se nenhuma cobre, a maior.
+    const score = item.healFraction >= missing ? item.healFraction : 10 - item.healFraction;
+    if (score < bestScore) {
+      bestScore = score;
+      best = i;
+    }
+  });
+  return best === -1 ? false : useItem(world, entity, best);
 }

@@ -140,6 +140,9 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
       case "attack":
         views.get(ev.source)?.triggerSwing();
         break;
+      case "windup":
+        views.get(ev.source)?.triggerWindup(ev.duration);
+        break;
       case "damage": {
         const target = world.get(ev.target);
         const source = world.get(ev.source);

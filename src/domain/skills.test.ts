@@ -24,6 +24,7 @@ describe("esquiva", () => {
     const { world, player } = setup();
     const slime = world.spawn((id) => createEnemy(id, "slime", { x: 1, y: 0, z: 0 }));
     slime.combat.cooldownLeft = 0;
+    slime.combat.windupTime = 0; // golpe instantâneo para testar só a invulnerabilidade
     player.abilities!.aimDirection = { x: 0, z: -1 };
     player.abilities!.wantsRoll = true;
     const events = run(world, ROLL.duration + 0.05);
