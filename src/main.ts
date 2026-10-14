@@ -355,7 +355,8 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
           audio.play("playerDeath");
         } else {
           hud.pushLog(`${victim.name} derrotado!`, "gain");
-          audio.play("enemyDeath", { ...spatial(victim.transform.position), pitch: victim.boss ? 0.5 : victim.archetype === "orc" ? 0.7 : victim.archetype === "slime" ? 1.3 : 1 });
+          const pitchByType: Record<string, number> = { slime: 1.3, goblin: 1, orc: 0.7, spider: 1.5, bogZombie: 0.6, scorpion: 1.2, bandit: 0.95 };
+          audio.play("enemyDeath", { ...spatial(victim.transform.position), pitch: victim.boss ? 0.5 : (pitchByType[victim.archetype] ?? 1) });
           if (victim.boss) audio.setBossMode(false);
         }
         break;
@@ -457,6 +458,8 @@ function frame(): void {
     }
   }
   if (paused) {
+    // Sem avançar animações (dt 0), mas refletindo o estado: equipar na mochila já muda o modelo.
+    views.update(0, cam.camera, currentTarget()?.id, world.time, player);
     hud.update(player, currentTarget());
     hud.updateBoss(world);
     composer.render();

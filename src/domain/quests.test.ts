@@ -102,5 +102,8 @@ describe("quests", () => {
       expect(["elder", "smith", "guard"]).toContain(q.giver);
       for (const r of q.requires) expect(ids.has(r)).toBe(true);
     }
+    expect(ids.has("spiderQueen")).toBe(true);
+    expect(ids.has("scorpions")).toBe(true);
+    expect(ids.has("bandits")).toBe(true);
   });
 });

@@ -231,7 +231,8 @@ class EntityView {
     if (windingUp) {
       const progress = 1 - e.combat.windupLeft / this.windupTotal;
       const shape = this.windupShape!;
-      this.telegraph.position.set(p.x, p.y + 0.06, p.z);
+      const at = shape.kind === "circle" && shape.at ? shape.at : p;
+      this.telegraph.position.set(at.x, at.y + 0.06, at.z);
       const circle = shape.kind === "circle";
       this.telegraphRing.visible = this.telegraphFill.visible = circle;
       this.telegraphLine.visible = this.telegraphLineFill.visible = !circle;

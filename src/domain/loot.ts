@@ -14,6 +14,10 @@ const LOOT_TABLES: Record<string, LootTable> = {
   slime: { tier: 1, equipmentChance: 0.18, potionChance: 0.3, largePotionChance: 0 },
   goblin: { tier: 2, equipmentChance: 0.4, potionChance: 0.3, largePotionChance: 0.25 },
   orc: { tier: 3, equipmentChance: 0.85, potionChance: 0.45, largePotionChance: 0.7 },
+  spider: { tier: 2, equipmentChance: 0.3, potionChance: 0.25, largePotionChance: 0.3 },
+  bogZombie: { tier: 3, equipmentChance: 0.6, potionChance: 0.4, largePotionChance: 0.6 },
+  scorpion: { tier: 3, equipmentChance: 0.5, potionChance: 0.3, largePotionChance: 0.6 },
+  bandit: { tier: 3, equipmentChance: 0.7, potionChance: 0.35, largePotionChance: 0.6 },
 };
 
 /** Sorteia e espalha os drops de um inimigo morto ao redor de onde ele caiu. */

@@ -26,7 +26,11 @@ com screenshots antes de serem considerados prontos.
 11. **Som**: efeitos sintetizados e música generativa com tema de chefe.
 12. **Correção**: item largado pela mochila era recoletado ao fechar o painel (`requireLeave`).
 13. **Documentação**: esta pasta.
+14. **Biomas e segundo chefe**: pântano (oeste) com água plana que atrasa o passo, aranhas e zumbis do
+    lodo; deserto (leste) com escorpiões e salteadores; Rainha Aranha com padrão novo "aoe" (área
+    fixada na posição do jogador no início do aviso); três quests novas. Lição: screenshots com o
+    jogo pausado mostravam o herói na posição antiga porque as views não atualizavam na pausa;
+    agora atualizam com dt 0 (e equipar na mochila já reflete no modelo).
 
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).
-- Mais biomas e segundo chefe (em andamento após este documento).

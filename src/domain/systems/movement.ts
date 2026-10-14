@@ -1,5 +1,5 @@
 import { clamp, lerpAngle, yawFromDirection } from "../math";
-import { terrainHeight, WORLD_HALF } from "../terrain";
+import { isWater, terrainHeight, WORLD_HALF } from "../terrain";
 import type { World } from "../world";
 
 const TURN_SPEED = 14; // quão rápido a entidade gira para a direção de movimento
@@ -10,7 +10,8 @@ export function movementSystem(world: World, dt: number): void {
     const dash = e.abilities?.dash;
     // Um dash substitui o movimento normal: direção e velocidade fixas, corpo virado para onde vai.
     const intent = dash ? dash.direction : e.movement.intent;
-    const speed = dash ? dash.speed : e.movement.speed * e.movement.speedMultiplier;
+    const inWater = !dash && isWater(pos.x, pos.z);
+    const speed = dash ? dash.speed : e.movement.speed * e.movement.speedMultiplier * (inWater ? 0.6 : 1);
     const moving = intent.x !== 0 || intent.z !== 0;
 
     if (moving) {

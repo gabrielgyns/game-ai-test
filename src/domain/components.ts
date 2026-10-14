@@ -55,8 +55,8 @@ export interface Combat {
   windupTime: number;
   /** Tempo restante do aviso em curso (0 = nenhum ataque em preparação). */
   windupLeft: number;
-  /** Golpe em preparação: padrão e direção fixada no início do aviso. */
-  pending?: { pattern: AttackPattern; direction: Vec2 };
+  /** Golpe em preparação: padrão, direção e (para aoe) ponto fixados no início do aviso. */
+  pending?: { pattern: AttackPattern; direction: Vec2; point?: Vec3 };
 }
 
 export interface Progression {

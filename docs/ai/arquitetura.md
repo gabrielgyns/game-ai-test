@@ -36,8 +36,11 @@ o servidor roda `stepWorld` e o cliente roda só `src/game`.
   `kind !== kind` para isso.
 - **Atributos**: `health.max` e `combat.damage` são derivados. Altere `baseMax`/`baseDamage` e
   chame `recomputeStats`. Nível altera a base; equipamento soma por cima.
-- **Golpes telegrafados**: tudo passa por `AttackPattern` (melee, slam, charge). Inimigos comuns
-  usam um padrão melee implícito; chefes têm listas. O alcance é conferido **no fim** do aviso.
+- **Golpes telegrafados**: tudo passa por `AttackPattern` (melee, slam, charge, aoe). Inimigos comuns
+  usam um padrão melee implícito; chefes têm listas. O alcance é conferido **no fim** do aviso;
+  o aoe fixa o ponto (posição do alvo) **no início**.
+- **Biomas**: `biomeAt`/`biomeWeights` em `biomes.ts` dirigem relevo, água, cor do terreno, props e
+  spawns. Transição suave por peso em X.
 - **Ids de item** são globais (`items.ts`); ao carregar um save, `resetItemIds(max + 1)`.
 - **Save**: só o que muda é salvo; o mundo é regenerado pela seed. Mudar a geração do mundo não
   quebra saves antigos, mas mudar o formato de `SaveData` exige subir `SAVE_VERSION` e migrar.

@@ -1,7 +1,7 @@
 import { isAlive, type Entity } from "../components";
 import { directionXZ, distanceXZ, lerpAngle, yawFromDirection, clamp } from "../math";
 import type { World } from "../world";
-import { resetBoss, updateBossPhase } from "../boss";
+import { BOSS_MINION, resetBoss, updateBossPhase } from "../boss";
 import { createEnemy } from "../factories";
 import { startAttack } from "./combat";
 
@@ -111,10 +111,12 @@ function bossBehavior(world: World, e: Entity, dt: number, player: Entity | unde
   if (newPhase !== null) world.emit({ type: "bossPhase", entity: e.id, phase: newPhase });
   if (boss.phase >= 3 && !boss.summoned) {
     boss.summoned = true;
-    const minions = [0, 1].map((i) => {
-      const angle = e.transform.yaw + (i === 0 ? 1 : -1) * 1.3;
+    const kind = (BOSS_MINION[e.archetype] ?? "goblin") as Parameters<typeof createEnemy>[1];
+    const count = kind === "spider" ? 3 : 2;
+    const minions = Array.from({ length: count }, (_, i) => {
+      const angle = e.transform.yaw + (i - (count - 1) / 2) * 1.3;
       const spawnAt = { x: pos.x - Math.sin(angle) * 2.5, y: pos.y, z: pos.z - Math.cos(angle) * 2.5 };
-      const minion = world.spawn((id) => createEnemy(id, "goblin", spawnAt));
+      const minion = world.spawn((id) => createEnemy(id, kind, spawnAt));
       minion.ai!.respawnSeconds = Infinity; // lacaios não renascem
       minion.ai!.state = "chase";
       minion.ai!.leashRange = 60;
@@ -142,6 +144,8 @@ function bossBehavior(world: World, e: Entity, dt: number, player: Entity | unde
     if (melee && distPlayer <= melee.range) return melee;
     const slam = ready.find((p) => p.kind === "slam");
     if (slam && distPlayer <= slam.range * 0.8) return slam;
+    const aoe = ready.find((p) => p.kind === "aoe");
+    if (aoe && distPlayer <= (aoe.castRange ?? aoe.range)) return aoe;
     return undefined;
   };
   const pattern = choose();

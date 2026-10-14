@@ -37,8 +37,9 @@ function defaultPattern(e: Entity): AttackPattern {
   return { id: "basic", name: "Golpe", kind: "melee", range: e.combat.range, windup: e.combat.windupTime, damageMultiplier: 1, cooldown: e.combat.cooldown, minPhase: 1 };
 }
 
-export function telegraphShape(pattern: AttackPattern, direction: { x: number; z: number }): TelegraphShape {
+export function telegraphShape(pattern: AttackPattern, direction: { x: number; z: number }, point?: { x: number; y: number; z: number }): TelegraphShape {
   if (pattern.kind === "charge") return { kind: "line", length: pattern.range, width: 2.4, direction };
+  if (pattern.kind === "aoe" && point) return { kind: "circle", radius: pattern.range, at: { ...point } };
   return { kind: "circle", radius: pattern.range };
 }
 
@@ -47,12 +48,14 @@ export function startAttack(world: World, e: Entity, pattern: AttackPattern, win
   const player = world.player;
   const direction =
     e.kind === "enemy" && player ? directionXZ(e.transform.position, player.transform.position) : directionFromYaw(e.transform.yaw);
+  // Área mirada: o ponto é a posição do alvo agora; quem sair dela até o fim do aviso escapa.
+  const point = pattern.kind === "aoe" && player ? { ...player.transform.position } : undefined;
   if (windup > 0) {
     e.combat.windupLeft = windup;
-    e.combat.pending = { pattern, direction };
-    world.emit({ type: "windup", source: e.id, duration: windup, shape: telegraphShape(pattern, direction), patternName: pattern.id === "basic" ? undefined : pattern.name });
+    e.combat.pending = { pattern, direction, point };
+    world.emit({ type: "windup", source: e.id, duration: windup, shape: telegraphShape(pattern, direction, point), patternName: pattern.id === "basic" ? undefined : pattern.name });
   } else {
-    e.combat.pending = { pattern, direction };
+    e.combat.pending = { pattern, direction, point };
     resolveAttack(world, e);
   }
 }
@@ -70,11 +73,13 @@ function resolveAttack(world: World, e: Entity): void {
       if (target) applyDamage(world, e, target, damage);
       break;
     }
-    case "slam": {
+    case "slam":
+    case "aoe": {
+      const center = pattern.kind === "aoe" && pending?.point ? pending.point : e.transform.position;
       let hit: Entity | undefined;
       for (const other of world.alive()) {
         if (!isHostile(e, other)) continue;
-        if (distanceXZ(e.transform.position, other.transform.position) > pattern.range) continue;
+        if (distanceXZ(center, other.transform.position) > pattern.range) continue;
         hit = other;
         applyDamage(world, e, other, damage);
       }

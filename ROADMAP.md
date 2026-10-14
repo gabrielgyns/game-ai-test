@@ -24,14 +24,17 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 - [x] NPCs no santuário (Anciã, Ferreiro, Guarda) com diálogo (F), 4 quests encadeadas, rastreador e marcadores ! e ?
 - [x] Salvar e carregar: autosave, continuar ao abrir, exportar/importar arquivo .json, novo jogo
 - [x] Som sintetizado: efeitos para combate, loot, habilidades e quests; trilha ambiente generativa e tema de chefe
+- [x] Biomas: Pântano Sombrio (oeste, água, aranhas, zumbis do lodo) e Deserto Escaldante (leste, escorpiões, salteadores)
+- [x] Segundo chefe: Rainha Aranha no pântano, com Teia Venenosa mirada no jogador, Bote e aranhas na fúria
+- [x] 3 quests novas (Rainha, escorpiões, salteadores); o Guarda passa a dar quest
 
 ## Próximos
 
-1. **Mais vida no mundo voxel.** Água, flores e grama alta, variação de biomas, ciclo de dia e noite,
+1. **Mais vida no mundo voxel.** Flores e grama alta, ciclo de dia e noite, partículas e tremor de câmera,
    e suporte a modelos `.vox` (MagicaVoxel) para quem quiser desenhar personagens num editor.
 2. **Loot mais rico.** Afixos aleatórios (ex.: "da Serpente": +regeneração), conjuntos, venda de itens
    por ouro num mercador.
-3. **Mais chefes.** Um por bioma, com mecânicas próprias (projéteis, poças, escudos) usando os padrões de golpe.
+3. **Chefe do deserto** e mecânicas novas de padrão (projéteis, poças que ficam, escudos).
 4. **Lock-on.** Travar a câmera num alvo (Zelda) como alternativa ao modo livre.
 5. **Mais quests.** Objetivos de coleta e exploração, quests repetíveis diárias, e um mercador para vender loot.
 6. **Vários slots de save** e save na nuvem (quando houver servidor).

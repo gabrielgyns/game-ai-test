@@ -5,18 +5,21 @@ import { createAbilities } from "./skills";
 
 /** Forma do aviso de golpe, desenhada no chão pela apresentação. */
 export type TelegraphShape =
-  | { kind: "circle"; radius: number }
+  | { kind: "circle"; radius: number; at?: Vec3 }
   | { kind: "line"; length: number; width: number; direction: Vec2 };
 
-export type PatternKind = "melee" | "slam" | "charge";
+/** aoe: área fixada na posição do alvo no início do aviso (sair dela evita). */
+export type PatternKind = "melee" | "slam" | "charge" | "aoe";
 
 /** Um golpe telegrafado. Inimigos comuns têm um só (melee); chefes alternam vários. */
 export interface AttackPattern {
   id: string;
   name: string;
   kind: PatternKind;
-  /** Melee: alcance; slam: raio em volta do atacante; charge: comprimento do avanço. */
+  /** Melee: alcance; slam: raio em volta do atacante; charge: comprimento do avanço; aoe: raio da área. */
   range: number;
+  /** aoe: distância máxima para mirar. */
+  castRange?: number;
   windup: number;
   damageMultiplier: number;
   cooldown: number;
@@ -108,3 +111,41 @@ export function resetBoss(entity: Entity): void {
   boss.cooldowns = {};
   entity.combat.damage = entity.combat.baseDamage;
 }
+
+export const SPIDER_QUEEN_PATTERNS: AttackPattern[] = [
+  { id: "bite", name: "Mordida", kind: "melee", range: 3.0, windup: 0.7, damageMultiplier: 1, cooldown: 1.8, minPhase: 1 },
+  { id: "web", name: "Teia Venenosa", kind: "aoe", range: 3.2, castRange: 14, windup: 1.3, damageMultiplier: 1.6, cooldown: 6, minPhase: 1 },
+  { id: "pounce", name: "Bote", kind: "charge", range: 10, windup: 0.7, damageMultiplier: 1.3, cooldown: 7, minPhase: 2 },
+];
+
+export function createSpiderQueen(id: EntityId, position: Vec3): Entity {
+  const maxHealth = 1300;
+  const boss: Boss = {
+    title: "Rainha Aranha",
+    patterns: SPIDER_QUEEN_PATTERNS,
+    cooldowns: {},
+    phase: 1,
+    phaseThresholds: [0.6, 0.3],
+    windupScale: 1,
+    summoned: false,
+    engaged: false,
+  };
+  return {
+    id,
+    kind: "enemy",
+    name: "Rainha Aranha",
+    archetype: "spiderQueen",
+    transform: { position: { ...position }, yaw: 0 },
+    movement: { speed: 5.4, speedMultiplier: 1, intent: { x: 0, z: 0 } },
+    health: { current: maxHealth, max: maxHealth, baseMax: maxHealth, regenPerSecond: 8, lastDamagedAt: -Infinity },
+    combat: { damage: 30, baseDamage: 30, range: 3.0, cooldown: 1.8, cooldownLeft: 0, wantsAttack: false, windupTime: 0.7, windupLeft: 0 },
+    ai: { state: "idle", home: { ...position }, aggroRange: 18, leashRange: 45, xpReward: 700, goldReward: 240, respawnSeconds: 180 },
+    boss,
+    abilities: { ...createAbilities(), skills: [] },
+    inventory: createInventory(0),
+    equipment: createEquipmentSlots(),
+  };
+}
+
+/** Que lacaio cada chefe convoca na fase final. */
+export const BOSS_MINION: Record<string, string> = { goblinKing: "goblin", spiderQueen: "spider" };

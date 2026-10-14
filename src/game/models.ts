@@ -298,6 +298,101 @@ export function createGoblinKing(): CharacterModel {
   return { root, weaponArm, height: 32 * V + 0.2 };
 }
 
+/** Aranha: corpo baixo, oito patas, olhos vermelhos. `scale` > 1 para a rainha. */
+export function createSpider(queen = false): CharacterModel {
+  const k = queen ? 2.2 : 1;
+  const body = queen ? "#2b1b2e" : "#2a2a2a";
+  const accent = queen ? "#8f2f6b" : "#5a3a1a";
+  const b = new VoxelBuilder();
+  const s = (n: number) => Math.round(n * k);
+  b.box(-s(3), s(2), -s(2), s(3), s(5), s(4), body); // abdômen
+  b.box(-s(2), s(2), -s(5), s(2), s(5), -s(2), body); // cabeça
+  b.box(-s(1), s(3), s(1), s(1), s(4), s(4), accent); // marca
+  for (const sx of [-1, 1]) {
+    b.set(sx * s(1), s(4), -s(5) - 1, "#ff3030").set(sx * s(2), s(4), -s(5) - 1, "#ff3030"); // olhos
+    for (let i = 0; i < 4; i++) {
+      const z = -s(4) + i * s(2);
+      b.box(sx * s(3), s(3), z, sx * s(6), s(4), z + 1, body); // pata para fora
+      b.box(sx * s(6), 0, z, sx * s(7), s(4), z + 1, body); // pata descendo
+    }
+  }
+  if (queen) {
+    b.box(-3, s(5), -s(4), 3, s(5) + 3, -s(2), "#e0b43a"); // coroa
+    for (const x of [-3, 0, 2]) b.set(x, s(5) + 3, -s(3), "#e0b43a");
+  }
+  const root = new THREE.Group();
+  root.add(mesh(b));
+  return { root, height: s(5) * V + (queen ? 0.6 : 0.3) };
+}
+
+export function createBogZombie(): CharacterModel {
+  const skin = "#5e7a4a", rags = "#3a4a2a", eye = "#c8ff5a";
+  const b = new VoxelBuilder();
+  b.box(-3, 0, -1, -1, 6, 1, rags).box(1, 0, -1, 3, 6, 1, rags);
+  b.box(-4, 6, -2, 4, 13, 2, skin);
+  b.box(-4, 6, -2, 4, 9, 2, rags);
+  b.box(-6, 7, -1, -4, 13, 1, skin);
+  b.box(-3, 13, -3, 3, 19, 3, skin);
+  b.set(-2, 16, -3, eye).set(1, 16, -3, eye);
+  b.box(-1, 13, -4, 2, 14, -3, "#2b2b2b"); // boca
+  const root = new THREE.Group();
+  root.add(mesh(b));
+  // Braço direito esticado para a frente (zumbi).
+  const arm = new VoxelBuilder();
+  arm.box(-1, -1, -7, 1, 1, 1, skin);
+  const weaponArm = new THREE.Group();
+  weaponArm.position.set(5 * V, 11 * V, 0);
+  weaponArm.add(mesh(arm));
+  root.add(weaponArm);
+  return { root, weaponArm, height: 19 * V + 0.1 };
+}
+
+export function createScorpion(): CharacterModel {
+  const shell = "#b8783a", dark = "#8a5428";
+  const b = new VoxelBuilder();
+  b.box(-3, 1, -3, 3, 4, 4, shell); // corpo
+  for (const sx of [-1, 1]) {
+    for (const z of [-2, 0, 2]) b.box(sx * 3, 0, z, sx * 5, 2, z + 1, dark); // patas
+    b.box(sx * 3, 2, -5, sx * 5, 3, -3, shell).box(sx * 5, 2, -7, sx * 6, 4, -4, dark); // pinças
+  }
+  b.set(-1, 3, -4, "#1b1b1b").set(1, 3, -4, "#1b1b1b");
+  const root = new THREE.Group();
+  root.add(mesh(b));
+  // Cauda com ferrão, levantada no aviso.
+  const tail = new VoxelBuilder();
+  tail.box(-1, 0, 0, 1, 2, 5, shell).box(-1, 2, 4, 1, 6, 6, shell).box(-1, 5, 2, 1, 7, 4, "#1b1b1b");
+  const weaponArm = new THREE.Group();
+  weaponArm.position.set(0, 3 * V, 4 * V);
+  weaponArm.add(mesh(tail));
+  root.add(weaponArm);
+  return { root, weaponArm, height: 10 * V + 0.2 };
+}
+
+export function createBandit(): CharacterModel {
+  const skin = "#d9a070", cloth = "#7a3b2a", scarf = "#2b2b2b";
+  const b = new VoxelBuilder();
+  b.box(-3, 0, -1, -1, 6, 1, "#4a3a2a").box(1, 0, -1, 3, 6, 1, "#4a3a2a");
+  b.box(-4, 6, -2, 4, 13, 2, cloth);
+  b.box(-4, 6, -2, 4, 7, 2, "#c9a227");
+  b.box(-6, 7, -1, -4, 13, 1, skin);
+  b.box(-3, 13, -3, 3, 19, 3, skin);
+  b.box(-3, 13, -4, 3, 16, -2, scarf); // lenço no rosto
+  b.box(-3, 18, -3, 3, 20, 3, "#e0c47f"); // turbante
+  b.set(-2, 16, -3, "#1b1b1b").set(1, 16, -3, "#1b1b1b");
+  const root = new THREE.Group();
+  root.add(mesh(b));
+  const arm = new VoxelBuilder();
+  arm.box(-1, -6, -1, 1, 0, 1, skin);
+  arm.box(-1, -7, -1, 1, -6, 0, "#c9a227");
+  arm.box(-1, -15, -1, 0, -7, 0, "#d8dde6"); // cimitarra reta (voxel)
+  arm.box(-2, -15, -1, -1, -11, 0, "#d8dde6");
+  const weaponArm = new THREE.Group();
+  weaponArm.position.set(5 * V, 13 * V, 0);
+  weaponArm.add(mesh(arm));
+  root.add(weaponArm);
+  return { root, weaponArm, height: 20 * V + 0.1 };
+}
+
 export function createModel(archetype: string, equipment?: Equipment): CharacterModel {
   switch (archetype) {
     case "hero": return createHero(equipment);
@@ -305,6 +400,11 @@ export function createModel(archetype: string, equipment?: Equipment): Character
     case "goblin": return createGoblin();
     case "orc": return createOrc();
     case "goblinKing": return createGoblinKing();
+    case "spider": return createSpider(false);
+    case "spiderQueen": return createSpider(true);
+    case "bogZombie": return createBogZombie();
+    case "scorpion": return createScorpion();
+    case "bandit": return createBandit();
     case "elder": return createVillager("elder");
     case "smith": return createVillager("smith");
     case "guard": return createVillager("guard");

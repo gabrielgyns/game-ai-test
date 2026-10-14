@@ -33,7 +33,10 @@ Inimigos avisam o golpe com uma área vermelha que se preenche: saia dela ou rol
 No santuário vivem três NPCs: a **Anciã Mira** dá a cadeia principal (gosmas, goblins e o Rei Goblin),
 o **Ferreiro Brom** pede ferro dos orcs e forja uma arma rara, e o **Guarda Tiago** ensina a lutar.
 Um "!" sobre o NPC indica quest disponível e "?" quest pronta para entregar.
-No platô ao norte, cercado de totens, vive o **Rei Goblin**: um chefe com Golpe Pesado, Pisão em área e
+O mapa tem três biomas: as **Campinas do Vale** no centro, o **Pântano Sombrio** a oeste (água que
+atrasa o passo, aranhas rápidas e zumbis do lodo) e o **Deserto Escaldante** a leste (escorpiões de
+ferrão quase sem aviso e salteadores). No pântano reina a **Rainha Aranha**, cuja Teia Venenosa cai
+onde você estava quando ela começou a tecer. No platô ao norte, cercado de totens, vive o **Rei Goblin**: um chefe com Golpe Pesado, Pisão em área e
 Investida Real em linha, três fases que aceleram os avisos, lacaios na fúria final e loot épico garantido. Subir de nível cura por completo e aumenta vida e dano.
 Se cair, você renasce no santuário depois de alguns segundos. Inimigos renascem em casa.
 
@@ -84,7 +87,8 @@ src/
     npc.ts         NPCs do santuário e suas falas
     quests.ts      definições de quests, diário do jogador, aceitar/avançar/entregar
     save.ts        snapshot serializável do progresso e reconstrução do mundo a partir dele
-    terrain.ts     função de altura do terreno (compartilhada com a malha visual)
+    terrain.ts     função de altura do terreno (compartilhada com a malha visual), água do pântano
+    biomes.ts      biomas por região (campina, pântano, deserto) e pesos de transição
     worldgen.ts    geração determinística do mundo por anéis de dificuldade
   game/            apresentação em Three.js e HUD em HTML
     camera.ts      câmera orbital em terceira pessoa
