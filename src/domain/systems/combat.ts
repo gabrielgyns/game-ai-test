@@ -154,6 +154,7 @@ function kill(world: World, victim: Entity, killer: Entity): void {
     victim.ai.state = "idle";
     victim.respawn = { timeLeft: victim.ai.respawnSeconds, at: { ...victim.ai.home } };
     if (killer.kind === "player") {
+      if (killer.stats) killer.stats.kills++;
       rollLoot(world, victim);
       advanceKillQuests(world, killer, victim.archetype);
       grantXp(world, killer, victim.ai.xpReward);

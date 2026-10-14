@@ -110,6 +110,8 @@ export interface Entity {
   boss?: Boss;
   npc?: { id: string };
   quests?: QuestLog;
+  /** Contadores de progresso (abates etc.). */
+  stats?: { kills: number };
 }
 
 /** Quem pode ferir quem: jogador e inimigos são hostis entre si; NPCs ficam fora. */

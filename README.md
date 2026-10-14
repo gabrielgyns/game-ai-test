@@ -37,6 +37,10 @@ No platô ao norte, cercado de totens, vive o **Rei Goblin**: um chefe com Golpe
 Investida Real em linha, três fases que aceleram os avisos, lacaios na fúria final e loot épico garantido. Subir de nível cura por completo e aumenta vida e dano.
 Se cair, você renasce no santuário depois de alguns segundos. Inimigos renascem em casa.
 
+O progresso é salvo automaticamente no navegador (a cada 45 s, ao concluir quests, subir de nível e ao
+sair da aba). Ao abrir o jogo de novo, ele continua de onde parou. No menu (ESC) dá para salvar na hora,
+exportar o save como arquivo `.json`, importar um arquivo e começar um novo jogo.
+
 Veja o [ROADMAP](ROADMAP.md) para a visão e os próximos marcos.
 
 ## Comandos
@@ -69,6 +73,7 @@ src/
     boss.ts        chefes: padrões de golpe (melee, área, investida), formas de telegraph e fases
     npc.ts         NPCs do santuário e suas falas
     quests.ts      definições de quests, diário do jogador, aceitar/avançar/entregar
+    save.ts        snapshot serializável do progresso e reconstrução do mundo a partir dele
     terrain.ts     função de altura do terreno (compartilhada com a malha visual)
     worldgen.ts    geração determinística do mundo por anéis de dificuldade
   game/            apresentação em Three.js e HUD em HTML
@@ -83,6 +88,7 @@ src/
     skillBar.ts    barra de habilidades com recarga
     dialogueUI.ts  painel de conversa com NPCs
     questTracker.ts lista de quests ativas
+    storage.ts     localStorage, exportar e importar arquivo de save
     itemIcons.ts   ícones de itens em pixel art (usados na UI e nos drops 3D)
     dropViews.ts   itens caídos no chão: ícone extrudado em voxel, anel e feixe por raridade
     terrainMesh.ts terreno em blocos (colunas por célula, degraus de 0,5 m)

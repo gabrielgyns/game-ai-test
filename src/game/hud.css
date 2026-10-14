@@ -242,3 +242,20 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0d12; col
 #dialogue-options button:hover { background: rgba(255,255,255,0.16); }
 #dialogue-options button.primary { background: #3b6ad6; border-color: #5b8def; }
 #dialogue-options .objective { color: var(--muted); font-size: 13px; margin-right: auto; }
+
+.menu-row { display: flex; gap: 8px; }
+.menu-row button { flex: 1; }
+#menu button.danger { border-color: rgba(229, 72, 77, 0.5); color: #ffb3b3; }
+#menu button.danger:hover { background: rgba(229, 72, 77, 0.2); }
+.save-info { font-size: 12px; color: var(--muted); text-align: center; }
+#overlay button {
+  pointer-events: auto; font: inherit; font-weight: 600; color: var(--muted); background: transparent;
+  border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 8px 14px; cursor: pointer; margin-top: 10px;
+}
+#overlay button:hover { color: var(--text); background: rgba(255,255,255,0.08); }
+#toast {
+  position: absolute; top: 90px; left: 50%; transform: translateX(-50%);
+  background: var(--panel); border: 1px solid rgba(255,255,255,0.14); border-radius: 8px;
+  padding: 6px 14px; font-size: 13px; color: var(--text); opacity: 0; transition: opacity 200ms;
+}
+#toast.show { opacity: 1; }

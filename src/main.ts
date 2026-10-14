@@ -6,7 +6,9 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { isAlive, type Entity } from "./domain/components";
 import { distanceXZ, normalizeXZ } from "./domain/math";
 import { stepWorld } from "./domain/simulation";
-import { generateWorld } from "./domain/worldgen";
+import { DEFAULT_SEED, generateWorld } from "./domain/worldgen";
+import { describeSave, restoreGame, serializeGame } from "./domain/save";
+import { clearSave, exportSave, importSave, loadSave, writeSave } from "./game/storage";
 import { ThirdPersonCamera } from "./game/camera";
 import { EntityViews } from "./game/entityViews";
 import { createEnvironment } from "./game/environment";
@@ -58,8 +60,26 @@ scene.add(sun, sun.target);
 scene.add(createTerrainMesh());
 scene.add(createEnvironment());
 
-const world = generateWorld();
+// Continua do save se houver um; "Novo jogo" apaga o save e recarrega a página.
+const SEED = DEFAULT_SEED;
+const existingSave = loadSave();
+const world = existingSave ? restoreGame(existingSave) : generateWorld({ seed: SEED });
 const player = world.player!;
+if (existingSave) {
+  const info = document.getElementById("overlay-save")!;
+  info.textContent = `Save encontrado: ${describeSave(existingSave)}`;
+  info.classList.remove("hidden");
+  document.getElementById("overlay-hint")!.textContent = "Clique para continuar";
+  const newBtn = document.getElementById("overlay-new")!;
+  newBtn.classList.remove("hidden");
+  newBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (confirm("Começar um novo jogo apaga o save atual. Continuar?")) {
+      clearSave();
+      window.location.reload();
+    }
+  });
+}
 const views = new EntityViews(scene);
 views.sync(world);
 
@@ -150,6 +170,57 @@ function resume(): void {
   input.requestLock();
 }
 menu.onResume = resume;
+
+const toastEl = document.getElementById("toast")!;
+let toastTimer = 0;
+function toast(text: string): void {
+  toastEl.textContent = text;
+  toastEl.classList.remove("hidden");
+  toastEl.classList.add("show");
+  window.clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => toastEl.classList.remove("show"), 1800);
+}
+
+let lastSaveAt = 0;
+function saveGame(reason: string): void {
+  if (!started || !isAlive(player)) return;
+  const save = serializeGame(world, SEED);
+  if (writeSave(save)) {
+    lastSaveAt = performance.now();
+    menu.setSaveInfo(`Último save: ${describeSave(save)}`);
+    toast(reason === "auto" ? "Jogo salvo automaticamente" : "Jogo salvo");
+  } else {
+    toast("Não foi possível salvar (armazenamento indisponível)");
+  }
+}
+menu.onSave = () => saveGame("manual");
+menu.onExport = () => {
+  const save = loadSave() ?? serializeGame(world, SEED);
+  exportSave(save);
+};
+menu.onImport = () => {
+  void importSave().then((save) => {
+    if (!save) return toast("Arquivo de save inválido");
+    if (confirm(`Carregar este save? ${describeSave(save)}\nO progresso atual não salvo será perdido.`)) {
+      writeSave(save);
+      window.location.reload();
+    }
+  });
+};
+menu.onNewGame = () => {
+  if (confirm("Começar um novo jogo apaga o save atual. Continuar?")) {
+    clearSave();
+    window.location.reload();
+  }
+};
+if (existingSave) menu.setSaveInfo(`Último save: ${describeSave(existingSave)}`);
+
+// Autosave: a cada 45 s, ao esconder a aba e em marcos (quest concluída, nível).
+const AUTOSAVE_MS = 45_000;
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") saveGame("auto");
+});
+window.addEventListener("beforeunload", () => saveGame("auto"));
 input.onEscape = () => {
   if (!started) return;
   if (inventoryUI.isOpen) closeInventory();
@@ -237,6 +308,7 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         const q = questById(ev.questId);
         hud.pushLog(`Quest concluída: ${q?.title ?? ev.questId} (+${ev.xp} XP, +${ev.gold} ouro${ev.itemNames.length ? ", " + ev.itemNames.join(", ") : ""})`, "level");
         floats.spawn(player.transform.position, "QUEST CONCLUÍDA!", "#ffe57a", 1.3);
+        saveGame("auto");
         break;
       }
       case "damage": {
@@ -254,7 +326,6 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         if (ev.entity === player.id) {
           hud.pushLog("Você caiu em combate…", "dmg-in");
         } else {
-          hud.addKill();
           hud.pushLog(`${victim.name} derrotado!`, "gain");
         }
         break;
@@ -268,6 +339,7 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
       case "levelUp":
         floats.spawn(player.transform.position, `NÍVEL ${ev.level}!`, "#ffe57a", 1.4);
         hud.pushLog(`Você alcançou o nível ${ev.level}!`, "level");
+        saveGame("auto");
         break;
       case "respawn":
         if (ev.entity === player.id) hud.pushLog("Você renasceu no santuário.", "level");
@@ -374,6 +446,8 @@ function frame(): void {
     player.movement.intent = { x: 0, z: 0 };
   }
 
+  if (performance.now() - lastSaveAt > AUTOSAVE_MS) saveGame("auto");
+
   // Simulação em passo fixo para o combate ser previsível.
   accumulator += frameDt;
   while (accumulator >= FIXED_DT) {
@@ -412,6 +486,7 @@ if (import.meta.env.DEV) {
       paused = true;
       menu.open();
     },
+    save: () => saveGame("manual"),
     setPaused: (v: boolean) => {
       paused = v;
     },

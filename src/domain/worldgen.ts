@@ -29,8 +29,10 @@ export interface WorldGenOptions {
  * Popula o mundo em anéis de dificuldade: gosmas perto do spawn, goblins no meio, orcs na borda.
  * O jogador aprende o combate com segurança e sente a progressão ao se afastar.
  */
+export const DEFAULT_SEED = 1337;
+
 export function generateWorld(options: WorldGenOptions = {}): World {
-  const rand = seededRandom(options.seed ?? 1337);
+  const rand = seededRandom(options.seed ?? DEFAULT_SEED);
   const world = new World();
   world.random = seededRandom((options.seed ?? 1337) * 7919 + 17);
   world.spawn((id) => createPlayer(id, { x: 0, y: terrainHeight(0, 0), z: 0 }));

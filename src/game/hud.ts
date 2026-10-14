@@ -32,14 +32,9 @@ export class Hud {
   private readonly overlay = el("overlay");
   private readonly death = el("death");
   private readonly deathTimer = el("death-timer");
-  private killCount = 0;
 
   hideIntro(): void {
     this.overlay.classList.add("hidden");
-  }
-
-  addKill(): void {
-    this.killCount += 1;
   }
 
   pushLog(text: string, cls: string): void {
@@ -78,7 +73,7 @@ export class Hud {
     this.hpText.textContent = `${hp} / ${player.health.max}`;
     if (prog) this.xpFill.style.width = `${(prog.xp / prog.xpToNext) * 100}%`;
     this.gold.textContent = `${player.wallet?.gold ?? 0} ouro`;
-    this.kills.textContent = `${this.killCount} abates`;
+    this.kills.textContent = `${player.stats?.kills ?? 0} abates`;
     const inv = player.inventory;
     if (inv) {
       this.potions.textContent = `${countItems(inv, (i) => i.kind === "consumable")}`;

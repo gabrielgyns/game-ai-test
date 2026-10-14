@@ -13,6 +13,11 @@ export class PauseMenu {
   private readonly sensValue = el("menu-sens-value");
   sensitivity = 1;
   onResume: () => void = () => {};
+  onSave: () => void = () => {};
+  onExport: () => void = () => {};
+  onImport: () => void = () => {};
+  onNewGame: () => void = () => {};
+  private readonly saveInfo = el("menu-save-info");
 
   constructor() {
     try {
@@ -25,7 +30,10 @@ export class PauseMenu {
     this.sensValue.textContent = this.sensitivity.toFixed(1);
 
     el("menu-resume").addEventListener("click", () => this.onResume());
-    el("menu-restart").addEventListener("click", () => window.location.reload());
+    el("menu-save").addEventListener("click", () => this.onSave());
+    el("menu-export").addEventListener("click", () => this.onExport());
+    el("menu-import").addEventListener("click", () => this.onImport());
+    el("menu-restart").addEventListener("click", () => this.onNewGame());
     this.sens.addEventListener("input", () => {
       this.sensitivity = Number(this.sens.value);
       this.sensValue.textContent = this.sensitivity.toFixed(1);
@@ -43,6 +51,10 @@ export class PauseMenu {
 
   open(): void {
     this.root.classList.remove("hidden");
+  }
+
+  setSaveInfo(text: string): void {
+    this.saveInfo.textContent = text;
   }
 
   close(): void {
