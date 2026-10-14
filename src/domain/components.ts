@@ -14,6 +14,11 @@ export interface Movement {
   speed: number;
   /** Direção desejada no plano XZ (normalizada ou zero). Preenchida por input ou IA. */
   intent: Vec2;
+  /**
+   * Quando definido, a entidade encara este yaw em vez da direção do movimento.
+   * Permite andar de ré e de lado mantendo o alvo à frente (estilo MMO).
+   */
+  faceYaw?: number;
 }
 
 export interface Health {

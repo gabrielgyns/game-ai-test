@@ -13,8 +13,10 @@ export function movementSystem(world: World, dt: number): void {
     if (moving) {
       pos.x = clamp(pos.x + intent.x * speed * dt, -WORLD_HALF + 2, WORLD_HALF - 2);
       pos.z = clamp(pos.z + intent.z * speed * dt, -WORLD_HALF + 2, WORLD_HALF - 2);
-      const target = yawFromDirection(intent);
-      e.transform.yaw = lerpAngle(e.transform.yaw, target, clamp(TURN_SPEED * dt, 0, 1));
+    }
+    const targetYaw = e.movement.faceYaw ?? (moving ? yawFromDirection(intent) : undefined);
+    if (targetYaw !== undefined) {
+      e.transform.yaw = lerpAngle(e.transform.yaw, targetYaw, clamp(TURN_SPEED * dt, 0, 1));
     }
     pos.y = terrainHeight(pos.x, pos.z);
   }

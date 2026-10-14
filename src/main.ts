@@ -9,6 +9,7 @@ import { createEnvironment } from "./game/environment";
 import { FloatingTexts } from "./game/effects";
 import { Hud } from "./game/hud";
 import { Input } from "./game/input";
+import { PauseMenu } from "./game/menu";
 import { createTerrainMesh } from "./game/terrainMesh";
 
 const canvas = document.getElementById("game") as HTMLCanvasElement;
@@ -50,7 +51,22 @@ const input = new Input(canvas);
 const cam = new ThirdPersonCamera(window.innerWidth / window.innerHeight);
 const hud = new Hud();
 const floats = new FloatingTexts(scene);
-input.onFirstInteraction = () => hud.hideIntro();
+const menu = new PauseMenu();
+let started = false;
+let paused = false;
+
+input.onFirstInteraction = () => {
+  hud.hideIntro();
+  started = true;
+};
+// ESC solta o pointer lock: pausa e abre o menu. Voltar ao jogo recaptura o mouse.
+input.onPointerLockChange = (locked) => {
+  if (!started) return;
+  paused = !locked;
+  if (locked) menu.close();
+  else menu.open();
+};
+menu.onResume = () => input.requestLock();
 
 window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -127,11 +143,18 @@ function frame(): void {
 
   // Input → intenções no domínio.
   const { lookX, lookY, zoom, attack } = input.flush();
-  cam.applyLook(lookX, lookY, zoom);
+  if (paused) {
+    renderer.render(scene, cam.camera);
+    return;
+  }
+  cam.applyLook(lookX * menu.sensitivity, lookY * menu.sensitivity, zoom);
   if (isAlive(player)) {
     const axes = input.moveAxes();
     player.movement.intent = normalizeXZ(cam.worldDirection(axes));
-    player.movement.speed = input.running ? 10.5 : 7;
+    // O corpo encara para onde a câmera olha: S anda de ré, A/D andam de lado.
+    player.movement.faceYaw = cam.facingYaw;
+    const backpedaling = axes.z > 0;
+    player.movement.speed = (input.running ? 10.5 : 7) * (backpedaling ? 0.65 : 1);
     if (attack) player.combat.wantsAttack = true;
   } else {
     player.movement.intent = { x: 0, z: 0 };
@@ -158,7 +181,16 @@ function frame(): void {
 
 // Gancho de depuração só em desenvolvimento (testes automatizados e console).
 if (import.meta.env.DEV) {
-  (window as unknown as { __game: unknown }).__game = { world, player };
+  (window as unknown as { __game: unknown }).__game = {
+    world,
+    player,
+    cam,
+    openMenu: () => {
+      started = true;
+      paused = true;
+      menu.open();
+    },
+  };
 }
 
 frame();

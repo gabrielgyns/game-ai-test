@@ -44,6 +44,11 @@ export class ThirdPersonCamera {
     this.camera.lookAt(focus);
   }
 
+  /** Yaw que uma entidade deve ter para encarar a mesma direção que a câmera olha. */
+  get facingYaw(): number {
+    return this.yaw;
+  }
+
   /** Converte eixos de input (relativos à tela) em direção no mundo, seguindo o yaw da câmera. */
   worldDirection(axes: { x: number; z: number }): { x: number; z: number } {
     const forward = { x: -Math.sin(this.yaw), z: -Math.cos(this.yaw) };

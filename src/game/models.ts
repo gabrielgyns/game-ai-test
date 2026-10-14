@@ -48,10 +48,10 @@ export function createHero(): CharacterModel {
   const armR = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.45, 3, 6), skin);
   armR.position.y = -0.3;
   const blade = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.3, 0.22), mat("#d8dde6"));
-  blade.position.set(0, -0.2, 0.75);
+  blade.position.set(0, -0.2, -0.75);
   blade.rotation.x = Math.PI / 2;
   const guard = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.08, 0.1), mat("#c9a227"));
-  guard.position.set(0, -0.55, 0.15);
+  guard.position.set(0, -0.55, -0.15);
   weaponArm.add(armR, blade, guard);
 
   root.add(body, head, hair, belt, legL, legR, armL, weaponArm);
@@ -89,7 +89,7 @@ export function createGoblin(): CharacterModel {
   const weaponArm = new THREE.Group();
   weaponArm.position.set(0.45, 1.1, 0);
   const club = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.16, 1.0, 6), mat("#8a5a2b"));
-  club.position.set(0, -0.1, 0.5);
+  club.position.set(0, -0.1, -0.5);
   club.rotation.x = Math.PI / 2;
   weaponArm.add(club);
   root.add(body, head, weaponArm);
@@ -111,10 +111,10 @@ export function createOrc(): CharacterModel {
   const weaponArm = new THREE.Group();
   weaponArm.position.set(0.8, 1.8, 0);
   const axeHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.6, 6), mat("#5a3d2b"));
-  axeHandle.position.set(0, -0.2, 0.7);
+  axeHandle.position.set(0, -0.2, -0.7);
   axeHandle.rotation.x = Math.PI / 2;
   const axeHead = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.7, 0.5), mat("#aab0b8"));
-  axeHead.position.set(0, -0.2, 1.4);
+  axeHead.position.set(0, -0.2, -1.4);
   weaponArm.add(axeHandle, axeHead);
   root.add(body, head, weaponArm);
   return { root: shadowed(root), weaponArm, height: 2.9 };

@@ -13,15 +13,18 @@ Abra `http://localhost:5173` e clique na tela para começar.
 
 | Controle | Ação |
 | --- | --- |
-| WASD / setas | mover |
+| WASD / setas | mover (S anda de ré, A/D de lado, o corpo segue a câmera) |
 | Mouse | girar a câmera |
 | Clique esquerdo / Espaço | atacar |
 | Scroll | zoom |
 | Shift | correr |
+| ESC | menu de pausa |
 
 Gosmas vivem perto do santuário central, goblins mais longe e orcs na borda do mapa.
 Derrote inimigos para ganhar XP e ouro. Subir de nível cura por completo e aumenta vida e dano.
 Se cair, você renasce no santuário depois de alguns segundos. Inimigos renascem em casa.
+
+Veja o [ROADMAP](ROADMAP.md) para a visão e os próximos marcos.
 
 ## Comandos
 

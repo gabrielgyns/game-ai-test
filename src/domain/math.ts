@@ -43,9 +43,18 @@ export function smoothstep(edge0: number, edge1: number, x: number): number {
   return t * t * (3 - 2 * t);
 }
 
-/** Ângulo (yaw) em radianos a partir de uma direção XZ. Convenção: yaw 0 aponta para -Z. */
+/**
+ * Ângulo (yaw) em radianos a partir de uma direção XZ.
+ * Convenção do Three.js: rotation.y = yaw faz o -Z local apontar para (-sin yaw, -cos yaw).
+ * Logo yaw 0 aponta para -Z, e um modelo "encara" o seu -Z local.
+ */
 export function yawFromDirection(dir: Vec2): number {
-  return Math.atan2(dir.x, dir.z);
+  return Math.atan2(-dir.x, -dir.z);
+}
+
+/** Inversa de yawFromDirection. */
+export function directionFromYaw(yaw: number): Vec2 {
+  return { x: -Math.sin(yaw), z: -Math.cos(yaw) };
 }
 
 /** Interpola ângulos pelo caminho mais curto. */

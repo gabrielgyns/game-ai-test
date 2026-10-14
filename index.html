@@ -37,6 +37,26 @@
         <p class="hint">Clique para jogar</p>
       </div>
 
+      <div id="menu" class="hidden">
+        <div class="panel">
+          <h1>Pausado</h1>
+          <button id="menu-resume" class="primary">Continuar</button>
+          <button id="menu-restart">Reiniciar partida</button>
+          <label class="slider">
+            <span>Sensibilidade do mouse <b id="menu-sens-value">1.0</b></span>
+            <input id="menu-sens" type="range" min="0.3" max="2.5" step="0.1" value="1" />
+          </label>
+          <div class="controls-list">
+            <div><b>WASD</b> mover (S anda de ré, A/D de lado)</div>
+            <div><b>Mouse</b> olhar e virar o personagem</div>
+            <div><b>Clique / Espaço</b> atacar</div>
+            <div><b>Shift</b> correr</div>
+            <div><b>Scroll</b> zoom</div>
+            <div><b>ESC</b> abrir e fechar este menu</div>
+          </div>
+        </div>
+      </div>
+
       <div id="death" class="hidden">
         <h1>Você caiu</h1>
         <p>Renascendo em <span id="death-timer">5</span>s…</p>

@@ -70,3 +70,26 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0d12; col
 .hidden { display: none !important; }
 
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+#menu {
+  position: absolute; inset: 0; display: flex; justify-content: center; align-items: center;
+  background: rgba(5, 6, 10, 0.6); backdrop-filter: blur(4px);
+  pointer-events: auto;
+}
+#menu .panel {
+  width: 360px; background: var(--panel); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px; padding: 22px 24px; display: flex; flex-direction: column; gap: 10px;
+}
+#menu h1 { margin: 0 0 6px; font-size: 30px; text-align: center; }
+#menu button {
+  font: inherit; font-weight: 600; color: var(--text); background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; padding: 10px 14px; cursor: pointer;
+}
+#menu button:hover { background: rgba(255,255,255,0.16); }
+#menu button.primary { background: #3b6ad6; border-color: #5b8def; }
+#menu button.primary:hover { background: #4a7ae6; }
+#menu .slider { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); margin-top: 6px; }
+#menu .slider b { color: var(--text); }
+#menu input[type="range"] { width: 100%; }
+#menu .controls-list { margin-top: 8px; font-size: 13px; color: var(--muted); display: grid; gap: 4px; }
+#menu .controls-list b { color: var(--text); }

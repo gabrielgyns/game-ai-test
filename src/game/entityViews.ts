@@ -83,7 +83,7 @@ class EntityView {
       this.swingTime += dt;
       const d = 0.3;
       const k = this.swingTime < d ? Math.sin((this.swingTime / d) * Math.PI) : 0;
-      this.model.weaponArm.rotation.x = -k * 1.9;
+      this.model.weaponArm.rotation.x = k * 1.9;
       this.model.weaponArm.rotation.y = k * 0.4;
     } else if (this.swingTime < 0.3) {
       // Gosma "pula" para atacar.

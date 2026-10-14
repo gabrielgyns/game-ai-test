@@ -7,8 +7,10 @@ export class Input {
   attackQueued = false;
   pointerLocked = false;
   onFirstInteraction: (() => void) | null = null;
+  /** Chamado quando o pointer lock é perdido (ESC) ou obtido. */
+  onPointerLockChange: ((locked: boolean) => void) | null = null;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(private readonly canvas: HTMLCanvasElement) {
     window.addEventListener("keydown", (e) => {
       if (e.repeat) return;
       this.keys.add(e.code);
@@ -32,6 +34,8 @@ export class Input {
     });
     document.addEventListener("pointerlockchange", () => {
       this.pointerLocked = document.pointerLockElement === canvas;
+      if (!this.pointerLocked) this.keys.clear();
+      this.onPointerLockChange?.(this.pointerLocked);
     });
     window.addEventListener("mousemove", (e) => {
       if (!this.pointerLocked) return;
@@ -41,6 +45,10 @@ export class Input {
     window.addEventListener("wheel", (e) => {
       this.zoomDelta += Math.sign(e.deltaY);
     }, { passive: true });
+  }
+
+  requestLock(): void {
+    this.canvas.requestPointerLock();
   }
 
   isDown(code: string): boolean {
