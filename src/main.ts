@@ -43,6 +43,7 @@ import {
 } from "./domain/dungeon";
 import { ShopUI } from "./game/shopUI";
 import { SkillTreeUI } from "./game/skillTreeUI";
+import { Minimap } from "./game/minimap";
 import { DayNightSky } from "./game/sky";
 import { Foliage } from "./game/foliage";
 import { HIT_COLORS, Particles } from "./game/particles";
@@ -62,6 +63,7 @@ const scene = new THREE.Scene();
 // Céu, sol, lua e neblina seguem o relógio do mundo (dayCycle no domínio).
 const sky = new DayNightSky(scene);
 const foliage = new Foliage();
+const minimap = new Minimap();
 scene.add(foliage.group);
 const particles = new Particles(scene);
 const shake = new CameraShake();
@@ -797,7 +799,8 @@ function frame(): void {
   const frameDt = Math.min(timer.getDelta(), 0.1);
 
   // Input → intenções no domínio.
-  const { lookX, lookY, zoom, attack, inventory, potion, roll, skill, interact, tree } = input.flush();
+  const { lookX, lookY, zoom, attack, inventory, potion, roll, skill, interact, tree, map } = input.flush();
+  if (map && started && !menu.isOpen) minimap.toggleFull();
   if (tree && started && !menu.isOpen && !dialogue.isOpen && !shopUI.isOpen && !inventoryUI.isOpen) {
     if (treeUI.isOpen) closeTree();
     else openTree();
@@ -907,6 +910,7 @@ function frame(): void {
   floats.update(frameDt);
   hud.update(player, target);
   hud.updateBoss(world);
+  minimap.update(world, player, cam.yaw);
   skillBar.update(player);
   composer.render();
 }
@@ -934,6 +938,7 @@ if (import.meta.env.DEV) {
     shake,
     foliage,
     environment,
+    minimap,
     enterDungeon: (seed?: number) => afterDungeonChange(() => enterDungeon(world, player, seed)),
     exitDungeon: () => afterDungeonChange(() => exitDungeon(world, player, "leave")),
     activeSlot: () => activeSlot,

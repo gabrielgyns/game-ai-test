@@ -75,6 +75,11 @@ Grito deixa todos lentos, o Segundo Fôlego dispara sozinho quando a vida fica c
 vira uma rajada de três flechas que atordoam, a Chuva de Flechas vira tempestade, a Bola de Fogo dobra e
 deixa o chão em chamas, a Nova Gélida congela, o Teleporte explode na partida e o Escudo Arcano explode
 ao acabar. Chefes resistem a atordoamento e lentidão (metade do tempo). Reiniciar a árvore custa ouro.
+No canto superior direito fica o **minimapa**, que gira com a câmera (para cima é para onde você olha):
+inimigos em vermelho, chefes em losango, `!` e `?` nos personagens com quest, o portal da cripta, e,
+lá dentro, as salas, a saída e o baú. Chefes e quests fora do alcance ficam presos na borda, apontando
+a direção. A tecla **M** abre o mapa grande, com o vale inteiro (ou a cripta inteira) e a legenda.
+
 Todo inimigo mostra o **nível** ao lado da barra de vida e do nome, na cor da dificuldade para o seu
 herói: cinza (bem abaixo), verde (fácil), amarelo (páreo), laranja (difícil) e vermelho (perigoso).
 Se cair, você renasce no santuário depois de alguns segundos. Inimigos renascem em casa.

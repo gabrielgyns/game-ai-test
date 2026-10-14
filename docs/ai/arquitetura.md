@@ -83,6 +83,8 @@ o servidor roda `stepWorld` e o cliente roda só `src/game`.
   `landmarks.ts` esculpem os modelos. `vox.ts` lê e escreve `.vox` do MagicaVoxel.
 - `sky.ts`, `foliage.ts`, `particles.ts`, `shake.ts`: ambiente e "sensação de jogo". O céu lê o
   relógio do domínio; partículas, clarão e tremor reagem aos eventos em `handleEvents`.
+- `minimap.ts`: minimapa e mapa grande (M), desenhados em canvas 2D sobre os marcadores do domínio
+  (`mapMarkers.ts`). O fundo do vale é gerado uma vez a partir do terreno; o da cripta, da planta.
 - `audio.ts`: tudo sintetizado com Web Audio; música generativa com modo de chefe.
 - UI em HTML sobre o canvas: `hud.ts`, `inventoryUI.ts`, `dialogueUI.ts`, `questTracker.ts`,
   `skillBar.ts`, `menu.ts`. Painéis modais (mochila, diálogo, menu) pausam a simulação e soltam o

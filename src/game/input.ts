@@ -11,6 +11,7 @@ export class Input {
   skillQueued: number | null = null;
   interactQueued = false;
   treeToggled = false;
+  mapToggled = false;
   pointerLocked = false;
   onFirstInteraction: (() => void) | null = null;
   /** Chamado quando o pointer lock é perdido (ESC) ou obtido. */
@@ -36,6 +37,7 @@ export class Input {
       if (digit) this.skillQueued = Number(digit[1]) - 1;
       if (e.code === "KeyI") this.inventoryToggled = true;
       if (e.code === "KeyK") this.treeToggled = true;
+      if (e.code === "KeyM") this.mapToggled = true;
       if (e.code === "KeyQ") this.potionQueued = true;
     });
     window.addEventListener("keyup", (e) => this.keys.delete(e.code));
@@ -99,6 +101,7 @@ export class Input {
     skill: number | null;
     interact: boolean;
     tree: boolean;
+    map: boolean;
   } {
     const out = {
       lookX: this.lookDeltaX,
@@ -111,8 +114,10 @@ export class Input {
       skill: this.skillQueued,
       interact: this.interactQueued,
       tree: this.treeToggled,
+      map: this.mapToggled,
     };
     this.treeToggled = false;
+    this.mapToggled = false;
     this.rollQueued = false;
     this.skillQueued = null;
     this.interactQueued = false;

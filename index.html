@@ -41,6 +41,21 @@
       <div id="skillbar"></div>
       <div id="tree-badge" class="hidden"></div>
 
+      <div id="minimap">
+        <canvas id="minimap-canvas"></canvas>
+        <div id="minimap-region"></div>
+        <div id="minimap-hint"><b>M</b> mapa</div>
+      </div>
+      <div id="worldmap" class="hidden">
+        <div class="panel">
+          <header><h2>Mapa</h2><button id="worldmap-close" title="Fechar (M)">✕</button></header>
+          <div class="body">
+            <canvas id="worldmap-canvas"></canvas>
+            <aside id="worldmap-legend"></aside>
+          </div>
+        </div>
+      </div>
+
       <div id="quests" class="hidden"></div>
 
       <div id="interact" class="hidden"><b>F</b> <span id="interact-text"></span></div>
@@ -108,7 +123,7 @@
       </div>
 
       <div id="controls">
-        <b>WASD</b> mover · <b>Mouse</b> olhar · <b>Clique / E</b> atacar · <b>Espaço</b> esquivar · <b>1-4</b> habilidades · <b>Q</b> poção · <b>I</b> mochila · <b>K</b> habilidades · <b>F</b> falar
+        <b>WASD</b> mover · <b>Mouse</b> olhar · <b>Clique / E</b> atacar · <b>Espaço</b> esquivar · <b>1-4</b> habilidades · <b>Q</b> poção · <b>I</b> mochila · <b>K</b> habilidades · <b>M</b> mapa · <b>F</b> falar
       </div>
 
       <div id="overlay">
@@ -155,7 +170,7 @@
             <div><b>Espaço</b> esquiva com rolamento (invulnerável)</div>
             <div><b>1-4</b> habilidades</div>
             <div><b>Shift</b> correr</div>
-            <div><b>Q</b> beber poção · <b>I</b> abrir mochila · <b>K</b> árvore de habilidades · <b>F</b> falar com NPC</div>
+            <div><b>Q</b> beber poção · <b>I</b> abrir mochila · <b>K</b> árvore de habilidades · <b>M</b> mapa · <b>F</b> falar com NPC</div>
             <div><b>Scroll</b> zoom</div>
             <div><b>ESC</b> abrir e fechar este menu</div>
           </div>

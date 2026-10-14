@@ -133,6 +133,13 @@ com screenshots antes de serem considerados prontos.
     esqueletos da cripta no nível dela. Apresentação: selo com o número à esquerda da barra de vida
     flutuante, "Nv N" ao lado do nome no painel do alvo e na barra do chefe, na cor da dificuldade
     (cinza, verde, amarelo, laranja, vermelho). 5 testes novos.
+25. **Minimapa** (pedido do dono). Domínio: `mapMarkers.ts` decide o que aparece (inimigos, chefes,
+    NPCs com quest nova ou para entregar, portal da cripta, saídas, baú, itens raros e épicos no chão),
+    só do "lugar" onde o herói está (vale ou cripta). Apresentação: `minimap.ts` com o fundo do vale
+    desenhado uma vez (bioma, altura, relevo sombreado, água, praça, árvores e pedras de
+    `placeProps`) e o da cripta a partir da planta (salas limpas em verde); minimapa redondo que gira
+    com a câmera, com "N", nome da região e marcadores importantes presos na borda; mapa grande na
+    tecla M, norte para cima, com nomes dos chefes e legenda. 4 testes novos.
 
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).
