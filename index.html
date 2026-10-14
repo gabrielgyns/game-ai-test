@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vale das Gosmas</title>
+    <link rel="stylesheet" href="/src/game/hud.css" />
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+
+    <div id="hud">
+      <div id="status">
+        <div class="row">
+          <span id="hud-name">Herói</span>
+          <span id="hud-level">Nv 1</span>
+        </div>
+        <div class="bar hp"><div id="hud-hp-fill"></div><span id="hud-hp-text"></span></div>
+        <div class="bar xp"><div id="hud-xp-fill"></div><span id="hud-xp-text"></span></div>
+        <div class="row small"><span id="hud-gold">0 ouro</span><span id="hud-kills">0 abates</span></div>
+      </div>
+
+      <div id="target" class="hidden">
+        <div class="row"><span id="target-name"></span></div>
+        <div class="bar hp"><div id="target-hp-fill"></div><span id="target-hp-text"></span></div>
+      </div>
+
+      <div id="log"></div>
+
+      <div id="controls">
+        <b>WASD</b> mover · <b>Mouse</b> olhar · <b>Clique / Espaço</b> atacar · <b>Scroll</b> zoom · <b>Shift</b> correr
+      </div>
+
+      <div id="overlay">
+        <h1>Vale das Gosmas</h1>
+        <p>Um RPG 3D. Derrote gosmas perto do centro, goblins mais longe e orcs na borda.</p>
+        <p class="hint">Clique para jogar</p>
+      </div>
+
+      <div id="death" class="hidden">
+        <h1>Você caiu</h1>
+        <p>Renascendo em <span id="death-timer">5</span>s…</p>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
