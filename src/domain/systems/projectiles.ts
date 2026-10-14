@@ -4,6 +4,7 @@ import { PROJECTILE_SPECS, type Projectile } from "../projectiles";
 import { terrainHeight } from "../terrain";
 import type { World } from "../world";
 import { applyDamage } from "./combat";
+import { applyStun } from "../status";
 
 /** Move projéteis, resolve acertos (primeiro hostil no raio) e explosões. */
 export function projectileSystem(world: World, dt: number): void {
@@ -35,6 +36,7 @@ export function projectileSystem(world: World, dt: number): void {
         explode(world, owner, p);
       } else {
         applyDamage(world, owner, hit, p.damage, p.fromSkill ? "skill" : "basic");
+        if (p.stun && hit.health.current > 0) applyStun(world, hit, p.stun);
         world.emit({ type: "projectileHit", projectileId: p.id, target: hit.id, position: { ...p.position }, explodeRadius: 0 });
       }
       if (!p.pierce) {

@@ -89,6 +89,16 @@ com screenshots antes de serem considerados prontos.
     santuário. Apresentação: modelo da Mercadora com balança e bolsa de moedas, barraca com toldo
     listrado, painel da loja, tooltip compartilhado com afixos e comparação de todos os bônus,
     número de crítico laranja com "!", som de moedas. Concordância de "Reforçad@" no plural.
+21. **Árvore de habilidades** (pedido do dono: "dá motivo para subir de nível"). Domínio:
+    `skillTree.ts` (dados dos 60 ranks; `skillMods` soma o que foi comprado; pontos = nível − 1;
+    `learnRank` em ordem; `resetTalents` por 30 ouro × nível; `effectiveCooldown` junta ranks e
+    afixo do Sábio), `status.ts` (atordoado, lento, vulnerável, com chefes a meia duração), Pele de
+    Ferro (`abilities.guard`), crítico extra no Foco, poças do herói (fogo, tempestade de flechas),
+    flechas e investida que atordoam, buff ao fim do deslocamento, Retorno e Mana Viva no escudo,
+    Último Suspiro disparado por `applyDamage`. O sistema de habilidades foi reescrito em cima dessas
+    primitivas. Talentos salvos no `SaveData.player.talents`. Apresentação: painel (K) com 4 colunas,
+    aviso de pontos sobre a barra, estrelas de atordoamento para qualquer criatura, tom azul (lento)
+    e roxo (vulnerável), poças de fogo e chuva de flechas. 19 testes novos.
 
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).

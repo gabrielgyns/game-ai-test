@@ -7,12 +7,14 @@ import { pickupSystem } from "./systems/pickup";
 import { projectileSystem } from "./systems/projectiles";
 import { hazardSystem } from "./systems/hazards";
 import { respawnSystem } from "./systems/respawn";
+import { statusSystem } from "./status";
 import type { World } from "./world";
 
 /** Avança o mundo um passo e devolve os eventos gerados nesse passo. */
 export function stepWorld(world: World, dt: number): GameEvent[] {
   world.time += dt;
   respawnSystem(world, dt);
+  statusSystem(world, dt);
   aiSystem(world, dt);
   abilitySystem(world, dt);
   movementSystem(world, dt);

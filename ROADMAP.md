@@ -33,6 +33,7 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 - [x] Terceiro chefe: Imperador Escorpião no deserto, com Rajada de Espinhos em leque, Cuspe Ácido que deixa poças e Carapaça de Areia que só habilidades quebram; quest do Guarda
 - [x] Inimigos arqueiros (Goblin Arqueiro na campina, Salteador Arqueiro no deserto) que mantêm distância e atiram com aviso em linha
 - [x] Afixos nos equipamentos (8 tipos, de regeneração em combate a crítico e roubo de vida) e Mercadora Zuri com venda, poções, estoque diário e recompra
+- [x] Árvore de habilidades: 1 ponto por nível, 5 ranks por habilidade (60 ao todo) com talentos que atordoam, congelam, deixam lento ou vulnerável, criam fogo e tempestades; reinício por ouro
 - [x] Saves em 5 slots locais, com nome do herói, resumo de progresso, exportar/importar por slot e migração do save antigo
 - [x] Lab de modelos (`/lab.html`): vitrine de tudo que aparece no jogo, luz, animações e comparação com a versão anterior
 
@@ -45,6 +46,5 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 4. **Mais quests.** Objetivos de coleta e exploração e quests repetíveis diárias.
 5. **Save na nuvem** (quando houver servidor); os slots locais já existem.
 6. **Áudio com assets.** Trocar a síntese por samples e trilha composta quando houver arte sonora.
-7. **Árvore de habilidades** por classe e pontos ao subir de nível.
-8. **Dungeons.** Áreas instanciadas com chefes e loot garantido (Minecraft Dungeons).
-9. **Multiplayer.** Servidor rodando o mesmo domínio; cliente só renderiza.
+7. **Dungeons.** Áreas instanciadas com chefes e loot garantido (Minecraft Dungeons).
+8. **Multiplayer.** Servidor rodando o mesmo domínio; cliente só renderiza.

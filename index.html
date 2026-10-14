@@ -37,6 +37,7 @@
       </div>
 
       <div id="skillbar"></div>
+      <div id="tree-badge" class="hidden"></div>
 
       <div id="quests" class="hidden"></div>
 
@@ -93,8 +94,19 @@
         <div id="shop-tooltip" class="item-tip hidden"></div>
       </div>
 
+      <div id="tree" class="hidden">
+        <div class="panel">
+          <div class="inv-header"><h2>Árvore de habilidades</h2><span id="tree-points"></span></div>
+          <div id="tree-cols"></div>
+          <div class="tree-footer">
+            <span class="hint">Um ponto por nível · clique no próximo rank para aprender · ◆ talento muda a habilidade · K ou ESC: fechar</span>
+            <span><button id="tree-reset" type="button">Reiniciar</button> <button id="tree-close" type="button">Fechar</button></span>
+          </div>
+        </div>
+      </div>
+
       <div id="controls">
-        <b>WASD</b> mover · <b>Mouse</b> olhar · <b>Clique / E</b> atacar · <b>Espaço</b> esquivar · <b>1-4</b> habilidades · <b>Q</b> poção · <b>I</b> mochila · <b>F</b> falar
+        <b>WASD</b> mover · <b>Mouse</b> olhar · <b>Clique / E</b> atacar · <b>Espaço</b> esquivar · <b>1-4</b> habilidades · <b>Q</b> poção · <b>I</b> mochila · <b>K</b> habilidades · <b>F</b> falar
       </div>
 
       <div id="overlay">
@@ -141,7 +153,7 @@
             <div><b>Espaço</b> esquiva com rolamento (invulnerável)</div>
             <div><b>1-4</b> habilidades</div>
             <div><b>Shift</b> correr</div>
-            <div><b>Q</b> beber poção · <b>I</b> abrir mochila · <b>F</b> falar com NPC</div>
+            <div><b>Q</b> beber poção · <b>I</b> abrir mochila · <b>K</b> árvore de habilidades · <b>F</b> falar com NPC</div>
             <div><b>Scroll</b> zoom</div>
             <div><b>ESC</b> abrir e fechar este menu</div>
           </div>

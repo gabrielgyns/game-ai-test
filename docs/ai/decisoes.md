@@ -118,3 +118,15 @@ velocidade vivem em `entity.bonuses`, recalculado junto com o resto em `recomput
 O estoque muda à meia-noite do relógio do mundo (dia do `dayCycle`) e é semeado por dia e nível, então
 é o mesmo se você recarregar no mesmo dia. Ele é salvo (com o que já foi comprado) para não dar para
 comprar o mesmo item duas vezes recarregando.
+
+## D26. Talentos sobre primitivas de status
+Os 24 talentos não têm regra própria espalhada pelos sistemas: eles pedem atordoar, lentidão,
+vulnerabilidade, buff, cura, escudo, explosão em área ou poça. A IA respeita o atordoado, o
+movimento respeita o lento e `applyDamage` respeita vulnerável e Pele de Ferro. Um talento novo
+costuma ser uma linha em `useSkill`. Chefes resistem (metade do tempo) para os talentos não
+anularem as lutas.
+
+## D27. Escudo termina no sistema de habilidades
+`applyDamage` só zera o escudo; quem encerra (e dispara o talento Retorno) é o `abilitySystem`, no
+passo seguinte. Assim combate não importa habilidades (evita ciclo de import) e o fim do escudo tem
+um lugar só, seja por tempo ou por dano.

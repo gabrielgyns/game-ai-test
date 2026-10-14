@@ -2,6 +2,7 @@ import type { Entity } from "../domain/components";
 import { SKILLS, type SkillId } from "../domain/skills";
 import { iconCanvas } from "./itemIcons";
 import { countItems } from "../domain/inventory";
+import { effectiveCooldown, pointsAvailable, rankOf } from "../domain/skillTree";
 
 /** Barra de habilidades (1 a 4) com cooldown e destaque do buff ativo. */
 export class SkillBar {
@@ -56,7 +57,18 @@ export class SkillBar {
     this.potionCount = count;
   }
 
+  private readonly badge = document.getElementById("tree-badge")!;
+  private badgeText = "";
+
   update(player: Entity): void {
+    // Aviso de pontos na árvore, acima da barra.
+    const pts = pointsAvailable(player);
+    const text = pts > 0 ? `+${pts} ponto${pts > 1 ? "s" : ""} de habilidade · K` : "";
+    if (text !== this.badgeText) {
+      this.badgeText = text;
+      this.badge.textContent = text;
+      this.badge.classList.toggle("hidden", !text);
+    }
     const potions = player.inventory ? countItems(player.inventory, (i) => i.kind === "consumable") : 0;
     this.potionCount.textContent = `×${potions}`;
     this.potionSlot.classList.toggle("ready", potions > 0);
@@ -66,8 +78,11 @@ export class SkillBar {
     for (const s of ab.skills) {
       const slot = this.slots.get(s.id);
       if (!slot) continue;
-      const total = SKILLS[s.id].cooldown;
-      const ratio = s.cooldownLeft / total;
+      const total = effectiveCooldown(player, s.id);
+      const ratio = Math.min(1, s.cooldownLeft / total);
+      const rank = rankOf(player, s.id);
+      const title = `${SKILLS[s.id].name} (rank ${rank}/5): ${SKILLS[s.id].description} · K abre a árvore`;
+      if (slot.el.title !== title) slot.el.title = title;
       slot.cd.style.height = `${ratio * 100}%`;
       slot.text.textContent = s.cooldownLeft > 0 ? `${Math.ceil(s.cooldownLeft)}` : "";
       slot.el.classList.toggle("ready", s.cooldownLeft <= 0);

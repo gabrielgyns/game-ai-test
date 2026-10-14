@@ -2,6 +2,14 @@ import * as THREE from "three";
 import type { World } from "../domain/world";
 import { terrainHeight } from "../domain/terrain";
 import { VoxelBuilder } from "./voxel";
+import type { HazardKind } from "../domain/hazards";
+
+/** Cores do disco (borda, meio, centro), emissivo e das partículas de cada tipo de poça. */
+const LOOK: Record<HazardKind, { edge: string; mid: string; core: string; emissive: string; glow: number; bit: string; opacity: number }> = {
+  acid: { edge: "#3f8a24", mid: "#6cc63a", core: "#9ce85a", emissive: "#3f9a20", glow: 0.45, bit: "#c8ff8a", opacity: 0.9 },
+  fire: { edge: "#8a2a10", mid: "#e0601a", core: "#ffc24a", emissive: "#ff6a1a", glow: 0.9, bit: "#ffb84a", opacity: 0.85 },
+  arrows: { edge: "#5a4028", mid: "#7a5a38", core: "#8a6a44", emissive: "#000000", glow: 0, bit: "#d8d0c0", opacity: 0.55 },
+};
 
 /**
  * Poças no chão (ácido verde que borbulha) e avisos extras de onde algo vai cair.
@@ -12,6 +20,7 @@ interface PoolView {
   disc: THREE.Mesh;
   bubbles: THREE.Mesh[];
   seed: number;
+  kind: HazardKind;
 }
 
 interface Warning {
@@ -22,11 +31,12 @@ interface Warning {
   radius: number;
 }
 
-const discCache = new Map<number, THREE.BufferGeometry>();
+const discCache = new Map<string, THREE.BufferGeometry>();
 
 /** Disco de voxels de 1/6 m com borda escura e miolo claro. */
-function acidDisc(radius: number): THREE.BufferGeometry {
-  const key = Math.round(radius * 10);
+function poolDisc(radius: number, kind: HazardKind): THREE.BufferGeometry {
+  const look = LOOK[kind];
+  const key = `${kind}|${Math.round(radius * 10)}`;
   let g = discCache.get(key);
   if (g) return g;
   const b = new VoxelBuilder();
@@ -38,7 +48,7 @@ function acidDisc(radius: number): THREE.BufferGeometry {
       // Borda irregular: alguns voxels de fora somem.
       const n = Math.sin(x * 12.9 + z * 78.2) * 43758.5;
       if (d > r - 1.2 && n - Math.floor(n) < 0.35) continue;
-      const color = d > r - 1.6 ? "#3f8a24" : d > r * 0.55 ? "#6cc63a" : "#9ce85a";
+      const color = d > r - 1.6 ? look.edge : d > r * 0.55 ? look.mid : look.core;
       b.set(x, 0, z, color);
     }
   g = b.build(1 / 6, { jitter: 0.05, ao: false, skipGroundFaces: true });
@@ -50,6 +60,7 @@ export class HazardViews {
   private pools = new Map<number, PoolView>();
   private warnings: Warning[] = [];
   private readonly bubbleGeo = new THREE.BoxGeometry(0.16, 0.16, 0.16);
+  private readonly arrowGeo = new THREE.BoxGeometry(0.05, 0.6, 0.05);
 
   constructor(private readonly scene: THREE.Scene) {}
 
@@ -58,19 +69,21 @@ export class HazardViews {
       let view = this.pools.get(h.id);
       if (!view) {
         const group = new THREE.Group();
-        const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.25, transparent: true, opacity: 0.9, emissive: new THREE.Color("#3f9a20"), emissiveIntensity: 0.45, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
-        const disc = new THREE.Mesh(acidDisc(h.radius), mat);
+        const look = LOOK[h.kind];
+        const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.25, transparent: true, opacity: look.opacity, emissive: new THREE.Color(look.emissive), emissiveIntensity: look.glow, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
+        const disc = new THREE.Mesh(poolDisc(h.radius, h.kind), mat);
         disc.renderOrder = 3;
         group.add(disc);
         const bubbles: THREE.Mesh[] = [];
         for (let i = 0; i < 7; i++) {
-          const bubble = new THREE.Mesh(this.bubbleGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color("#c8ff8a").multiplyScalar(1.3), transparent: true }));
+          const geo = h.kind === "arrows" ? this.arrowGeo : this.bubbleGeo;
+          const bubble = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: new THREE.Color(look.bit).multiplyScalar(h.kind === "arrows" ? 1 : 1.4), transparent: true }));
           group.add(bubble);
           bubbles.push(bubble);
         }
         group.position.set(h.position.x, terrainHeight(h.position.x, h.position.z) + 0.03, h.position.z);
         this.scene.add(group);
-        view = { group, disc, bubbles, seed: h.id * 7.3 };
+        view = { group, disc, bubbles, seed: h.id * 7.3, kind: h.kind };
         this.pools.set(h.id, view);
       }
       // Cresce no primeiro 0,3 s, encolhe e some no último segundo.
@@ -81,10 +94,19 @@ export class HazardViews {
       (view.disc.material as THREE.MeshStandardMaterial).opacity = 0.9 * fade;
       view.bubbles.forEach((b, i) => {
         // Cada bolha sobe e estoura num ciclo próprio, em pontos espalhados pela poça.
-        const cycle = (time * 0.9 + i * 0.37 + view!.seed) % 1;
         const a = i * 2.4 + view!.seed;
         const r = h.radius * (0.25 + ((i * 0.31) % 0.6));
-        b.position.set(Math.cos(a) * r, cycle * 0.45, Math.sin(a) * r);
+        if (view!.kind === "arrows") {
+          // Flechas caindo em ciclos rápidos sobre a área.
+          const cycle = (time * 2.2 + i * 0.29 + view!.seed) % 1;
+          b.position.set(Math.cos(a + Math.floor(time * 2.2 + i * 0.29)) * r, 3 * (1 - cycle) + 0.3, Math.sin(a + Math.floor(time * 2.2 + i * 0.29)) * r);
+          b.scale.setScalar(grow);
+          return;
+        }
+        // Ácido borbulha devagar; fogo sobe rápido como chama.
+        const speed = view!.kind === "fire" ? 1.8 : 0.9;
+        const cycle = (time * speed + i * 0.37 + view!.seed) % 1;
+        b.position.set(Math.cos(a) * r, cycle * (view!.kind === "fire" ? 1.1 : 0.45), Math.sin(a) * r);
         b.scale.setScalar((1 - cycle) * grow);
         (b.material as THREE.MeshBasicMaterial).opacity = fade;
       });

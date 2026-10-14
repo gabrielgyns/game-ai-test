@@ -39,6 +39,9 @@ export type GameEvent =
   | { type: "carapaceHit"; entity: EntityId; layersLeft: number }
   | { type: "carapaceBreak"; entity: EntityId; stun: number }
   | { type: "carapaceUp"; entity: EntityId; layers: number }
+  | { type: "status"; entity: EntityId; effect: "stun" | "slow" | "vulnerable"; seconds: number }
+  | { type: "talentLearned"; entity: EntityId; skill: SkillId; rank: number }
+  | { type: "talentReset"; entity: EntityId; gold: number }
   | { type: "sell"; entity: EntityId; itemName: string; gold: number }
   | { type: "buy"; entity: EntityId; itemName: string; gold: number }
   | { type: "hazardSpawn"; hazardId: number }

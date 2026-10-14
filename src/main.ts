@@ -27,6 +27,7 @@ import { QuestTracker } from "./game/questTracker";
 import { TALK_RANGE } from "./domain/npc";
 import { questById } from "./domain/quests";
 import { SKILLS, type SkillId } from "./domain/skills";
+import { SKILL_TREE } from "./domain/skillTree";
 import { CLASSES } from "./domain/classes";
 import { ProjectileViews } from "./game/projectileViews";
 import { directionFromYaw } from "./domain/math";
@@ -34,6 +35,7 @@ import { useFirstPotion } from "./domain/inventory";
 import { createTerrainMesh } from "./game/terrainMesh";
 import { HazardViews } from "./game/hazardViews";
 import { ShopUI } from "./game/shopUI";
+import { SkillTreeUI } from "./game/skillTreeUI";
 import { DayNightSky } from "./game/sky";
 import { Foliage } from "./game/foliage";
 import { HIT_COLORS, Particles } from "./game/particles";
@@ -189,6 +191,21 @@ function closeShop(): void {
 }
 shopUI.onClose = closeShop;
 dialogue.onShop = openShop;
+// Árvore de habilidades (K): painel modal como a mochila.
+const treeUI = new SkillTreeUI(world, player);
+treeUI.onAction = () => handleEvents(world.drainEvents());
+treeUI.onMessage = (text) => toast(text);
+function openTree(): void {
+  treeUI.open();
+  paused = true;
+  document.exitPointerLock();
+}
+function closeTree(): void {
+  treeUI.close();
+  paused = false;
+  input.requestLock();
+}
+treeUI.onClose = closeTree;
 dialogue.onAction = () => handleEvents(world.drainEvents());
 let started = false;
 let paused = false;
@@ -239,6 +256,10 @@ input.onPointerLockChange = (locked) => {
   }
   if (shopUI.isOpen) {
     if (locked) closeShop();
+    return;
+  }
+  if (treeUI.isOpen) {
+    if (locked) closeTree();
     return;
   }
   paused = !locked;
@@ -354,6 +375,7 @@ input.onEscape = () => {
   }
   if (!started) return;
   if (inventoryUI.isOpen) closeInventory();
+  else if (treeUI.isOpen) closeTree();
   else if (shopUI.isOpen) closeShop();
   else if (dialogue.isOpen) closeDialogue();
   else if (menu.isOpen) resume();
@@ -511,6 +533,7 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         break;
       case "levelUp":
         audio.play("levelUp");
+        hud.pushLog("+1 ponto de habilidade: aperte K para abrir a árvore.", "level");
         particles.sparkle({ x: player.transform.position.x, y: player.transform.position.y + 1.2, z: player.transform.position.z }, ["#ffe57a", "#fff3c4", "#ffb84a"], 36);
         floats.spawn(player.transform.position, `NÍVEL ${ev.level}!`, "#ffe57a", 1.4);
         hud.pushLog(`Você alcançou o nível ${ev.level}!`, "level");
@@ -570,7 +593,7 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         if (ev.explodeRadius > 0) {
           shake.add(attenuate(0.32, distanceXZ(ev.position, player.transform.position), 22));
           particles.burst(ev.position, { count: 14, colors: ev.projectileId === -1 ? ["#9ce39c", "#6fcf5a"] : ["#ff9a3c", "#ffd37a", "#5a4a3a"], speed: [2, 5], up: [2, 5], size: [0.08, 0.16], life: [0.5, 0.9] });
-          projectileViews.burst(ev.position, ev.explodeRadius, ev.projectileId === -1 ? "#9ce39c" : "#ff9a3c");
+          projectileViews.burst(ev.position, ev.explodeRadius, ev.projectileId === -1 ? "#9ce39c" : ev.projectileId === -2 ? "#b88aff" : "#ff9a3c");
           audio.play("explode", spatial(ev.position));
         } else {
           projectileViews.burst(ev.position, 0.4, "#ffd37a");
@@ -649,10 +672,27 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         break;
       case "hazardSpawn": {
         const h = world.hazards.get(ev.hazardId);
-        if (h) {
-          audio.play("explode", { ...spatial(h.position), pitch: 1.5 });
-          particles.burst({ x: h.position.x, y: h.position.y + 0.3, z: h.position.z }, { count: 16, colors: ["#9ce85a", "#6cc63a", "#3f8a24"], speed: [1.5, 4], up: [2, 4.5], size: [0.08, 0.16], life: [0.5, 0.9] });
+        if (h && h.kind !== "arrows") {
+          audio.play("explode", { ...spatial(h.position), pitch: h.kind === "acid" ? 1.5 : 1.1 });
+          const colors = h.kind === "fire" ? ["#ffb84a", "#ff6a1a", "#8a2a10"] : ["#9ce85a", "#6cc63a", "#3f8a24"];
+          particles.burst({ x: h.position.x, y: h.position.y + 0.3, z: h.position.z }, { count: 16, colors, speed: [1.5, 4], up: [2, 4.5], size: [0.08, 0.16], life: [0.5, 0.9] });
         }
+        break;
+      }
+      case "talentLearned": {
+        const r = SKILL_TREE[ev.skill][ev.rank - 1];
+        audio.play(r?.mods.talent ? "pickupRare" : "ui");
+        hud.pushLog(`${SKILLS[ev.skill].name} rank ${ev.rank}: ${r?.name ?? ""}`, "level");
+        break;
+      }
+      case "talentReset":
+        audio.play("coin");
+        hud.pushLog(`Árvore reiniciada (-${ev.gold} ouro). Pontos devolvidos.`, "gain");
+        break;
+      case "status": {
+        const t = world.get(ev.entity);
+        // As estrelas já mostram o atordoamento; o texto só para chefes, que resistem e importam mais.
+        if (t?.boss && ev.effect === "stun") floats.spawn(t.transform.position, "ATORDOADO", "#ffe57a", 1);
         break;
       }
       case "sell":
@@ -682,12 +722,16 @@ function frame(): void {
   const frameDt = Math.min(timer.getDelta(), 0.1);
 
   // Input → intenções no domínio.
-  const { lookX, lookY, zoom, attack, inventory, potion, roll, skill, interact } = input.flush();
-  if (inventory && started && !menu.isOpen && !dialogue.isOpen && !shopUI.isOpen) {
+  const { lookX, lookY, zoom, attack, inventory, potion, roll, skill, interact, tree } = input.flush();
+  if (tree && started && !menu.isOpen && !dialogue.isOpen && !shopUI.isOpen && !inventoryUI.isOpen) {
+    if (treeUI.isOpen) closeTree();
+    else openTree();
+  }
+  if (inventory && started && !menu.isOpen && !dialogue.isOpen && !shopUI.isOpen && !treeUI.isOpen) {
     if (inventoryUI.isOpen) closeInventory();
     else openInventory();
   }
-  if (interact && started && !menu.isOpen && !inventoryUI.isOpen) {
+  if (interact && started && !menu.isOpen && !inventoryUI.isOpen && !treeUI.isOpen) {
     if (shopUI.isOpen) closeShop();
     else if (dialogue.isOpen) closeDialogue();
     else {

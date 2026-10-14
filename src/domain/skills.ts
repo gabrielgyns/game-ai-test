@@ -123,6 +123,10 @@ export interface Dash {
   /** Investida: dano aplicado uma vez a cada inimigo atravessado. */
   damageMultiplier: number;
   hitEntityIds: number[];
+  /** Talento Impacto: atordoa quem for atravessado. */
+  stun?: number;
+  /** Talentos Ímpeto e Contra-ataque: buff de dano aplicado ao fim do deslocamento. */
+  afterBuff?: { multiplier: number; duration: number };
 }
 
 export interface Abilities {
@@ -135,10 +139,12 @@ export interface Abilities {
   aimDirection: Vec2;
   dash: Dash | null;
   rollCooldownLeft: number;
-  /** Buff de dano ativo (Grito de Guerra, Foco). */
-  damageBuff: { multiplier: number; timeLeft: number } | null;
-  /** Escudo que absorve dano antes da vida (Escudo Arcano). */
+  /** Buff de dano ativo (Grito de Guerra, Foco); `critBonus` vem do talento Olho de Águia. */
+  damageBuff: { multiplier: number; timeLeft: number; critBonus?: number } | null;
+  /** Escudo que absorve dano antes da vida (Escudo Arcano, Véu). */
   shield: { amount: number; timeLeft: number } | null;
+  /** Redução de dano recebido (talento Pele de Ferro). */
+  guard?: { reduction: number; timeLeft: number } | null;
 }
 
 export const ROLL = { duration: 0.42, distance: 4.2, cooldown: 1.0 } as const;

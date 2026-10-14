@@ -8,6 +8,8 @@ import { questsForNpc } from "../domain/quests";
 import { clamp } from "../domain/math";
 
 const FLASH_TIME = 0.14;
+const SLOW_TINT = new THREE.Color("#3a6ad8");
+const VULN_TINT = new THREE.Color("#a03ac8");
 const WHITE = new THREE.Color("#ffffff");
 
 /** Liga uma entidade do domínio a um modelo na cena, com animação procedural. */
@@ -38,6 +40,8 @@ class EntityView {
   /** Carapaça de Areia (casca de voxels dourados) e estrelinhas de atordoamento. */
   private carapaceMesh: THREE.Mesh | null = null;
   private stunStars: THREE.Group | null = null;
+  /** Tom de status aplicado nos materiais ("" = nenhum). */
+  private tint = "";
   private marker: THREE.Sprite | null = null;
   private shieldMesh!: THREE.Mesh;
   private markerKind: "" | "!" | "?" = "";
@@ -153,6 +157,7 @@ class EntityView {
   private collectMaterials(): void {
     const seen = new Set<THREE.Material>();
     this.flashMaterials = [];
+    this.tint = "";
     this.model.root.traverse((o) => {
       const m = (o as THREE.Mesh).material;
       if (!(m instanceof THREE.MeshStandardMaterial) || seen.has(m)) return;
@@ -202,12 +207,6 @@ class EntityView {
       this.carapaceMesh = new THREE.Mesh(b.build(1 / 3.6, { jitter: 0.05, ao: false }), mat);
       this.carapaceMesh.renderOrder = 4;
       this.scene.add(this.carapaceMesh);
-      this.stunStars = new THREE.Group();
-      for (let i = 0; i < 4; i++) {
-        const star = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 0.18), new THREE.MeshBasicMaterial({ color: new THREE.Color("#ffe57a").multiplyScalar(1.7) }));
-        this.stunStars.add(star);
-      }
-      this.scene.add(this.stunStars);
     }
     const alive = isAlive(this.entity);
     this.carapaceMesh.visible = alive && shell.active;
@@ -219,20 +218,60 @@ class EntityView {
       (this.carapaceMesh.material as THREE.MeshStandardMaterial).opacity = 0.14 + 0.26 * k;
       this.carapaceMesh.scale.setScalar(1 + Math.sin(time * 3) * 0.015);
     }
-    this.stunStars!.visible = alive && shell.stunLeft > 0;
-    if (this.stunStars!.visible) {
-      const top = this.model.height + 0.3;
-      this.stunStars!.children.forEach((s, i) => {
-        const a = time * 3 + (i / 4) * Math.PI * 2;
-        s.position.set(p.x + Math.cos(a) * 1.1, p.y + top + Math.sin(time * 6 + i) * 0.1, p.z + Math.sin(a) * 1.1);
-        s.rotation.set(time * 4, time * 3, 0);
-      });
+  }
+
+  /** Estrelinhas girando sobre a cabeça de quem está atordoado (carapaça partida ou talento). */
+  private updateStun(time: number): void {
+    const e = this.entity;
+    const stunned = isAlive(e) && ((e.status?.stunLeft ?? 0) > 0 || (e.boss?.carapace?.stunLeft ?? 0) > 0);
+    if (!stunned) {
+      if (this.stunStars) this.stunStars.visible = false;
+      return;
+    }
+    if (!this.stunStars) {
+      this.stunStars = new THREE.Group();
+      for (let i = 0; i < 4; i++) {
+        const star = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 0.18), new THREE.MeshBasicMaterial({ color: new THREE.Color("#ffe57a").multiplyScalar(1.7) }));
+        this.stunStars.add(star);
+      }
+      this.scene.add(this.stunStars);
+    }
+    this.stunStars.visible = true;
+    const p = e.transform.position;
+    const top = this.model.height + 0.3;
+    const r = Math.max(0.6, this.model.height * 0.35);
+    this.stunStars.children.forEach((s, i) => {
+      const a = time * 3 + (i / 4) * Math.PI * 2;
+      s.position.set(p.x + Math.cos(a) * r, p.y + top + Math.sin(time * 6 + i) * 0.1, p.z + Math.sin(a) * r);
+      s.rotation.set(time * 4, time * 3, 0);
+    });
+  }
+
+  /** Lento fica azulado, vulnerável fica arroxeado (o clarão de golpe tem prioridade). */
+  private applyTint(): void {
+    if (this.flashLeft > 0) return;
+    const s = this.entity.status;
+    const want = (s?.vulnerableLeft ?? 0) > 0 ? "vuln" : (s?.slowLeft ?? 0) > 0 ? "slow" : "";
+    if (want === this.tint) return;
+    this.tint = want;
+    const color = want === "vuln" ? VULN_TINT : want === "slow" ? SLOW_TINT : null;
+    const glow = new Set(this.model.glowMaterials?.map((g) => g.material));
+    for (const f of this.flashMaterials) {
+      if (glow.has(f.material)) continue; // glow de raridade continua com a cor dele
+      if (color) {
+        f.material.emissive.copy(color);
+        f.material.emissiveIntensity = 0.35;
+      } else {
+        f.material.emissive.copy(f.emissive);
+        f.material.emissiveIntensity = f.intensity;
+      }
     }
   }
 
   private applyFlash(dt: number): void {
     if (this.flashLeft <= 0) return;
     this.flashLeft = Math.max(0, this.flashLeft - dt);
+    if (this.flashLeft === 0) this.tint = ""; // o clarão apagou o tom: reaplica no mesmo quadro
     const k = this.flashLeft / FLASH_TIME;
     const glow = new Set(this.model.glowMaterials?.map((g) => g.material));
     for (const f of this.flashMaterials) {
@@ -307,7 +346,9 @@ class EntityView {
       for (const g of this.model.glowMaterials) g.material.emissiveIntensity = g.baseIntensity * pulse;
     }
     this.applyFlash(dt);
+    this.applyTint();
     this.updateCarapace(time);
+    this.updateStun(time);
 
     // Caminhada: pernas e braços alternam como um pêndulo; o corpo sobe no apoio de cada passo.
     const moving = e.movement.intent.x !== 0 || e.movement.intent.z !== 0;

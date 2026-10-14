@@ -22,6 +22,7 @@ Abra `http://localhost:5173` e clique na tela para começar.
 | Shift | correr |
 | Q | beber poção (escolhe a menor que cobre o que falta) |
 | I | abrir a mochila (clique equipa ou usa, botão direito larga no chão) |
+| K | árvore de habilidades (um ponto por nível) |
 | F | falar com o NPC mais próximo |
 | ESC | menu de pausa |
 
@@ -58,6 +59,13 @@ andam pelo mapa (goblins na mata, salteadores no deserto): mantêm distância, r
 perto e avisam o tiro com uma linha no chão; saia dela de lado.
 No platô ao norte, cercado de totens, vive o **Rei Goblin**: um chefe com Golpe Pesado, Pisão em área e
 Investida Real em linha, três fases que aceleram os avisos, lacaios na fúria final e loot épico garantido. Subir de nível cura por completo e aumenta vida e dano.
+Cada nível dá **1 ponto de habilidade** (K): cada uma das quatro habilidades da classe tem 5 ranks.
+Os ranks 1, 2 e 4 melhoram números (dano, raio, recarga, duração); os ranks 3 e 5 são **talentos** que
+mudam o jeito de jogar: a Investida atordoa, o Golpe Giratório cura e deixa os inimigos vulneráveis, o
+Grito deixa todos lentos, o Segundo Fôlego dispara sozinho quando a vida fica crítica, o Tiro Perfurante
+vira uma rajada de três flechas que atordoam, a Chuva de Flechas vira tempestade, a Bola de Fogo dobra e
+deixa o chão em chamas, a Nova Gélida congela, o Teleporte explode na partida e o Escudo Arcano explode
+ao acabar. Chefes resistem a atordoamento e lentidão (metade do tempo). Reiniciar a árvore custa ouro.
 Se cair, você renasce no santuário depois de alguns segundos. Inimigos renascem em casa.
 
 O jogo tem **5 slots de save** no navegador, cada um com um herói (classe e nome escolhidos na criação).
@@ -131,6 +139,8 @@ src/
     boss.ts        chefes: padrões de golpe (melee, área, investida), formas de telegraph e fases
     npc.ts         NPCs do santuário e suas falas
     quests.ts      definições de quests, diário do jogador, aceitar/avançar/entregar
+    skillTree.ts   árvore: 5 ranks por habilidade, talentos, pontos por nível e reinício por ouro
+    status.ts      efeitos de status (atordoado, lento, vulnerável) usados pelos talentos
     affixes.ts     afixos sorteados nos equipamentos (Serpente, Águia, Vampiro, Sábio...)
     shop.ts        loja: preços, estoque do dia, compra, venda e recompra
     hazards.ts     poças no chão (receita e estado); o sistema em systems/hazards.ts pulsa o dano
@@ -153,6 +163,7 @@ src/
     dialogueUI.ts  painel de conversa com NPCs
     questTracker.ts lista de quests ativas
     storage.ts     localStorage como porta dos slots, pedido de novo jogo, exportar e importar arquivo
+    skillTreeUI.ts painel da árvore de habilidades (K) e aviso de pontos sobre a barra
     shopUI.ts      painel da Mercadora (à venda, recompra, mochila que vende no clique)
     itemTooltip.ts tooltip de item compartilhado (afixos e comparação com o equipado)
     slotsUI.ts     tela de saves (lista, criar herói, apagar, exportar, importar)

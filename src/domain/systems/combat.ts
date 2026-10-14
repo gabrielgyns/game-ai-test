@@ -5,6 +5,8 @@ import { directionFromYaw, directionXZ, distanceXZ } from "../math";
 import { CHARGE } from "../skills";
 import { CLASSES } from "../classes";
 import { fireProjectile } from "./projectiles";
+import { vulnerability } from "../status";
+import { hasTalent } from "../skillTree";
 import { grantXp } from "../progression";
 import { rollLoot } from "../loot";
 import type { World } from "../world";
@@ -208,7 +210,7 @@ export function applyDamage(world: World, source: Entity, target: Entity, amount
   }
   // Crítico (afixo da Águia): sorteado antes de escudos, para o número grande valer o golpe inteiro.
   let crit = false;
-  const critChance = kind === "hazard" ? 0 : (source.bonuses?.critChance ?? 0);
+  const critChance = kind === "hazard" ? 0 : (source.bonuses?.critChance ?? 0) + (source.abilities?.damageBuff?.critBonus ?? 0);
   if (critChance > 0 && world.random() * 100 < critChance) {
     crit = true;
     amount = Math.round(amount * CRIT_MULTIPLIER);
@@ -235,6 +237,11 @@ export function applyDamage(world: World, source: Entity, target: Entity, amount
   } else if (shell && shell.stunLeft > 0) {
     amount = Math.round(amount * CARAPACE.vulnerableMultiplier);
   }
+  // Vulnerável (Redemoinho, Estilhaços) e Pele de Ferro.
+  const vuln = vulnerability(target);
+  if (vuln > 0) amount = Math.round(amount * (1 + vuln));
+  const guard = target.abilities?.guard;
+  if (guard && guard.timeLeft > 0) amount = Math.max(1, Math.round(amount * (1 - guard.reduction)));
   // Escudo absorve antes da vida.
   const shield = target.abilities?.shield;
   if (shield && shield.amount > 0) {
@@ -242,10 +249,7 @@ export function applyDamage(world: World, source: Entity, target: Entity, amount
     shield.amount -= absorbed;
     amount -= absorbed;
     world.emit({ type: "shieldAbsorb", entity: target.id, amount: absorbed });
-    if (shield.amount <= 0) {
-      target.abilities!.shield = null;
-      world.emit({ type: "shieldEnd", entity: target.id });
-    }
+    // Escudo zerado: o sistema de habilidades encerra no próximo passo (e dispara o Retorno, se houver).
     if (amount <= 0) return;
   }
   const dealt = Math.min(target.health.current, amount);
@@ -257,6 +261,12 @@ export function applyDamage(world: World, source: Entity, target: Entity, amount
   const lifesteal = kind === "hazard" ? 0 : (source.bonuses?.lifesteal ?? 0);
   if (lifesteal > 0 && isAlive(source)) {
     source.health.current = Math.min(source.health.max, source.health.current + (dealt * lifesteal) / 100);
+  }
+
+  // Último Suspiro: o Segundo Fôlego dispara sozinho quando a vida fica crítica.
+  if (target.kind === "player" && target.health.current > 0 && target.health.current < target.health.max * 0.2 && hasTalent(target, "secondWind", "lastStand")) {
+    const sw = target.abilities?.skills.find((s) => s.id === "secondWind");
+    if (sw && sw.cooldownLeft <= 0 && target.abilities) target.abilities.queuedSkill = "secondWind";
   }
 
   // Ser atacado acorda o inimigo mesmo fora do aggro.

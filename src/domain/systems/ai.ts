@@ -4,6 +4,7 @@ import type { World } from "../world";
 import { BOSS_MINION, raiseCarapace, resetBoss, updateBossPhase } from "../boss";
 import { createEnemy } from "../factories";
 import { startAttack } from "./combat";
+import { isStunned } from "../status";
 
 /**
  * Máquina de estados simples por inimigo:
@@ -20,6 +21,7 @@ export function aiSystem(world: World, dt: number): void {
     e.movement.intent = { x: 0, z: 0 };
     e.movement.faceYaw = undefined;
     e.combat.wantsAttack = false;
+    if (isStunned(e)) continue; // atordoado: não pensa, não anda, não ataca
 
     const distHome = distanceXZ(pos, ai.home);
     const distPlayer = playerAlive ? distanceXZ(pos, player.transform.position) : Infinity;

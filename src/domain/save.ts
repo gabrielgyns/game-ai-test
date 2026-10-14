@@ -7,6 +7,7 @@ import { generateWorld } from "./worldgen";
 import { isClassId, type ClassId } from "./classes";
 import type { World } from "./world";
 import type { ShopState } from "./shop";
+import type { TalentRanks } from "./skillTree";
 
 export const SAVE_VERSION = 1;
 
@@ -33,6 +34,8 @@ export interface SaveData {
     inventory: (Item | null)[];
     equipment: Equipment;
     quests: QuestLog;
+    /** Ranks da árvore de habilidades (opcional: saves antigos não têm). */
+    talents?: TalentRanks;
   };
   drops: { item: Item; position: Vec3; age: number; requireLeave?: boolean }[];
   /** Estoque do dia e recompra da Mercadora (opcional: saves antigos não têm). */
@@ -63,6 +66,7 @@ export function serializeGame(world: World, seed: number): SaveData {
       inventory: (p.inventory?.items ?? []).map((i) => (i ? structuredClone(i) : null)),
       equipment: structuredClone(p.equipment ?? { weapon: null, armor: null, accessory: null }),
       quests: structuredClone(p.quests ?? {}),
+      talents: { ...(p.talents ?? {}) },
     },
     drops: [...world.drops.values()].map((d) => ({ item: structuredClone(d.item), position: { ...d.position }, age: d.age, requireLeave: d.requireLeave })),
     shop: world.shop ? structuredClone(world.shop) : undefined,
@@ -100,6 +104,7 @@ export function restoreGame(save: SaveData): World {
   }
   p.equipment = structuredClone(s.equipment);
   p.quests = structuredClone(s.quests);
+  p.talents = { ...(s.talents ?? {}) };
   recomputeStats(p);
   p.health.current = Math.min(p.health.max, Math.max(1, s.health));
 

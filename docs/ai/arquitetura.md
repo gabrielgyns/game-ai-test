@@ -49,6 +49,8 @@ o servidor roda `stepWorld` e o cliente roda só `src/game`.
 - **Bônus de equipamento**: `recomputeStats` é a única fonte de `combat.damage`, `health.max`,
   `movement.speedMultiplier` e `entity.bonuses` (crítico, roubo de vida, recarga, ouro, regeneração).
   Item novo com atributo novo: some em `itemBonus` e leia de `bonuses` no sistema certo.
+- **Habilidades e talentos**: `useSkill` lê `skillMods(e, id)` e combina primitivas de `status.ts`.
+  A recarga efetiva é `effectiveCooldown` (ranks + afixo). `statusSystem` roda antes da IA.
 - **Loja**: `world.shop` (estoque do dia e recompra) é salvo; regras só em `domain/shop.ts`.
 - **Poças** vivem em `world.hazards` e não são salvas (somem em segundos).
 - **Direção de mira do jogador** é `abilities.aimDirection` (câmera), escrita por `main.ts` a cada

@@ -26,6 +26,8 @@ export interface Projectile {
   lob?: boolean;
   /** Deixa uma poça onde explode. */
   pool?: PoolSpec;
+  /** Atordoa quem acertar, por estes segundos (talento Flecha Pesada). */
+  stun?: number;
 }
 
 export const PROJECTILE_SPECS: Record<ProjectileKind, { speed: number; hitRadius: number }> = {

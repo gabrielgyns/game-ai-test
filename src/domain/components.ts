@@ -4,6 +4,8 @@ import type { Abilities } from "./skills";
 import type { AttackPattern, Boss } from "./boss";
 import type { QuestLog } from "./quests";
 import type { ClassId } from "./classes";
+import type { StatusEffects } from "./status";
+import type { TalentRanks } from "./skillTree";
 
 export type EntityId = number;
 export type EntityKind = "player" | "enemy" | "npc";
@@ -136,6 +138,10 @@ export interface Entity {
   stats?: { kills: number };
   /** Bônus especiais do equipamento (só o jogador tem). */
   bonuses?: Bonuses;
+  /** Efeitos de status ativos (atordoado, lento, vulnerável). */
+  status?: StatusEffects;
+  /** Ranks comprados na árvore de habilidades. */
+  talents?: TalentRanks;
   /** Classe do herói (define ataque básico e barra de habilidades). */
   classId?: ClassId;
 }
