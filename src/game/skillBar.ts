@@ -6,6 +6,8 @@ import { iconCanvas } from "./itemIcons";
 export class SkillBar {
   private readonly root = document.getElementById("skillbar")!;
   private readonly slots = new Map<SkillId, { el: HTMLDivElement; cd: HTMLDivElement; text: HTMLDivElement }>();
+  private readonly potionSlot: HTMLDivElement;
+  private readonly potionCount: HTMLSpanElement;
 
   constructor() {
     SKILL_BAR.forEach((id, i) => {
@@ -29,9 +31,35 @@ export class SkillBar {
       this.root.appendChild(el);
       this.slots.set(id, { el, cd, text });
     });
+
+    // Slot da poção (Q), separado das habilidades.
+    const gap = document.createElement("div");
+    gap.className = "skill-gap";
+    this.root.appendChild(gap);
+    const potion = document.createElement("div");
+    potion.className = "skill potion ready";
+    potion.title = "Poção de Vida: cura 40% da vida máxima.";
+    const icon = document.createElement("canvas");
+    icon.width = 12;
+    icon.height = 12;
+    icon.className = "icon";
+    icon.getContext("2d")!.drawImage(iconCanvas("potion"), 0, 0);
+    const key = document.createElement("span");
+    key.className = "key";
+    key.textContent = "Q";
+    const count = document.createElement("span");
+    count.className = "count";
+    potion.append(icon, key, count);
+    this.root.appendChild(potion);
+    this.potionSlot = potion;
+    this.potionCount = count;
   }
 
   update(player: Entity): void {
+    const potions = player.inventory?.items.filter((i) => i?.kind === "consumable").length ?? 0;
+    this.potionCount.textContent = `×${potions}`;
+    this.potionSlot.classList.toggle("ready", potions > 0);
+    this.potionSlot.classList.toggle("empty", potions === 0);
     const ab = player.abilities;
     if (!ab) return;
     for (const s of ab.skills) {
