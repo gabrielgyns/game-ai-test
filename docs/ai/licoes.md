@@ -75,3 +75,8 @@
   câmera por bloco; sem ele, o mesh inteiro é desenhado mesmo fora da tela.
 - Uma luz direcional que vira sol e lua precisa trocar de lado com intensidade zero, senão as sombras
   "pulam" no horizonte.
+- O headless com software renderiza o mapa inteiro a ~3 fps (850k triângulos). Com o passo limitado
+  a 0,1 s por quadro, o mundo anda a ~1/3 do tempo real: dê timeouts generosos e uma janela menor
+  (960×600) para testes de luta. Não é sinal de problema no jogo.
+- Para depurar a ordem de golpes de um chefe, simule só o domínio num teste de rascunho e registre os
+  `windup`: em segundos se vê a rotação inteira, sem navegador.

@@ -3,19 +3,19 @@ import type { ClassId } from "../domain/classes";
 import type { CharacterModel } from "./characters/common";
 import { createHero } from "./characters/hero";
 import { createBandit, createBogZombie, createGoblin, createOrc, createScorpion, createSlime, createSpider } from "./characters/mobs";
-import { createGoblinKing, createSpiderQueen } from "./characters/bosses";
+import { createGoblinKing, createScorpionEmperor, createSpiderQueen } from "./characters/bosses";
 import { createVillager } from "./characters/npcs";
 
 export type { CharacterModel } from "./characters/common";
 export { equipmentSignature, createHero, paintWeapon } from "./characters/hero";
 export { createBandit, createBogZombie, createGoblin, createOrc, createScorpion, createSlime, createSpider } from "./characters/mobs";
-export { createGoblinKing, createSpiderQueen } from "./characters/bosses";
+export { createGoblinKing, createScorpionEmperor, createSpiderQueen } from "./characters/bosses";
 export { createVillager } from "./characters/npcs";
 
 /** Todos os arquétipos conhecidos, na ordem em que aparecem no jogo. */
 export const ARCHETYPES = [
-  "hero", "slime", "goblin", "orc", "spider", "bogZombie", "scorpion", "bandit",
-  "goblinKing", "spiderQueen", "elder", "smith", "guard",
+  "hero", "slime", "goblin", "goblinArcher", "orc", "spider", "bogZombie", "scorpion", "bandit", "banditArcher",
+  "goblinKing", "spiderQueen", "scorpionEmperor", "elder", "smith", "guard",
 ] as const;
 
 export function createModel(archetype: string, equipment?: Equipment, classId?: ClassId): CharacterModel {
@@ -23,6 +23,7 @@ export function createModel(archetype: string, equipment?: Equipment, classId?: 
     case "hero": return createHero(equipment, classId);
     case "slime": return createSlime();
     case "goblin": return createGoblin();
+    case "goblinArcher": return createGoblin(true);
     case "orc": return createOrc();
     case "goblinKing": return createGoblinKing();
     case "spider": return createSpider(false);
@@ -30,6 +31,8 @@ export function createModel(archetype: string, equipment?: Equipment, classId?: 
     case "bogZombie": return createBogZombie();
     case "scorpion": return createScorpion();
     case "bandit": return createBandit();
+    case "banditArcher": return createBandit(true);
+    case "scorpionEmperor": return createScorpionEmperor();
     case "elder": return createVillager("elder");
     case "smith": return createVillager("smith");
     case "guard": return createVillager("guard");

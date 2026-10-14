@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { biomeWeights, SWAMP_BOSS_HOME } from "../domain/biomes";
+import { biomeWeights, DESERT_BOSS_HOME, SWAMP_BOSS_HOME } from "../domain/biomes";
 import { isWater, terrainHeight, WATER_LEVEL, WORLD_HALF } from "../domain/terrain";
 import { BOSS_HOME, seededRandom } from "../domain/worldgen";
 import { VoxelBuilder, voxelMaterial } from "./voxel";
@@ -111,6 +111,7 @@ function placeFoliage(seed: number): Placement[] {
       if (Math.hypot(mx, mz) < 10) continue; // praça de areia do santuário
       if (Math.hypot(mx - BOSS_HOME.x, mz - BOSS_HOME.z) < 9) continue;
       if (Math.hypot(mx - SWAMP_BOSS_HOME.x, mz - SWAMP_BOSS_HOME.z) < 9) continue;
+      if (Math.hypot(mx - DESERT_BOSS_HOME.x, mz - DESERT_BOSS_HOME.z) < 14) continue;
       const h = terrainHeight(mx, mz);
       if (h > 7 || isWater(mx, mz)) continue; // pedra, neve e água
       const w = biomeWeights(mx);

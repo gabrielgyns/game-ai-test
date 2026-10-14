@@ -122,6 +122,20 @@ export const QUESTS: QuestDefinition[] = [
     },
   },
   {
+    id: "emperor",
+    title: "O Imperador das Areias",
+    giver: "guard",
+    description: "No tablado de areia a leste reina o Imperador Escorpião, protegido por uma carapaça. Derrote-o.",
+    objective: { kind: "kill", archetype: "scorpionEmperor", count: 1, label: "Imperador Escorpião derrotado" },
+    reward: { xp: 1400, gold: 450, item: { kind: "equipment", tier: 3, rarity: "epic" } },
+    requires: ["bandits"],
+    dialogue: {
+      offer: "Os salteadores falavam de um senhor no extremo leste: o Imperador Escorpião. A carapaça de areia dele não sente espada nem flecha comum. Só as suas técnicas a racham. Quebre a casca e bata enquanto ele estiver tonto.",
+      progress: "Ataque básico não passa da carapaça: use as habilidades. E cuidado com o ácido: o chão fica queimando onde o cuspe cai.",
+      complete: "O leste está livre! Nunca pensei que veria alguém voltar daquele tablado. Isto é seu, com a gratidão da Guarda.",
+    },
+  },
+  {
     id: "orcs",
     title: "Orcs da Borda",
     giver: "smith",

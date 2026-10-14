@@ -1,8 +1,8 @@
 import { createEnemy, createPlayer, type EnemyKind } from "./factories";
 import { terrainHeight, SPAWN_FLAT_RADIUS, WORLD_HALF } from "./terrain";
 import { World } from "./world";
-import { createGoblinKing, createSpiderQueen } from "./boss";
-import { biomeAt, SWAMP_BOSS_HOME } from "./biomes";
+import { createGoblinKing, createScorpionEmperor, createSpiderQueen } from "./boss";
+import { biomeAt, DESERT_BOSS_HOME, SWAMP_BOSS_HOME } from "./biomes";
 import { createNpc, npcById } from "./npc";
 import type { ClassId } from "./classes";
 
@@ -53,12 +53,15 @@ export function generateWorld(options: WorldGenOptions = {}): World {
   }
 
   const nearArena = (x: number, z: number) =>
-    Math.hypot(x - BOSS_HOME.x, z - BOSS_HOME.z) < BOSS_ARENA_RADIUS || Math.hypot(x - SWAMP_BOSS_HOME.x, z - SWAMP_BOSS_HOME.z) < BOSS_ARENA_RADIUS;
+    Math.hypot(x - BOSS_HOME.x, z - BOSS_HOME.z) < BOSS_ARENA_RADIUS ||
+    Math.hypot(x - SWAMP_BOSS_HOME.x, z - SWAMP_BOSS_HOME.z) < BOSS_ARENA_RADIUS ||
+    Math.hypot(x - DESERT_BOSS_HOME.x, z - DESERT_BOSS_HOME.z) < BOSS_ARENA_RADIUS;
 
   // Campina: anéis de dificuldade em volta do santuário (só dentro do bioma).
   const rings: { kind: EnemyKind; min: number; max: number; count: number }[] = [
     { kind: "slime", min: SPAWN_FLAT_RADIUS + 4, max: 40, count: 16 },
     { kind: "goblin", min: 40, max: 70, count: 16 },
+    { kind: "goblinArcher", min: 45, max: 72, count: 6 },
     { kind: "orc", min: 70, max: WORLD_HALF - 22, count: 10 },
   ];
   for (const ring of rings) {
@@ -80,6 +83,7 @@ export function generateWorld(options: WorldGenOptions = {}): World {
     { kind: "bogZombie", count: 8, minX: -WORLD_HALF + 14, maxX: -40 },
     { kind: "scorpion", count: 12, minX: 40, maxX: WORLD_HALF - 14 },
     { kind: "bandit", count: 8, minX: 40, maxX: WORLD_HALF - 14 },
+    { kind: "banditArcher", count: 6, minX: 40, maxX: WORLD_HALF - 14 },
   ];
   for (const region of regions) {
     let placed = 0;
@@ -93,5 +97,6 @@ export function generateWorld(options: WorldGenOptions = {}): World {
   }
   world.spawn((id) => createGoblinKing(id, { x: BOSS_HOME.x, y: terrainHeight(BOSS_HOME.x, BOSS_HOME.z), z: BOSS_HOME.z }));
   world.spawn((id) => createSpiderQueen(id, { x: SWAMP_BOSS_HOME.x, y: terrainHeight(SWAMP_BOSS_HOME.x, SWAMP_BOSS_HOME.z), z: SWAMP_BOSS_HOME.z }));
+  world.spawn((id) => createScorpionEmperor(id, { x: DESERT_BOSS_HOME.x, y: terrainHeight(DESERT_BOSS_HOME.x, DESERT_BOSS_HOME.z), z: DESERT_BOSS_HOME.z }));
   return world;
 }

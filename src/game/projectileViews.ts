@@ -30,7 +30,34 @@ export function createProjectileMesh(kind: ProjectileKind): THREE.Object3D {
       g.add(core, halo);
       return g;
     }
+    case "stinger": {
+      // Espinho escuro com ponta âmbar que brilha de leve (lido contra a areia clara).
+      const g = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.7), new THREE.MeshStandardMaterial({ color: "#2e1a14" }));
+      const tip = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.25), new THREE.MeshBasicMaterial({ color: new THREE.Color("#ffb84a").multiplyScalar(1.6) }));
+      tip.position.z = -0.45;
+      const ring = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.08), new THREE.MeshStandardMaterial({ color: "#d4a92a" }));
+      ring.position.z = 0.2;
+      g.add(body, tip, ring);
+      return g;
+    }
+    case "acidGlob": {
+      const g = new THREE.Group();
+      const core = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.45, 0.45), new THREE.MeshBasicMaterial({ color: new THREE.Color("#8ee04a").multiplyScalar(1.5) }));
+      const drip = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), new THREE.MeshBasicMaterial({ color: "#4f9a2a" }));
+      drip.position.set(0.18, -0.25, 0.1);
+      const halo = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.75, 0.75), new THREE.MeshBasicMaterial({ color: new THREE.Color("#6fd63a").multiplyScalar(1.2), transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false }));
+      g.add(core, drip, halo);
+      return g;
+    }
   }
+}
+
+/** Altura extra de um arremesso em arco (parábola sobre o trajeto). */
+export function lobHeight(traveled: number, maxDistance: number): number {
+  const t = Math.min(1, Math.max(0, traveled / Math.max(0.001, maxDistance)));
+  const peak = Math.min(5, 1.5 + maxDistance * 0.3);
+  return 4 * peak * t * (1 - t);
 }
 
 interface Burst {
@@ -55,9 +82,9 @@ export class ProjectileViews {
         this.scene.add(view);
         this.views.set(p.id, view);
       }
-      view.position.set(p.position.x, p.position.y, p.position.z);
+      view.position.set(p.position.x, p.position.y + (p.lob ? lobHeight(p.traveled, p.maxDistance) : 0), p.position.z);
       view.rotation.y = Math.atan2(-p.direction.x, -p.direction.z);
-      if (p.kind === "fireball" || p.kind === "bolt") view.rotation.z = time * 6;
+      if (p.kind === "fireball" || p.kind === "bolt" || p.kind === "acidGlob") view.rotation.z = time * 6;
     }
     for (const [id, view] of this.views) {
       if (!world.projectiles.has(id)) {

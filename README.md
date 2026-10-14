@@ -41,7 +41,14 @@ Um "!" sobre o NPC indica quest disponível e "?" quest pronta para entregar.
 O mapa tem três biomas: as **Campinas do Vale** no centro, o **Pântano Sombrio** a oeste (água que
 atrasa o passo, aranhas rápidas e zumbis do lodo) e o **Deserto Escaldante** a leste (escorpiões de
 ferrão quase sem aviso e salteadores). No pântano reina a **Rainha Aranha**, cuja Teia Venenosa cai
-onde você estava quando ela começou a tecer. No platô ao norte, cercado de totens, vive o **Rei Goblin**: um chefe com Golpe Pesado, Pisão em área e
+onde você estava quando ela começou a tecer. No extremo leste, num tablado cercado de obeliscos, reina o **Imperador Escorpião**: dispara uma
+**Rajada de Espinhos** em leque (aviso em cone), lança **Cuspe Ácido** que cai nos pontos avisados e
+deixa **poças** queimando no chão por 8 s, e se cobre com a **Carapaça de Areia**, que ignora ataques
+básicos: só habilidades (1-4) arrancam as três camadas. Partida, ele fica atordoado e leva 50% a mais
+de dano; a carapaça volta a cada fase, e na fúria ele chama salteadores arqueiros. **Arqueiros** também
+andam pelo mapa (goblins na mata, salteadores no deserto): mantêm distância, recuam se você chega
+perto e avisam o tiro com uma linha no chão; saia dela de lado.
+No platô ao norte, cercado de totens, vive o **Rei Goblin**: um chefe com Golpe Pesado, Pisão em área e
 Investida Real em linha, três fases que aceleram os avisos, lacaios na fúria final e loot épico garantido. Subir de nível cura por completo e aumenta vida e dano.
 Se cair, você renasce no santuário depois de alguns segundos. Inimigos renascem em casa.
 
@@ -116,6 +123,7 @@ src/
     boss.ts        chefes: padrões de golpe (melee, área, investida), formas de telegraph e fases
     npc.ts         NPCs do santuário e suas falas
     quests.ts      definições de quests, diário do jogador, aceitar/avançar/entregar
+    hazards.ts     poças no chão (receita e estado); o sistema em systems/hazards.ts pulsa o dano
     dayCycle.ts    relógio do mundo: hora, dia, altura do sol, luz do dia e crepúsculo
     save.ts        snapshot serializável do progresso e reconstrução do mundo a partir dele
     saveSlots.ts   slots de save sobre uma porta chave-valor (localStorage no jogo, Map nos testes)
@@ -144,6 +152,7 @@ src/
     environment.ts árvores, pedras, santuário e braseiros em voxels (instanciados)
     foliage.ts     grama, flores e juncos em blocos instanciados, com vento e pisada no shader
     sky.ts         céu, sol, lua, estrelas, neblina e vaga-lumes seguindo o relógio do domínio
+    hazardViews.ts poças de ácido em voxel e avisos extras de queda no chão
     particles.ts   partículas em voxel (acerto, morte, poeira, brilho) num pool instanciado
     shake.ts       tremor de câmera por trauma
   main.ts          bootstrap e loop com passo fixo de simulação

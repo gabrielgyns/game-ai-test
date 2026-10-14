@@ -84,7 +84,7 @@ function useSkill(world: World, e: Entity, id: SkillId): boolean {
       for (const other of world.alive()) {
         if (other.kind !== "enemy") continue;
         if (distanceXZ(e.transform.position, other.transform.position) > WHIRLWIND.radius) continue;
-        applyDamage(world, e, other, Math.round(effectiveDamage(e) * WHIRLWIND.damageMultiplier));
+        applyDamage(world, e, other, Math.round(effectiveDamage(e) * WHIRLWIND.damageMultiplier), "skill");
         hits++;
       }
       world.emit({ type: "skill", entity: e.id, skill: id, hits });
@@ -117,7 +117,7 @@ function useSkill(world: World, e: Entity, id: SkillId): boolean {
     }
     // ---- Arqueiro ----
     case "piercingShot":
-      fireProjectile(world, e, "piercingArrow", ab.aimDirection, Math.round(effectiveDamage(e) * PIERCING.damageMultiplier), PIERCING.range, { pierce: true });
+      fireProjectile(world, e, "piercingArrow", ab.aimDirection, Math.round(effectiveDamage(e) * PIERCING.damageMultiplier), PIERCING.range, { pierce: true, fromSkill: true });
       world.emit({ type: "skill", entity: e.id, skill: id, hits: 0 });
       break;
     case "arrowRain": {
@@ -130,7 +130,7 @@ function useSkill(world: World, e: Entity, id: SkillId): boolean {
       for (const other of world.alive()) {
         if (other.kind !== "enemy") continue;
         if (distanceXZ(center, other.transform.position) > ARROW_RAIN.radius + (other.boss ? 1 : 0)) continue;
-        applyDamage(world, e, other, Math.round(effectiveDamage(e) * ARROW_RAIN.damageMultiplier));
+        applyDamage(world, e, other, Math.round(effectiveDamage(e) * ARROW_RAIN.damageMultiplier), "skill");
         hits++;
       }
       world.emit({ type: "projectileHit", projectileId: -1, position: center, explodeRadius: ARROW_RAIN.radius });
@@ -156,7 +156,7 @@ function useSkill(world: World, e: Entity, id: SkillId): boolean {
       break;
     // ---- Mago ----
     case "fireball":
-      fireProjectile(world, e, "fireball", ab.aimDirection, Math.round(effectiveDamage(e) * FIREBALL.damageMultiplier), FIREBALL.range, { explodeRadius: FIREBALL.radius });
+      fireProjectile(world, e, "fireball", ab.aimDirection, Math.round(effectiveDamage(e) * FIREBALL.damageMultiplier), FIREBALL.range, { explodeRadius: FIREBALL.radius, fromSkill: true });
       world.emit({ type: "skill", entity: e.id, skill: id, hits: 0 });
       break;
     case "frostNova": {
@@ -164,7 +164,7 @@ function useSkill(world: World, e: Entity, id: SkillId): boolean {
       for (const other of world.alive()) {
         if (other.kind !== "enemy") continue;
         if (distanceXZ(e.transform.position, other.transform.position) > FROST_NOVA.radius + (other.boss ? 1 : 0)) continue;
-        applyDamage(world, e, other, Math.round(effectiveDamage(e) * FROST_NOVA.damageMultiplier));
+        applyDamage(world, e, other, Math.round(effectiveDamage(e) * FROST_NOVA.damageMultiplier), "skill");
         hits++;
       }
       world.emit({ type: "skill", entity: e.id, skill: id, hits });
@@ -199,6 +199,6 @@ function chargeHits(world: World, e: Entity): void {
     if (!isHostile(e, other) || dash.hitEntityIds.includes(other.id)) continue;
     if (distanceXZ(e.transform.position, other.transform.position) > (e.boss ? 2.4 : 1.6)) continue;
     dash.hitEntityIds.push(other.id);
-    applyDamage(world, e, other, Math.round(effectiveDamage(e) * dash.damageMultiplier));
+    applyDamage(world, e, other, Math.round(effectiveDamage(e) * dash.damageMultiplier), "skill");
   }
 }

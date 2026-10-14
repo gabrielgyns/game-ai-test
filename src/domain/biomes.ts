@@ -22,6 +22,8 @@ export function biomeWeights(x: number): { meadow: number; swamp: number; desert
 
 /** Centro da arena da Rainha Aranha, no extremo oeste. */
 export const SWAMP_BOSS_HOME = { x: -82, z: 0 };
+/** Centro da arena do Imperador Escorpião, no extremo leste. */
+export const DESERT_BOSS_HOME = { x: 82, z: 0 };
 
 export const BIOME_LABEL: Record<Biome, string> = {
   meadow: "Campinas do Vale",

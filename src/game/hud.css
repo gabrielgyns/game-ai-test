@@ -319,3 +319,6 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0d12; col
   flex: 1; font: inherit; font-size: 15px; color: var(--text); background: rgba(0,0,0,0.3);
   border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 6px 10px;
 }
+
+#boss-carapace { margin-top: 6px; font-size: 13px; font-weight: 600; color: #f0d38a; text-align: center; letter-spacing: 0.3px; }
+#boss-carapace.stunned { color: #ffe57a; animation: pulse 0.6s infinite; }

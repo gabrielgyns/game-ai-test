@@ -3,6 +3,7 @@ import type { GameEvent } from "./events";
 import type { Item } from "./items";
 import type { Vec3 } from "./math";
 import type { Projectile } from "./projectiles";
+import type { Hazard, PoolSpec } from "./hazards";
 
 /**
  * Agregado raiz do jogo. Guarda o estado completo e a fila de eventos do tick.
@@ -28,6 +29,9 @@ export class World {
   readonly drops = new Map<number, Drop>();
   readonly projectiles = new Map<number, Projectile>();
   private nextProjectileId = 1;
+  /** Poças e outros perigos ativos no chão. */
+  readonly hazards = new Map<number, Hazard>();
+  private nextHazardId = 1;
   /** Gerador determinístico usado por loot e outras decisões aleatórias do domínio. */
   random: () => number = Math.random;
   /** Tempo de jogo acumulado em segundos. */
@@ -65,6 +69,25 @@ export class World {
     this.projectiles.set(projectile.id, projectile);
     this.emit({ type: "projectileSpawn", projectileId: projectile.id });
     return projectile;
+  }
+
+  /** Cria uma poça a partir de uma receita; o dano é uma fração do dano do dono. */
+  addHazard(owner: Entity, spec: PoolSpec, position: Vec3): Hazard {
+    const hazard: Hazard = {
+      id: this.nextHazardId++,
+      kind: spec.kind,
+      owner: owner.id,
+      position: { ...position },
+      radius: spec.radius,
+      damage: Math.max(1, Math.round(owner.combat.damage * spec.damageFraction)),
+      tickEvery: spec.tickEvery,
+      tickLeft: spec.tickEvery,
+      timeLeft: spec.duration,
+      duration: spec.duration,
+    };
+    this.hazards.set(hazard.id, hazard);
+    this.emit({ type: "hazardSpawn", hazardId: hazard.id });
+    return hazard;
   }
 
   addDrop(item: Item, position: Vec3): Drop {

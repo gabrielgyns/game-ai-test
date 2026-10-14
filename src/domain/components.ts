@@ -56,8 +56,10 @@ export interface Combat {
   windupTime: number;
   /** Tempo restante do aviso em curso (0 = nenhum ataque em preparação). */
   windupLeft: number;
-  /** Golpe em preparação: padrão, direção e (para aoe) ponto fixados no início do aviso. */
-  pending?: { pattern: AttackPattern; direction: Vec2; point?: Vec3 };
+  /** Golpe em preparação: padrão, direção e (para aoe/lob) pontos fixados no início do aviso. */
+  pending?: { pattern: AttackPattern; direction: Vec2; point?: Vec3; points?: Vec3[] };
+  /** Golpe básico próprio (inimigos arqueiros); sem ele, melee ou o estilo da classe. */
+  basicPattern?: AttackPattern;
 }
 
 export interface Progression {
@@ -78,6 +80,8 @@ export interface EnemyAI {
   xpReward: number;
   goldReward: number;
   respawnSeconds: number;
+  /** Atiradores: distância que tentam manter do jogador (recuam se ele chegar mais perto). */
+  keepDistance?: number;
 }
 
 export interface Wallet {

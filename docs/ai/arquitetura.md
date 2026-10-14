@@ -44,6 +44,9 @@ o servidor roda `stepWorld` e o cliente roda só `src/game`.
 - **Classes**: `classes.ts` é a única fonte de atributos base, estilo de ataque e barra de
   habilidades. O ataque básico vira um `AttackPattern` melee ou `projectile` conforme a classe.
   Projéteis vivem em `world.projectiles` e são resolvidos por `projectileSystem` (após o combate).
+- **Dano tem tipo** (`basic`, `skill`, `hazard`): habilidades passam `"skill"` (e projéteis de
+  habilidade levam `fromSkill`), poças passam `"hazard"`. A Carapaça de Areia depende disso.
+- **Poças** vivem em `world.hazards` e não são salvas (somem em segundos).
 - **Direção de mira do jogador** é `abilities.aimDirection` (câmera), escrita por `main.ts` a cada
   frame; ataques, projéteis e dashes do jogador usam ela, não o yaw suavizado do corpo.
 - **Ids de item** são globais (`items.ts`); ao carregar um save, `resetItemIds(max + 1)`.

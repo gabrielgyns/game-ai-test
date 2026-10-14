@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { isAlive, type Entity, type EntityId } from "../domain/components";
 import type { World } from "../domain/world";
 import { createModel, equipmentSignature, type CharacterModel } from "./models";
+import { VoxelBuilder } from "./voxel";
 import type { TelegraphShape } from "../domain/boss";
 import { questsForNpc } from "../domain/quests";
 import { clamp } from "../domain/math";
@@ -30,6 +31,13 @@ class EntityView {
   private readonly telegraphRing: THREE.Mesh;
   private readonly telegraphLine: THREE.Mesh;
   private readonly telegraphLineFill: THREE.Mesh;
+  /** Leque (cone): reconstruído quando a abertura muda. */
+  private telegraphCone: THREE.Mesh | null = null;
+  private telegraphConeFill: THREE.Mesh | null = null;
+  private coneAngle = 0;
+  /** Carapaça de Areia (casca de voxels dourados) e estrelinhas de atordoamento. */
+  private carapaceMesh: THREE.Mesh | null = null;
+  private stunStars: THREE.Group | null = null;
   private marker: THREE.Sprite | null = null;
   private shieldMesh!: THREE.Mesh;
   private markerKind: "" | "!" | "?" = "";
@@ -158,6 +166,70 @@ class EntityView {
     this.flashLeft = FLASH_TIME;
   }
 
+  /** Setor de círculo de raio 1 com a abertura pedida, centrado no +X local. */
+  private ensureCone(angle: number): void {
+    if (this.telegraphCone && Math.abs(angle - this.coneAngle) < 1e-3) return;
+    if (this.telegraphCone) {
+      this.telegraph.remove(this.telegraphCone, this.telegraphConeFill!);
+      this.telegraphCone.geometry.dispose();
+      this.telegraphConeFill!.geometry.dispose();
+    }
+    this.coneAngle = angle;
+    const mat = (opacity: number) => new THREE.MeshBasicMaterial({ color: "#ff3b3b", transparent: true, opacity, side: THREE.DoubleSide, depthWrite: false });
+    this.telegraphCone = new THREE.Mesh(new THREE.CircleGeometry(1, 28, -angle / 2, angle), mat(0.16));
+    this.telegraphConeFill = new THREE.Mesh(new THREE.CircleGeometry(1, 28, -angle / 2, angle), mat(0.3));
+    this.telegraph.add(this.telegraphCone, this.telegraphConeFill);
+  }
+
+  /** Casca da Carapaça de Areia e estrelas do atordoamento, criadas só para quem tem carapaça. */
+  private updateCarapace(time: number): void {
+    const shell = this.entity.boss?.carapace;
+    if (!shell) return;
+    const p = this.entity.transform.position;
+    if (!this.carapaceMesh) {
+      const b = new VoxelBuilder();
+      const r = 9;
+      for (let x = -r; x <= r; x++)
+        for (let y = 0; y <= r; y++)
+          for (let z = -r; z <= r; z++) {
+            const d = Math.hypot(x, y * 1.15, z);
+            if (d > r || d < r - 1.2) continue;
+            // Placas hexagonais sugeridas por faixas alternadas de tom.
+            const band = (Math.floor((x + 20) / 3) + Math.floor((z + 20) / 3) + Math.floor(y / 3)) % 3;
+            b.set(x, y, z, band === 0 ? "#f0d38a" : band === 1 ? "#d9b25a" : "#c4963c");
+          }
+      const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, transparent: true, opacity: 0.35, depthWrite: false, emissive: new THREE.Color("#a07820"), emissiveIntensity: 0.25 });
+      this.carapaceMesh = new THREE.Mesh(b.build(1 / 3.6, { jitter: 0.05, ao: false }), mat);
+      this.carapaceMesh.renderOrder = 4;
+      this.scene.add(this.carapaceMesh);
+      this.stunStars = new THREE.Group();
+      for (let i = 0; i < 4; i++) {
+        const star = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 0.18), new THREE.MeshBasicMaterial({ color: new THREE.Color("#ffe57a").multiplyScalar(1.7) }));
+        this.stunStars.add(star);
+      }
+      this.scene.add(this.stunStars);
+    }
+    const alive = isAlive(this.entity);
+    this.carapaceMesh.visible = alive && shell.active;
+    if (this.carapaceMesh.visible) {
+      this.carapaceMesh.position.set(p.x, p.y, p.z);
+      this.carapaceMesh.rotation.y = time * 0.25;
+      // Cada camada perdida deixa a casca mais rala.
+      const k = shell.layers / shell.maxLayers;
+      (this.carapaceMesh.material as THREE.MeshStandardMaterial).opacity = 0.14 + 0.26 * k;
+      this.carapaceMesh.scale.setScalar(1 + Math.sin(time * 3) * 0.015);
+    }
+    this.stunStars!.visible = alive && shell.stunLeft > 0;
+    if (this.stunStars!.visible) {
+      const top = this.model.height + 0.3;
+      this.stunStars!.children.forEach((s, i) => {
+        const a = time * 3 + (i / 4) * Math.PI * 2;
+        s.position.set(p.x + Math.cos(a) * 1.1, p.y + top + Math.sin(time * 6 + i) * 0.1, p.z + Math.sin(a) * 1.1);
+        s.rotation.set(time * 4, time * 3, 0);
+      });
+    }
+  }
+
   private applyFlash(dt: number): void {
     if (this.flashLeft <= 0) return;
     this.flashLeft = Math.max(0, this.flashLeft - dt);
@@ -193,6 +265,8 @@ class EntityView {
       this.healthBar.visible = false;
       this.targetRing.visible = false;
       this.telegraph.visible = false; // morreu no meio do aviso: a marca some junto
+      if (this.carapaceMesh) this.carapaceMesh.visible = false;
+      if (this.stunStars) this.stunStars.visible = false;
       return;
     }
     this.deathTime = 0;
@@ -233,6 +307,7 @@ class EntityView {
       for (const g of this.model.glowMaterials) g.material.emissiveIntensity = g.baseIntensity * pulse;
     }
     this.applyFlash(dt);
+    this.updateCarapace(time);
 
     // Caminhada: pernas e braços alternam como um pêndulo; o corpo sobe no apoio de cada passo.
     const moving = e.movement.intent.x !== 0 || e.movement.intent.z !== 0;
@@ -312,13 +387,23 @@ class EntityView {
       this.telegraph.position.set(at.x, at.y + 0.06, at.z);
       const circle = shape.kind === "circle";
       this.telegraphRing.visible = this.telegraphFill.visible = circle;
-      this.telegraphLine.visible = this.telegraphLineFill.visible = !circle;
-      if (circle) {
+      this.telegraphLine.visible = this.telegraphLineFill.visible = shape.kind === "line";
+      if (this.telegraphCone) this.telegraphCone.visible = this.telegraphConeFill!.visible = shape.kind === "cone";
+      if (shape.kind === "cone") {
+        this.ensureCone(shape.angle);
+        // Plano local XY: +X local = +X do mundo, +Y local = -Z do mundo.
+        const local = Math.atan2(-shape.direction.z, shape.direction.x);
+        this.telegraphCone!.rotation.z = local;
+        this.telegraphConeFill!.rotation.z = local;
+        this.telegraphCone!.scale.setScalar(shape.length);
+        this.telegraphConeFill!.scale.setScalar(Math.max(0.05, shape.length * progress));
+        (this.telegraphConeFill!.material as THREE.MeshBasicMaterial).opacity = 0.18 + progress * 0.3;
+      } else if (circle) {
         const r = shape.radius;
         this.telegraphRing.scale.setScalar(r);
         this.telegraphFill.scale.setScalar(Math.max(0.05, r * progress));
         (this.telegraphFill.material as THREE.MeshBasicMaterial).opacity = 0.18 + progress * 0.3;
-      } else {
+      } else if (shape.kind === "line") {
         // Plano no XZ (grupo já rotacionado): eixo Y local aponta para -Z do mundo.
         const angle = Math.atan2(shape.direction.x, -shape.direction.z);
         for (const [mesh, len] of [[this.telegraphLine, shape.length], [this.telegraphLineFill, shape.length * progress]] as const) {
@@ -338,6 +423,8 @@ class EntityView {
 
   dispose(scene: THREE.Scene): void {
     scene.remove(this.model.root, this.healthBar, this.targetRing, this.telegraph, this.shieldMesh);
+    if (this.carapaceMesh) scene.remove(this.carapaceMesh);
+    if (this.stunStars) scene.remove(this.stunStars);
     if (this.marker) scene.remove(this.marker);
   }
 }

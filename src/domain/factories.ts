@@ -46,6 +46,8 @@ export interface EnemyTemplate {
   windup: number;
   xpReward: number;
   goldReward: number;
+  /** Atiradores: golpe básico à distância e distância que tentam manter. */
+  ranged?: { projectile: "arrow" | "bolt"; keepDistance: number };
 }
 
 export const ENEMY_TEMPLATES = {
@@ -140,13 +142,41 @@ export const ENEMY_TEMPLATES = {
     xpReward: 120,
     goldReward: 40,
   },
+  goblinArcher: {
+    name: "Goblin Arqueiro",
+    archetype: "goblinArcher",
+    maxHealth: 42,
+    damage: 9,
+    speed: 4.6,
+    range: 13,
+    cooldown: 2.6,
+    windup: 0.75,
+    aggroRange: 16,
+    xpReward: 36,
+    goldReward: 8,
+    ranged: { projectile: "arrow", keepDistance: 7 },
+  },
+  banditArcher: {
+    name: "Salteador Arqueiro",
+    archetype: "banditArcher",
+    maxHealth: 120,
+    damage: 19,
+    speed: 5.4,
+    range: 15,
+    cooldown: 2.3,
+    windup: 0.7,
+    aggroRange: 19,
+    xpReward: 125,
+    goldReward: 42,
+    ranged: { projectile: "arrow", keepDistance: 8 },
+  },
 } as const satisfies Record<string, EnemyTemplate>;
 
 export type EnemyKind = keyof typeof ENEMY_TEMPLATES;
 
 export function createEnemy(id: EntityId, kind: EnemyKind, position: Vec3): Entity {
-  const t = ENEMY_TEMPLATES[kind];
-  return {
+  const t: EnemyTemplate = ENEMY_TEMPLATES[kind];
+  const enemy: Entity = {
     id,
     kind: "enemy",
     name: t.name,
@@ -163,6 +193,12 @@ export function createEnemy(id: EntityId, kind: EnemyKind, position: Vec3): Enti
       xpReward: t.xpReward,
       goldReward: t.goldReward,
       respawnSeconds: 25,
+      keepDistance: t.ranged?.keepDistance,
     },
   };
+  if (t.ranged) {
+    // Tiro avisado por uma linha no chão: sair dela de lado evita a flecha.
+    enemy.combat.basicPattern = { id: "shot", name: "Flechada", kind: "projectile", projectile: t.ranged.projectile, range: t.range, windup: t.windup, damageMultiplier: 1, cooldown: t.cooldown, minPhase: 1 };
+  }
+  return enemy;
 }

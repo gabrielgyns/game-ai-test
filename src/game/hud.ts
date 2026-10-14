@@ -75,7 +75,18 @@ export class Hud {
     this.bossPhase.textContent = `Fase ${boss.boss!.phase} / ${phases}`;
     this.bossFill.style.width = `${(boss.health.current / boss.health.max) * 100}%`;
     this.bossText.textContent = `${Math.ceil(boss.health.current)} / ${boss.health.max}`;
+    // Carapaça: camadas restantes, ou o tempo de atordoamento depois de partida.
+    const shell = boss.boss!.carapace;
+    const showShell = !!shell && (shell.active || shell.stunLeft > 0);
+    this.bossShell.classList.toggle("hidden", !showShell);
+    if (shell && showShell) {
+      this.bossShell.classList.toggle("stunned", !shell.active);
+      this.bossShell.textContent = shell.active
+        ? `Carapaça de Areia ${"◆".repeat(shell.layers)}${"◇".repeat(shell.maxLayers - shell.layers)} · só habilidades a quebram`
+        : `ATORDOADO ${shell.stunLeft.toFixed(1)}s · dano +50%`;
+    }
   }
+  private readonly bossShell = el("boss-carapace");
 
   update(player: Entity, target: Entity | undefined): void {
     const prog = player.progression;

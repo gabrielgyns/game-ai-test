@@ -1,4 +1,6 @@
-import { PAL, shades, tone, type CharacterModel } from "./common";
+import * as THREE from "three";
+import { VoxelBuilder, voxelMaterial } from "../voxel";
+import { PAL, V, mesh, pivot, shades, tone, type CharacterModel } from "./common";
 import { buildHumanoid } from "./humanoid";
 import { createSpider } from "./mobs";
 
@@ -74,4 +76,90 @@ export function createGoblinKing(): CharacterModel {
 
 export function createSpiderQueen(): CharacterModel {
   return createSpider(true);
+}
+
+/* ---------- Imperador Escorpião: carapaça obsidiana com placas de ouro, coroa e ácido ---------- */
+
+export function createScorpionEmperor(): CharacterModel {
+  const shell = shades("#5a2a1e", 0.12);
+  const dark = shades("#2e1a14", 0.1);
+  const gold = PAL.gold;
+  const k = (n: number) => Math.round(n * 2.4);
+  const b = new VoxelBuilder();
+
+  // Corpo em quatro placas, cada uma com costura de ouro e uma crista no dorso.
+  for (let i = 0; i < 4; i++) {
+    const z0 = k(-6 + i * 3);
+    const z1 = k(-3 + i * 3);
+    const w = k(i === 3 ? 5 : 6);
+    const top = k(i === 0 ? 6 : 7);
+    b.box(-w, k(2), z0, w, top, z1, shell.base);
+    b.box(-w, top - 1, z0, w, top, z1, shell.light);
+    b.box(-w - 1, k(3), z1 - 1, w + 1, top + 1, z1, gold.base); // costura de ouro saltada
+    b.box(-2, top, z0 + 2, 2, top + 2, z1 - 2, gold.light); // crista
+    for (const sx of [-1, 1]) b.box(sx * (w - 1), top - 2, z0 + 2, sx * (w + 2), top - 1, z0 + 4, dark.base); // espinhos laterais
+  }
+  b.box(-k(5), k(2) - 1, -k(6), k(5), k(2), k(6), dark.dark); // ventre
+
+  // Cabeça baixa com seis olhos e coroa.
+  b.box(-k(4), k(1), -k(8), k(4), k(5), -k(6), dark.base);
+  b.box(-k(4), k(5) - 1, -k(8), k(4), k(5), -k(6), dark.light);
+  const crownY = k(5);
+  b.box(-k(4), crownY, -k(8), k(4), crownY + 2, -k(6) + 2, gold.base).box(-k(4), crownY + 1, -k(8), k(4), crownY + 2, -k(6) + 2, gold.light);
+  for (const x of [-k(4), -k(2), 0, k(2) - 1, k(4) - 1]) b.box(x, crownY + 2, -k(8), x + 1, crownY + (x === 0 ? 6 : 4), -k(8) + 1, gold.base);
+  b.box(-1, crownY + 2, -k(8) - 1, 1, crownY + 4, -k(8), "#4fd36b"); // esmeralda
+
+  // Patas: três pares com junta alta e ponta escura.
+  for (const sx of [-1, 1]) {
+    for (const z of [-k(4), 0, k(4)]) {
+      b.box(sx * k(6), k(4), z, sx * k(10), k(5), z + 2, dark.base);
+      b.box(sx * k(9), 0, z, sx * k(10), k(5), z + 2, dark.base);
+      b.box(sx * k(9), k(4), z, sx * k(10), k(5) + 1, z + 2, gold.base); // joelho dourado
+      b.box(sx * k(9) - sx, 0, z - 1, sx * k(11), 1, z + 2, dark.dark);
+    }
+    // Pinças grandes com borda de ouro.
+    b.box(sx * k(5), k(3), -k(10), sx * k(8), k(5), -k(5), shell.base);
+    b.box(sx * k(7), k(3), -k(14), sx * k(11), k(6), -k(10), shell.base);
+    b.box(sx * k(7), k(6) - 1, -k(14), sx * k(11), k(6), -k(10), gold.base);
+    b.box(sx * k(7), k(4), -k(17), sx * k(9), k(6), -k(14), shell.dark); // dedo fixo
+    b.box(sx * k(9), k(2), -k(16), sx * k(11), k(4), -k(14), shell.dark); // dedo móvel
+    b.box(sx * k(7), k(4), -k(17) - 1, sx * k(8), k(5), -k(17), gold.light); // ponta de ouro
+  }
+
+  // Olhos vermelhos que brilham (material próprio, pulsa como os equipamentos raros).
+  const eyesB = new VoxelBuilder();
+  for (const x of [-k(3), -k(1) - 1, k(1), k(3) - 1]) eyesB.box(x, k(4) - 1, -k(8) - 1, x + 2, k(4) + 1, -k(8), "#ff4a3a");
+  const eyeMat = voxelMaterial();
+  eyeMat.emissive = new THREE.Color("#ff3a2a");
+  eyeMat.emissiveIntensity = 0.9;
+
+  const root = new THREE.Group();
+  root.add(mesh(b), mesh(eyesB, eyeMat));
+
+  // Cauda: anéis de ouro, curvada sobre o corpo, com bulbo de ácido verde que brilha.
+  const tail = new VoxelBuilder();
+  const seg: [number, number][] = [[0, 0], [3, 1], [6, 1], [9, 0], [12, -2], [14, -5]];
+  for (const [y, z] of seg) {
+    tail.box(-k(2), k(y), k(z), k(2), k(y + 3), k(z + 3), shell.base);
+    tail.box(-k(2), k(y + 3) - 1, k(z), k(2), k(y + 3), k(z + 3), shell.light);
+    tail.box(-k(2) - 1, k(y), k(z), k(2) + 1, k(y) + 1, k(z + 3), gold.base); // anel
+  }
+  tail.box(-k(1), k(11), -k(11), k(1), k(15), -k(8), "#1b1b1b").box(-k(1), k(9), -k(12), k(1), k(11), -k(10), "#1b1b1b"); // ferrão
+  const acid = new VoxelBuilder();
+  acid.sphere(0, k(16), -k(7), k(2.6), k(2.6), k(2.6), "#7ccf3e");
+  acid.recolorFront(0, k(17), "#d8ff9a").recolorFront(1, k(17), "#d8ff9a").recolorFront(0, k(17) + 1, "#d8ff9a"); // reflexo
+  const acidMat = voxelMaterial();
+  acidMat.emissive = new THREE.Color("#6fd63a");
+  acidMat.emissiveIntensity = 0.45;
+  const weaponArm = pivot(0, k(5), k(5), mesh(tail), mesh(acid, acidMat));
+  root.add(weaponArm);
+  return {
+    root,
+    weaponArm,
+    height: k(22) * V + 0.2,
+    glowMaterials: [
+      { material: eyeMat, baseIntensity: 0.9 },
+      { material: acidMat, baseIntensity: 0.45 },
+    ],
+  };
 }

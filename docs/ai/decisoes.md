@@ -97,3 +97,13 @@ grama usa instâncias em blocos com LOD por "primeiras N instâncias de uma list
 de geometrias de LOD separadas: zero memória extra e nenhuma troca visível.
 O hit-stop congela a simulação (o acumulador do passo fixo não recebe tempo), não só a animação;
 é single-player, então pausar o mundo por 50 ms é seguro e dá mais peso ao golpe.
+
+## D22. Tipo de dano em vez de exceções por chefe
+`applyDamage` recebe `basic | skill | hazard`. A Carapaça de Areia só olha o tipo, então qualquer
+habilidade nova que cause dano já "sabe" quebrar escudos, e poças não geram "Esquivou!" a cada pulso.
+Projéteis carregam `fromSkill`. Alternativa descartada: uma lista de habilidades que quebram escudo,
+que precisaria ser lembrada a cada habilidade nova.
+
+## D23. Tiros de inimigo sem ajuda de mira
+A ajuda de mira (cone de 22°) é só do jogador. Se o tiro do inimigo se corrigisse no disparo, a linha
+avisada mentiria e sair dela de lado não adiantaria.

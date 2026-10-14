@@ -1,5 +1,5 @@
 import { smoothstep } from "./math";
-import { biomeWeights, SWAMP_BOSS_HOME } from "./biomes";
+import { biomeWeights, DESERT_BOSS_HOME, SWAMP_BOSS_HOME } from "./biomes";
 
 /** Metade do tamanho do mundo. O mundo vai de -WORLD_HALF a +WORLD_HALF em X e Z. */
 export const WORLD_HALF = 110;
@@ -28,10 +28,12 @@ export function terrainHeightSmooth(x: number, z: number): number {
   const distFromCenter = Math.hypot(x, z);
   const distFromArena = Math.hypot(x - 0, z - -82);
   const distFromSwampArena = Math.hypot(x - SWAMP_BOSS_HOME.x, z - SWAMP_BOSS_HOME.z);
+  const distFromDesertArena = Math.hypot(x - DESERT_BOSS_HOME.x, z - DESERT_BOSS_HOME.z);
   const flatten = Math.min(
     smoothstep(SPAWN_FLAT_RADIUS, SPAWN_FLAT_RADIUS + 22, distFromCenter),
     smoothstep(13, 24, distFromArena),
     smoothstep(13, 24, distFromSwampArena),
+    smoothstep(14, 24, distFromDesertArena),
   );
   const w = biomeWeights(x);
   // Pântano: baixo e encharcado (poças onde o relevo mergulha); deserto: dunas largas e suaves.
@@ -43,10 +45,12 @@ export function terrainHeightSmooth(x: number, z: number): number {
   const edge = Math.max(Math.abs(x), Math.abs(z));
   const wall = smoothstep(WORLD_HALF - 18, WORLD_HALF, edge) * 14;
 
-  // Arenas dos chefes: platô de 6 m ao norte; clareira seca no nível do pântano a oeste.
+  // Arenas dos chefes: platô de 6 m ao norte; clareira seca no nível do pântano a oeste;
+  // tablado de areia batida, um degrau acima das dunas, a leste.
   const plateau = 6 * (1 - smoothstep(13, 24, distFromArena));
   const swampArena = -1 * (1 - smoothstep(13, 24, distFromSwampArena));
-  return relief * flatten + wall + plateau + swampArena;
+  const desertArena = 1 * (1 - smoothstep(14, 24, distFromDesertArena));
+  return relief * flatten + wall + plateau + swampArena + desertArena;
 }
 
 /**

@@ -1,6 +1,6 @@
 import { isAlive, isHostile, type Entity } from "../components";
 import { advanceKillQuests } from "../quests";
-import type { AttackPattern, TelegraphShape } from "../boss";
+import { CARAPACE, lobCount, type AttackPattern, type TelegraphShape } from "../boss";
 import { directionFromYaw, directionXZ, distanceXZ } from "../math";
 import { CHARGE } from "../skills";
 import { CLASSES } from "../classes";
@@ -34,8 +34,9 @@ export function combatSystem(world: World, dt: number): void {
   regenerate(world, dt);
 }
 
-/** Golpe básico de quem não tem padrões próprios: melee, ou projétil conforme a classe. */
+/** Golpe básico de quem não tem padrões próprios: o do inimigo, melee, ou projétil conforme a classe. */
 function defaultPattern(e: Entity): AttackPattern {
+  if (e.combat.basicPattern) return e.combat.basicPattern;
   const style = e.classId ? CLASSES[e.classId].attackStyle : "melee";
   if (style !== "melee") {
     return { id: "basic", name: "Disparo", kind: "projectile", range: e.combat.range, windup: 0, damageMultiplier: 1, cooldown: e.combat.cooldown, minPhase: 1, projectile: style };
@@ -45,8 +46,22 @@ function defaultPattern(e: Entity): AttackPattern {
 
 export function telegraphShape(pattern: AttackPattern, direction: { x: number; z: number }, point?: { x: number; y: number; z: number }): TelegraphShape {
   if (pattern.kind === "charge") return { kind: "line", length: pattern.range, width: 2.4, direction };
-  if (pattern.kind === "aoe" && point) return { kind: "circle", radius: pattern.range, at: { ...point } };
+  if (pattern.kind === "projectile") return { kind: "line", length: pattern.range, width: 1.1, direction };
+  if (pattern.kind === "fan") return { kind: "cone", length: pattern.range, angle: ((pattern.spreadDeg ?? 40) * Math.PI) / 180, direction };
+  if ((pattern.kind === "aoe" || pattern.kind === "lob") && point) return { kind: "circle", radius: pattern.range, at: { ...point } };
   return { kind: "circle", radius: pattern.range };
+}
+
+/** Pontos de queda de um arremesso: o primeiro no alvo, os demais num anel em volta dele. */
+export function lobPoints(world: World, center: { x: number; y: number; z: number }, count: number): { x: number; y: number; z: number }[] {
+  const points = [{ ...center }];
+  const offset = world.random() * Math.PI * 2;
+  for (let i = 1; i < count; i++) {
+    const a = offset + ((i - 1) / Math.max(1, count - 1)) * Math.PI * 2;
+    const r = 3.6 + world.random() * 1.6;
+    points.push({ x: center.x + Math.cos(a) * r, y: center.y, z: center.z + Math.sin(a) * r });
+  }
+  return points;
 }
 
 /** Inicia um golpe: com aviso (windup > 0) ou imediato. A direção é fixada agora. */
@@ -57,13 +72,19 @@ export function startAttack(world: World, e: Entity, pattern: AttackPattern, win
       ? directionXZ(e.transform.position, player.transform.position)
       : e.abilities?.aimDirection ?? directionFromYaw(e.transform.yaw);
   // Área mirada: o ponto é a posição do alvo agora; quem sair dela até o fim do aviso escapa.
-  const point = pattern.kind === "aoe" && player ? { ...player.transform.position } : undefined;
+  const aimed = (pattern.kind === "aoe" || pattern.kind === "lob") && player;
+  const point = aimed ? { ...player.transform.position } : undefined;
+  const points = pattern.kind === "lob" && point ? lobPoints(world, point, lobCount(pattern, e.boss?.phase ?? 1)) : undefined;
   if (windup > 0) {
     e.combat.windupLeft = windup;
-    e.combat.pending = { pattern, direction, point };
-    world.emit({ type: "windup", source: e.id, duration: windup, shape: telegraphShape(pattern, direction, point), patternName: pattern.id === "basic" ? undefined : pattern.name });
+    e.combat.pending = { pattern, direction, point, points };
+    world.emit({ type: "windup", source: e.id, duration: windup, shape: telegraphShape(pattern, direction, point), patternName: pattern.id === "basic" || pattern.id === "shot" ? undefined : pattern.name });
+    // Os outros pontos de queda ganham um aviso próprio, que dura o aviso mais o voo.
+    for (const extra of points?.slice(1) ?? []) {
+      world.emit({ type: "groundWarning", at: extra, radius: pattern.range, duration: windup + 0.9 });
+    }
   } else {
-    e.combat.pending = { pattern, direction, point };
+    e.combat.pending = { pattern, direction, point, points };
     resolveAttack(world, e);
   }
 }
@@ -97,6 +118,35 @@ function resolveAttack(world: World, e: Entity): void {
     case "projectile": {
       const direction = pending?.direction ?? directionFromYaw(e.transform.yaw);
       fireProjectile(world, e, pattern.projectile ?? "arrow", direction, damage, pattern.range);
+      world.emit({ type: "attack", source: e.id });
+      break;
+    }
+    case "fan": {
+      // Leque: N projéteis igualmente espaçados na abertura avisada, sem ajuda de mira.
+      const base = pending?.direction ?? directionFromYaw(e.transform.yaw);
+      const count = Math.max(1, pattern.count ?? 3);
+      const spread = ((pattern.spreadDeg ?? 40) * Math.PI) / 180;
+      const baseAngle = Math.atan2(base.z, base.x);
+      for (let i = 0; i < count; i++) {
+        const a = baseAngle + (count === 1 ? 0 : (i / (count - 1) - 0.5) * spread);
+        fireProjectile(world, e, pattern.projectile ?? "stinger", { x: Math.cos(a), z: Math.sin(a) }, damage, pattern.range, { aimAssist: false });
+      }
+      world.emit({ type: "attack", source: e.id });
+      break;
+    }
+    case "lob": {
+      // Arremesso: cada globo voa até um ponto avisado e explode lá (deixando poça, se houver).
+      const from = e.transform.position;
+      for (const point of pending?.points ?? (pending?.point ? [pending.point] : [])) {
+        const dx = point.x - from.x, dz = point.z - from.z;
+        const dist = Math.max(0.5, Math.hypot(dx, dz));
+        fireProjectile(world, e, pattern.projectile ?? "acidGlob", { x: dx / dist, z: dz / dist }, damage, dist, {
+          aimAssist: false,
+          lob: true,
+          explodeRadius: pattern.impactRadius ?? 1.5,
+          pool: pattern.pool,
+        });
+      }
       world.emit({ type: "attack", source: e.id });
       break;
     }
@@ -146,11 +196,37 @@ export function effectiveDamage(e: Entity): number {
   return Math.round(e.combat.damage * (buff ? buff.multiplier : 1));
 }
 
-export function applyDamage(world: World, source: Entity, target: Entity, amount: number): void {
+/** De onde vem o dano: golpe básico, habilidade (quebra carapaça) ou poça no chão. */
+export type DamageKind = "basic" | "skill" | "hazard";
+
+export function applyDamage(world: World, source: Entity, target: Entity, amount: number, kind: DamageKind = "basic"): void {
   if (!isAlive(target)) return;
   if (target.abilities?.dash?.invulnerable) {
-    world.emit({ type: "dodge", entity: target.id, source: source.id });
+    // Rolar por cima de uma poça não precisa de "Esquivou!" a cada pulso.
+    if (kind !== "hazard") world.emit({ type: "dodge", entity: target.id, source: source.id });
     return;
+  }
+  // Carapaça de Areia: só habilidades a quebram; partida, o chefe fica vulnerável.
+  const shell = target.boss?.carapace;
+  if (shell?.active) {
+    if (kind !== "skill") {
+      world.emit({ type: "immune", entity: target.id, source: source.id });
+      return;
+    }
+    shell.layers = Math.max(0, shell.layers - 1);
+    amount = Math.max(1, Math.round(amount * CARAPACE.skillDamageFraction));
+    world.emit({ type: "carapaceHit", entity: target.id, layersLeft: shell.layers });
+    if (shell.layers === 0) {
+      shell.active = false;
+      shell.stunLeft = CARAPACE.stun;
+      // O golpe que ele preparava se perde.
+      target.combat.windupLeft = 0;
+      target.combat.pending = undefined;
+      if (target.abilities) target.abilities.dash = null;
+      world.emit({ type: "carapaceBreak", entity: target.id, stun: CARAPACE.stun });
+    }
+  } else if (shell && shell.stunLeft > 0) {
+    amount = Math.round(amount * CARAPACE.vulnerableMultiplier);
   }
   // Escudo absorve antes da vida.
   const shield = target.abilities?.shield;

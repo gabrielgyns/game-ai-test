@@ -1,7 +1,7 @@
 import { isAlive, type Entity } from "../components";
 import { directionXZ, distanceXZ, lerpAngle, yawFromDirection, clamp } from "../math";
 import type { World } from "../world";
-import { BOSS_MINION, resetBoss, updateBossPhase } from "../boss";
+import { BOSS_MINION, raiseCarapace, resetBoss, updateBossPhase } from "../boss";
 import { createEnemy } from "../factories";
 import { startAttack } from "./combat";
 
@@ -18,6 +18,7 @@ export function aiSystem(world: World, dt: number): void {
     if (!ai) continue;
     const pos = e.transform.position;
     e.movement.intent = { x: 0, z: 0 };
+    e.movement.faceYaw = undefined;
     e.combat.wantsAttack = false;
 
     const distHome = distanceXZ(pos, ai.home);
@@ -52,7 +53,15 @@ export function aiSystem(world: World, dt: number): void {
           // Vira para o jogador e tenta atacar; o sistema de combate decide pelo cooldown.
           const dir = directionXZ(pos, player.transform.position);
           e.transform.yaw = lerpAngle(e.transform.yaw, yawFromDirection(dir), clamp(10 * dt, 0, 1));
-          e.combat.wantsAttack = true;
+          // Atirador acuado recua entre um tiro e outro (nunca no meio do aviso).
+          const keep = ai.keepDistance;
+          if (keep && distPlayer < keep && e.combat.windupLeft <= 0 && e.combat.cooldownLeft > 0) {
+            e.movement.intent = { x: -dir.x, z: -dir.z };
+            e.movement.faceYaw = yawFromDirection(dir);
+          } else {
+            e.movement.faceYaw = undefined;
+            e.combat.wantsAttack = true;
+          }
         }
         break;
 
@@ -84,6 +93,7 @@ function bossBehavior(world: World, e: Entity, dt: number, player: Entity | unde
       ai.state = "chase";
       boss.engaged = true;
       world.emit({ type: "bossEngage", entity: e.id });
+      if (raiseCarapace(e)) world.emit({ type: "carapaceUp", entity: e.id, layers: boss.carapace!.layers });
     }
     return;
   }
@@ -108,7 +118,18 @@ function bossBehavior(world: World, e: Entity, dt: number, player: Entity | unde
   }
 
   const newPhase = updateBossPhase(e);
-  if (newPhase !== null) world.emit({ type: "bossPhase", entity: e.id, phase: newPhase });
+  if (newPhase !== null) {
+    world.emit({ type: "bossPhase", entity: e.id, phase: newPhase });
+    // A carapaça se refaz a cada fase.
+    if (raiseCarapace(e)) world.emit({ type: "carapaceUp", entity: e.id, layers: boss.carapace!.layers });
+  }
+  // Carapaça partida: atordoado, não age nem anda.
+  const shell = boss.carapace;
+  if (shell && shell.stunLeft > 0) {
+    shell.stunLeft = Math.max(0, shell.stunLeft - dt);
+    ai.state = "attack";
+    return;
+  }
   if (boss.phase >= 3 && !boss.summoned) {
     boss.summoned = true;
     const kind = (BOSS_MINION[e.archetype] ?? "goblin") as Parameters<typeof createEnemy>[1];
@@ -144,8 +165,11 @@ function bossBehavior(world: World, e: Entity, dt: number, player: Entity | unde
     if (melee && distPlayer <= melee.range) return melee;
     const slam = ready.find((p) => p.kind === "slam");
     if (slam && distPlayer <= slam.range * 0.8) return slam;
-    const aoe = ready.find((p) => p.kind === "aoe");
+    const aoe = ready.find((p) => p.kind === "aoe" || p.kind === "lob");
     if (aoe && distPlayer <= (aoe.castRange ?? aoe.range)) return aoe;
+    // Leque: de média distância, ou de perto quando o golpe está em recarga.
+    const fan = ready.find((p) => p.kind === "fan");
+    if (fan && distPlayer <= fan.range * 0.85) return fan;
     return undefined;
   };
   const pattern = choose();

@@ -69,6 +69,17 @@ com screenshots antes de serem considerados prontos.
     (trauma² com decaimento, regulável no menu) e hit-stop de 45–80 ms nos golpes corpo a corpo.
     Braseiros no santuário com luz pontual à noite. Custo medido: ~830k triângulos por quadro no spawn
     (antes ~620k).
+19. **Chefe do deserto e arqueiros** (pedido do dono). Domínio: `hazards.ts` + `hazardSystem` (poças
+    com pulsos de dano, hostilidade do dono, sem "esquivou" ao rolar por cima), padrões novos `fan`
+    (leque sem ajuda de mira, aviso em cone) e `lob` (arremesso em arco que cai nos pontos avisados;
+    na fase 2 e 3 vira 3 e 5 globos, com `groundWarning` para os extras), dano com tipo
+    (`basic | skill | hazard`) para a Carapaça de Areia (3 camadas, só habilidades, atordoa 4,5 s com
+    +50% de dano, volta a cada fase), `createScorpionEmperor` no tablado leste (+1 m, obeliscos),
+    quest "O Imperador das Areias" do Guarda, e inimigos com `basicPattern` de projétil e
+    `keepDistance` (Goblin Arqueiro e Salteador Arqueiro). Projéteis de inimigo nunca usam ajuda de
+    mira, para a linha avisada ser honesta. Apresentação: aviso em cone, poças em voxel que borbulham,
+    casca dourada translúcida, estrelas de atordoamento, linha da carapaça na barra do chefe, modelos
+    do Imperador e dos arqueiros. 14 testes novos.
 
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).

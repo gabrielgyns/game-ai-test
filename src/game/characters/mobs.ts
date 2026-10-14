@@ -5,7 +5,24 @@ import { buildHumanoid } from "./humanoid";
 
 /* ---------- Goblin: magro, orelhudo, porrete ---------- */
 
-export function createGoblin(): CharacterModel {
+/** Arco curto na mão do braço direito, na vertical, com corda. `len` em voxels. */
+function paintMobBow(b: VoxelBuilder, len: number, wood = PAL.wood): void {
+  const top = 2;
+  const bottom = -len;
+  b.box(0, bottom + 2, -1, 1, top - 1, 0, wood.base);
+  b.box(0, bottom, -3, 1, bottom + 2, -1, wood.dark).box(0, top - 1, -3, 1, top + 1, -1, wood.dark); // pontas curvas
+  b.box(0, bottom, -4, 1, top + 1, -3, "#7d7466"); // corda (escura, para não parecer um cajado)
+  b.box(-1, -Math.round(len * 0.55), -2, 2, -Math.round(len * 0.35), 1, PAL.leather.base); // empunhadura
+}
+
+/** Aljava nas costas com penas vermelhas. */
+function paintMobQuiver(b: VoxelBuilder, y: number, hd: number, h: number): void {
+  b.box(1, y + 1, hd, 4, y + h, hd + 2, PAL.leather.base).box(1, y + h - 1, hd, 4, y + h, hd + 2, PAL.leather.dark);
+  b.box(2, y + h, hd, 3, y + h + 3, hd + 1, PAL.wood.base);
+  b.set(2, y + h + 3, hd, "#e5484d").set(1, y + h + 2, hd, "#e5484d");
+}
+
+export function createGoblin(archer = false): CharacterModel {
   const skin = shades("#7bb04a", 0.1);
   const rag = shades("#5a3d2b", 0.1);
   return buildHumanoid({
@@ -29,6 +46,7 @@ export function createGoblin(): CharacterModel {
       b.carve(-5, y + 9, -4, -3, y + 11, 4).carve(3, y + 9, -4, 5, y + 11, 4); // trapo sem mangas
       b.box(-5, y + 9, -3, -3, y + 11, 3, skin.base).box(3, y + 9, -3, 5, y + 11, 3, skin.base);
       b.set(2, y + 5, -4, rag.light).set(-3, y + 7, -4, rag.light).set(0, y + 4, 3, rag.light); // remendos
+      if (archer) paintMobQuiver(b, y, 3, 10);
     },
     headPaint: (b) => {
       // Orelhas longas e pontudas, nariz comprido.
@@ -39,8 +57,9 @@ export function createGoblin(): CharacterModel {
       }
       b.box(-1, 3, -7, 1, 5, -5, skin.base).set(0, 3, -8, skin.dark); // nariz
       b.box(-2, 10, -5, 2, 12, 2, "#3a2a1a"); // topete de cabelo sujo
+      if (archer) b.box(-5, 10, -5, 5, 11, -3, "#3d6b2a").box(-5, 11, -5, 5, 12, 5, "#3d6b2a"); // capuz de folhas
     },
-    weaponPaint: (b) => {
+    weaponPaint: archer ? (b) => paintMobBow(b, 18) : (b) => {
       const wood = PAL.wood;
       b.box(-1, -20, -1, 1, -8, 0, wood.base).box(-1, -20, -1, 0, -8, 0, wood.dark);
       b.box(-3, -24, -3, 3, -18, 2, wood.base); // cabeça do porrete
@@ -103,9 +122,10 @@ export function createOrc(): CharacterModel {
 
 /* ---------- Salteador: lenço no rosto, turbante, cimitarra ---------- */
 
-export function createBandit(): CharacterModel {
+export function createBandit(archer = false): CharacterModel {
   const skin = shades("#d9a070", 0.09);
-  const cloth = shades("#7a3b2a", 0.1);
+  // O arqueiro veste azul-anil, para ser lido de longe como "o que atira".
+  const cloth = shades(archer ? "#2f4f7a" : "#7a3b2a", 0.1);
   return buildHumanoid({
     skin,
     legs: { hw: 2, hd: 2, length: 12 },
@@ -126,6 +146,7 @@ export function createBandit(): CharacterModel {
       b.box(-6, y + 1, -5, 6, y + 2, 5, "#2b2b2b");
       for (let i = 0; i < 12; i++) b.set(6 - i, y + 3 + i, -5, "#2b2b2b"); // bandoleira
       b.box(-3, y + 6, -5, -1, y + 9, -4, PAL.steel.base); // adaga presa no peito
+      if (archer) paintMobQuiver(b, y + 2, 4, 12);
     },
     headPaint: (b) => {
       const scarf = shades("#2b2b2b", 0.1);
@@ -134,7 +155,7 @@ export function createBandit(): CharacterModel {
       b.box(-2, 11, -8, 2, 13, -7, "#b8322f").set(0, 12, -9, PAL.gold.base); // broche
       b.box(5, 8, 5, 8, 12, 8, "#e0c47f"); // pano caído atrás
     },
-    weaponPaint: (b) => {
+    weaponPaint: archer ? (b) => paintMobBow(b, 22, PAL.wood) : (b) => {
       b.box(-1, -13, -1, 1, -8, 0, PAL.leather.base);
       b.box(-3, -14, -1, 3, -13, 0, PAL.gold.base);
       b.box(-1, -24, -1, 1, -14, 0, PAL.steel.base).box(-1, -24, -1, 0, -14, 0, PAL.steel.light);

@@ -30,6 +30,8 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
 - [x] Classes: Guerreiro, Arqueiro (flechas, ajuda de mira) e Mago (raios, Bola de Fogo, Escudo Arcano), cada uma com 4 habilidades
 - [x] Voxel rico: personagens em 16 voxels/m com rosto, roupa, armas e acessórios detalhados, AO e grão; membros articulados com ciclo de caminhada
 - [x] Mais vida no mundo: ciclo de dia e noite (céu, sol, lua, estrelas, vaga-lumes, braseiros), grama e flores com vento, partículas de acerto e morte, clarão no alvo, tremor de câmera e hit-stop
+- [x] Terceiro chefe: Imperador Escorpião no deserto, com Rajada de Espinhos em leque, Cuspe Ácido que deixa poças e Carapaça de Areia que só habilidades quebram; quest do Guarda
+- [x] Inimigos arqueiros (Goblin Arqueiro na campina, Salteador Arqueiro no deserto) que mantêm distância e atiram com aviso em linha
 - [x] Saves em 5 slots locais, com nome do herói, resumo de progresso, exportar/importar por slot e migração do save antigo
 - [x] Lab de modelos (`/lab.html`): vitrine de tudo que aparece no jogo, luz, animações e comparação com a versão anterior
 
@@ -39,11 +41,10 @@ Single-player primeiro; o domínio é isolado da renderização para permitir mu
    personagens, e suporte a modelos `.vox` (MagicaVoxel) para desenhar num editor.
 2. **Loot mais rico.** Afixos aleatórios (ex.: "da Serpente": +regeneração), conjuntos, venda de itens
    por ouro num mercador.
-3. **Chefe do deserto** e mecânicas novas de padrão (projéteis, poças que ficam, escudos).
-4. **Lock-on.** Travar a câmera num alvo (Zelda) como alternativa ao modo livre.
-5. **Mais quests.** Objetivos de coleta e exploração, quests repetíveis diárias, e um mercador para vender loot.
-6. **Save na nuvem** (quando houver servidor); os slots locais já existem.
-7. **Áudio com assets.** Trocar a síntese por samples e trilha composta quando houver arte sonora.
-8. **Árvore de habilidades** por classe e pontos ao subir de nível.
-9. **Dungeons.** Áreas instanciadas com chefes e loot garantido (Minecraft Dungeons).
-10. **Multiplayer.** Servidor rodando o mesmo domínio; cliente só renderiza.
+3. **Lock-on.** Travar a câmera num alvo (Zelda) como alternativa ao modo livre.
+4. **Mais quests.** Objetivos de coleta e exploração, quests repetíveis diárias, e um mercador para vender loot.
+5. **Save na nuvem** (quando houver servidor); os slots locais já existem.
+6. **Áudio com assets.** Trocar a síntese por samples e trilha composta quando houver arte sonora.
+7. **Árvore de habilidades** por classe e pontos ao subir de nível.
+8. **Dungeons.** Áreas instanciadas com chefes e loot garantido (Minecraft Dungeons).
+9. **Multiplayer.** Servidor rodando o mesmo domínio; cliente só renderiza.

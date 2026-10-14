@@ -33,4 +33,13 @@ export type GameEvent =
   | { type: "projectileSpawn"; projectileId: number }
   | { type: "projectileHit"; projectileId: number; target?: EntityId; position: { x: number; y: number; z: number }; explodeRadius: number }
   | { type: "shieldAbsorb"; entity: EntityId; amount: number }
-  | { type: "shieldEnd"; entity: EntityId };
+  | { type: "shieldEnd"; entity: EntityId }
+  /** Golpe comum contra a Carapaça de Areia: não faz nada. */
+  | { type: "immune"; entity: EntityId; source: EntityId }
+  | { type: "carapaceHit"; entity: EntityId; layersLeft: number }
+  | { type: "carapaceBreak"; entity: EntityId; stun: number }
+  | { type: "carapaceUp"; entity: EntityId; layers: number }
+  | { type: "hazardSpawn"; hazardId: number }
+  | { type: "hazardEnd"; hazardId: number }
+  /** Aviso extra no chão (ex.: onde cada globo ácido vai cair). */
+  | { type: "groundWarning"; at: { x: number; y: number; z: number }; radius: number; duration: number };

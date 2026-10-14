@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { terrainHeight, SPAWN_FLAT_RADIUS, WORLD_HALF } from "../domain/terrain";
 import { BOSS_HOME, seededRandom } from "../domain/worldgen";
-import { biomeAt, SWAMP_BOSS_HOME } from "../domain/biomes";
+import { biomeAt, DESERT_BOSS_HOME, SWAMP_BOSS_HOME } from "../domain/biomes";
 import { isWater } from "../domain/terrain";
 import { VoxelBuilder, voxelMaterial } from "./voxel";
 
@@ -87,6 +87,8 @@ export const PROP_BUILDERS: Record<string, () => THREE.BufferGeometry> = {
   "Pilar do santuário": () => pillarGeometry(),
   "Totem goblin": () => totemGeometry(),
   "Casulo de teia": () => cocoonGeometry(),
+  "Obelisco do deserto": () => obeliskGeometry(),
+  "Obelisco quebrado": () => obeliskGeometry(true),
 };
 
 function pillarGeometry(): THREE.BufferGeometry {
@@ -100,6 +102,23 @@ function totemGeometry(): THREE.BufferGeometry {
     .set(-1, 8, -3, "#1b1b1b").set(0, 8, -3, "#1b1b1b")
     .box(-3, 4, -1, 3, 5, 1, "#7a1f2b")
     .build(V, 0.08);
+}
+
+/** Obelisco de arenito com ponta de ouro e hieróglifos escuros (arena do deserto). */
+function obeliskGeometry(broken = false): THREE.BufferGeometry {
+  const b = new VoxelBuilder();
+  const sand = "#d8b878", sandDark = "#b8945a";
+  b.box(-2, 0, -2, 2, 1, 2, sandDark);
+  const h = broken ? 6 : 11;
+  b.box(-1, 1, -1, 1, h, 1, sand);
+  for (let y = 2; y < h - 1; y += 2) b.set(-1, y, -2, "#5a3a20").set(0, y + 1, -2, "#5a3a20"); // hieróglifos
+  b.box(-1, 1, -2, 1, h, -1, sand);
+  if (broken) {
+    b.box(1, 0, 1, 3, 1, 4, sand).box(2, 1, 2, 3, 2, 3, sandDark); // pedaço caído
+  } else {
+    b.box(-1, h, -1, 1, h + 1, 1, "#d4a92a").set(0, h + 1, 0, "#f0d070"); // ponta de ouro
+  }
+  return b.build(V, { grain: 0.06, grainScale: 2 });
 }
 
 function cocoonGeometry(): THREE.BufferGeometry {
@@ -211,6 +230,25 @@ export function createEnvironment(seed = 4242): THREE.Group {
     cocoons.setMatrixAt(i, dummy.matrix);
   }
   group.add(cocoons);
+
+  // Arena do Imperador Escorpião: anel de obeliscos de arenito, alguns quebrados.
+  for (const broken of [false, true]) {
+    const count = broken ? 4 : 8;
+    const obelisks = new THREE.InstancedMesh(obeliskGeometry(broken), voxelMaterial(), count);
+    obelisks.castShadow = obelisks.receiveShadow = true;
+    for (let i = 0; i < count; i++) {
+      const a = broken ? ((i + 0.5) / count) * Math.PI * 2 + 0.2 : (i / count) * Math.PI * 2;
+      const r = broken ? 15 : 13;
+      const x = DESERT_BOSS_HOME.x + Math.cos(a) * r;
+      const z = DESERT_BOSS_HOME.z + Math.sin(a) * r;
+      dummy.position.set(Math.floor(x) + 0.5, terrainHeight(x, z), Math.floor(z) + 0.5);
+      dummy.rotation.set(0, -a + Math.PI / 2, 0);
+      dummy.scale.setScalar(1);
+      dummy.updateMatrix();
+      obelisks.setMatrixAt(i, dummy.matrix);
+    }
+    group.add(obelisks);
+  }
   return group;
 }
 
@@ -221,6 +259,7 @@ function randomPoint(rand: () => number, minRadius: number, biome?: "meadow" | "
     if (Math.hypot(x, z) < minRadius) continue;
     if (Math.hypot(x - BOSS_HOME.x, z - BOSS_HOME.z) < 15) continue; // arenas dos chefes livres
     if (Math.hypot(x - SWAMP_BOSS_HOME.x, z - SWAMP_BOSS_HOME.z) < 15) continue;
+    if (Math.hypot(x - DESERT_BOSS_HOME.x, z - DESERT_BOSS_HOME.z) < 16) continue;
     if (biome && biomeAt(x, z) !== biome) continue;
     if (isWater(x, z)) continue;
     return { x, z };

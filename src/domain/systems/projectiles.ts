@@ -21,7 +21,7 @@ export function projectileSystem(world: World, dt: number): void {
 
     const hitRadius = PROJECTILE_SPECS[p.kind].hitRadius;
     let hit: Entity | undefined;
-    for (const other of world.alive()) {
+    for (const other of p.lob ? [] : world.alive()) {
       if (!isHostile(owner, other) || p.hitIds.includes(other.id)) continue;
       if (distanceXZ(p.position, other.transform.position) <= hitRadius + (other.boss ? 1.2 : 0)) {
         hit = other;
@@ -34,7 +34,7 @@ export function projectileSystem(world: World, dt: number): void {
       if (p.explodeRadius > 0) {
         explode(world, owner, p);
       } else {
-        applyDamage(world, owner, hit, p.damage);
+        applyDamage(world, owner, hit, p.damage, p.fromSkill ? "skill" : "basic");
         world.emit({ type: "projectileHit", projectileId: p.id, target: hit.id, position: { ...p.position }, explodeRadius: 0 });
       }
       if (!p.pierce) {
@@ -56,8 +56,9 @@ function explode(world: World, owner: Entity, p: Projectile): void {
     if (!isHostile(owner, other)) continue;
     if (distanceXZ(p.position, other.transform.position) > p.explodeRadius + (other.boss ? 1 : 0)) continue;
     target = other;
-    applyDamage(world, owner, other, p.damage);
+    applyDamage(world, owner, other, p.damage, p.fromSkill ? "skill" : "basic");
   }
+  if (p.pool) world.addHazard(owner, p.pool, { x: p.position.x, y: terrainHeight(p.position.x, p.position.z), z: p.position.z });
   world.emit({ type: "projectileHit", projectileId: p.id, target: target?.id, position: { ...p.position }, explodeRadius: p.explodeRadius });
   world.projectiles.delete(p.id);
 }
@@ -73,10 +74,11 @@ export function fireProjectile(
   direction: { x: number; z: number },
   damage: number,
   maxDistance: number,
-  opts: { explodeRadius?: number; pierce?: boolean; aimAssist?: boolean } = {},
+  opts: { explodeRadius?: number; pierce?: boolean; aimAssist?: boolean; fromSkill?: boolean; lob?: boolean; pool?: Projectile["pool"] } = {},
 ): Projectile {
   let dir = { ...direction };
-  if (opts.aimAssist !== false) {
+  // Ajuda de mira é para o jogador; o tiro do inimigo segue a linha avisada, para dar para desviar.
+  if (opts.aimAssist !== false && owner.kind === "player") {
     let best: Entity | undefined;
     let bestDot = Math.cos((22 * Math.PI) / 180);
     for (const other of world.alive()) {
@@ -109,5 +111,8 @@ export function fireProjectile(
     damage,
     explodeRadius: opts.explodeRadius ?? 0,
     pierce: opts.pierce ?? false,
+    fromSkill: opts.fromSkill,
+    lob: opts.lob,
+    pool: opts.pool,
   });
 }

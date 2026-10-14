@@ -4,7 +4,7 @@ import type { Item, Rarity } from "../domain/items";
 import type { ClassId } from "../domain/classes";
 import { CLASSES, CLASS_ORDER } from "../domain/classes";
 import { ENEMY_TEMPLATES, createEnemy, createPlayer, type EnemyKind } from "../domain/factories";
-import { createGoblinKing, createSpiderQueen } from "../domain/boss";
+import { createGoblinKing, createScorpionEmperor, createSpiderQueen } from "../domain/boss";
 import { NPC_DEFS, createNpc } from "../domain/npc";
 import { SKILLS, type SkillId } from "../domain/skills";
 import { RARITY_LABEL } from "../domain/items";
@@ -87,6 +87,8 @@ const ENEMY_DESCRIPTIONS: Record<EnemyKind, string> = {
   bogZombie: "Zumbi do lodo: braço esticado, pele com musgo e cogumelo na cintura.",
   scorpion: "Escorpião do deserto: carapaça segmentada, pinças e cauda com ferrão que levanta no aviso.",
   bandit: "Salteador do deserto: lenço, turbante, cimitarra curva e uma adaga de reserva no peito.",
+  goblinArcher: "Goblin com capuz de folhas, arco curto e aljava. Atira de longe e recua se você chegar perto.",
+  banditArcher: "Salteador de roupa anil, arco longo e aljava. O aviso é uma linha no chão: saia dela de lado.",
 };
 
 const PROJECTILE_DESCRIPTIONS: Record<string, string> = {
@@ -94,6 +96,8 @@ const PROJECTILE_DESCRIPTIONS: Record<string, string> = {
   piercingArrow: "Tiro Perfurante: atravessa todos os inimigos em linha.",
   bolt: "Raio arcano do Mago. Ataque básico, 16 m.",
   fireball: "Bola de Fogo: lenta, explode em 2,8 m.",
+  stinger: "Espinho do Imperador Escorpião, disparado em leque.",
+  acidGlob: "Cuspe Ácido: voa em arco até o ponto avisado e deixa uma poça que queima por 8 s.",
 };
 
 export function buildCatalog(): Exhibit[] {
@@ -150,6 +154,15 @@ export function buildCatalog(): Exhibit[] {
       description: "Chefe do pântano. Marca no abdômen, coroa, Teia Venenosa mirada e Bote.",
       size: 4.2,
       spawn: (id) => createSpiderQueen(id, { x: 0, y: 0, z: 0 }),
+    },
+    {
+      kind: "character",
+      id: "boss.scorpionEmperor",
+      group: "Chefes",
+      label: "Imperador Escorpião",
+      description: "Chefe do deserto. Carapaça obsidiana com placas de ouro, coroa com esmeralda, olhos e bulbo de ácido que brilham. Ferroada, Rajada de Espinhos em leque, Cuspe Ácido que deixa poças e uma Carapaça de Areia que só habilidades quebram.",
+      size: 5.2,
+      spawn: (id) => createScorpionEmperor(id, { x: 0, y: 0, z: 0 }),
     },
   );
 
@@ -216,7 +229,7 @@ export function buildCatalog(): Exhibit[] {
     });
   }
 
-  for (const kind of ["arrow", "piercingArrow", "bolt", "fireball"] as const) {
+  for (const kind of ["arrow", "piercingArrow", "bolt", "fireball", "stinger", "acidGlob"] as const) {
     out.push({
       kind: "object",
       id: `projectile.${kind}`,

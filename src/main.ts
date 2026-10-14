@@ -32,6 +32,7 @@ import { ProjectileViews } from "./game/projectileViews";
 import { directionFromYaw } from "./domain/math";
 import { useFirstPotion } from "./domain/inventory";
 import { createTerrainMesh } from "./game/terrainMesh";
+import { HazardViews } from "./game/hazardViews";
 import { DayNightSky } from "./game/sky";
 import { Foliage } from "./game/foliage";
 import { HIT_COLORS, Particles } from "./game/particles";
@@ -136,6 +137,7 @@ const inventoryUI = new InventoryUI(world, player);
 const dropViews = new DropViews(scene);
 const skillBar = new SkillBar(player.abilities!.skills.map((s) => s.id));
 const projectileViews = new ProjectileViews(scene);
+const hazardViews = new HazardViews(scene);
 const SKILL_SFX: Record<SkillId, "whirlwind" | "charge" | "warcry" | "secondWind" | "roll" | "dodge" | "shoot" | "explode"> = {
   whirlwind: "whirlwind", charge: "charge", warcry: "warcry", secondWind: "secondWind",
   piercingShot: "shoot", arrowRain: "explode", disengage: "roll", focus: "warcry",
@@ -241,6 +243,8 @@ function toast(text: string): void {
 }
 
 let lastSaveAt = 0;
+/** Última vez que a dica da carapaça apareceu no log (para não repetir a cada golpe). */
+let lastImmuneHint = -Infinity;
 /** Ligado antes de recarregar para trocar de slot: o autosave de saída não pode escrever por cima. */
 let suppressAutosave = false;
 function saveGame(reason: string): void {
@@ -470,7 +474,7 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
             shake.add(0.12);
             hitStop = Math.max(hitStop, 0.08);
           }
-          const pitchByType: Record<string, number> = { slime: 1.3, goblin: 1, orc: 0.7, spider: 1.5, bogZombie: 0.6, scorpion: 1.2, bandit: 0.95 };
+          const pitchByType: Record<string, number> = { slime: 1.3, goblin: 1, goblinArcher: 1.08, orc: 0.7, spider: 1.5, bogZombie: 0.6, scorpion: 1.2, bandit: 0.95, banditArcher: 1 };
           audio.play("enemyDeath", { ...spatial(victim.transform.position), pitch: victim.boss ? 0.5 : (pitchByType[victim.archetype] ?? 1) });
           if (victim.boss) audio.setBossMode(false);
         }
@@ -570,6 +574,62 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
       case "drop": {
         const d = world.drops.get(ev.dropId);
         if (d) audio.play("drop", spatial(d.position));
+        break;
+      }
+      case "immune": {
+        // Golpe básico na carapaça: só um "tink" e o aviso de que precisa de habilidade.
+        const t = world.get(ev.entity);
+        if (t && ev.source === player.id) {
+          floats.spawn(t.transform.position, "IMUNE", "#f0d38a", 0.85);
+          audio.play("hit", { ...spatial(t.transform.position), pitch: 1.8 });
+          const now = world.time;
+          if (now - lastImmuneHint > 6) {
+            lastImmuneHint = now;
+            hud.pushLog("A Carapaça de Areia ignora ataques básicos. Use habilidades (1-4)!", "dmg-in");
+          }
+        }
+        break;
+      }
+      case "carapaceHit": {
+        const t = world.get(ev.entity);
+        if (t) {
+          const tp = t.transform.position;
+          particles.burst({ x: tp.x, y: tp.y + 1.6, z: tp.z }, { count: 14, colors: ["#f0d38a", "#d9b25a", "#c4963c"], speed: [2, 5], up: [2, 5], size: [0.1, 0.2], life: [0.6, 1.0] });
+          if (ev.layersLeft > 0) floats.spawn(tp, `CARAPAÇA ${ev.layersLeft}/${t.boss?.carapace?.maxLayers ?? 3}`, "#f0d38a", 1);
+          shake.add(0.12);
+        }
+        break;
+      }
+      case "carapaceBreak": {
+        const t = world.get(ev.entity);
+        if (t) {
+          const tp = t.transform.position;
+          particles.death({ x: tp.x, y: tp.y + 1.2, z: tp.z }, ["#f0d38a", "#d9b25a", "#c4963c", "#8a6a3a"], true);
+          floats.spawn(tp, "CARAPAÇA PARTIDA!", "#ffe57a", 1.5);
+          hud.pushLog(`${t.name} está atordoado por ${ev.stun.toFixed(1)} s: bata com tudo!`, "level");
+          audio.play("bossPhase");
+          shake.add(0.45);
+          hitStop = Math.max(hitStop, 0.12);
+        }
+        break;
+      }
+      case "carapaceUp": {
+        const t = world.get(ev.entity);
+        if (t) {
+          floats.spawn(t.transform.position, "CARAPAÇA DE AREIA", "#f0d38a", 1.2);
+          hud.pushLog(`${t.name} se cobriu de areia: só habilidades quebram a carapaça.`, "dmg-in");
+        }
+        break;
+      }
+      case "groundWarning":
+        hazardViews.warn(ev.at, ev.radius, ev.duration);
+        break;
+      case "hazardSpawn": {
+        const h = world.hazards.get(ev.hazardId);
+        if (h) {
+          audio.play("explode", { ...spatial(h.position), pitch: 1.5 });
+          particles.burst({ x: h.position.x, y: h.position.y + 0.3, z: h.position.z }, { count: 16, colors: ["#9ce85a", "#6cc63a", "#3f8a24"], speed: [1.5, 4], up: [2, 4.5], size: [0.08, 0.16], life: [0.5, 0.9] });
+        }
         break;
       }
       case "buffEnd":
@@ -680,6 +740,7 @@ function frame(): void {
   questTracker.update(player);
   dropViews.update(world, world.time);
   projectileViews.update(world, frameDt, world.time);
+  hazardViews.update(world, frameDt, world.time);
   floats.update(frameDt);
   hud.update(player, target);
   hud.updateBoss(world);

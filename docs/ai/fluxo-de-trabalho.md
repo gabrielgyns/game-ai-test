@@ -26,8 +26,9 @@ npm run build      # produção em dist/
   identificadores de código em inglês.
 - Nada de Three.js ou DOM em `src/domain`.
 - Novos eventos entram em `events.ts` e são tratados em `handleEvents` no `main.ts`.
-- Novos inimigos: template em `factories.ts`, modelo em `models.ts` (+ `createModel`), loot em
-  `loot.ts`, spawn em `worldgen.ts`. Chefes: `boss.ts` com padrões e fases.
+- Novos inimigos: template em `factories.ts` (atiradores: `ranged`), modelo em `characters/` +
+  `createModel`, loot em `loot.ts`, spawn em `worldgen.ts`, cor das lascas em `particles.ts`.
+  Chefes: `boss.ts` com padrões (melee, slam, charge, aoe, projectile, fan, lob) e fases.
 - Novos itens: `items.ts` (templates por tier), ícone em `itemIcons.ts`, visual no herói em
   `models.ts` se for vestível.
 
