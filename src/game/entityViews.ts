@@ -154,6 +154,12 @@ class EntityView {
     if (this.model.weaponArm && spinning) this.model.weaponArm.rotation.z = -Math.PI / 2;
     else if (this.model.weaponArm) this.model.weaponArm.rotation.z = 0;
 
+    // Glow de equipamento pulsa de leve.
+    if (this.model.glowMaterials) {
+      const pulse = 1 + Math.sin(time * 2.4) * 0.12;
+      for (const g of this.model.glowMaterials) g.material.emissiveIntensity = g.baseIntensity * pulse;
+    }
+
     // Caminhada: balanço vertical e leve inclinação enquanto se move.
     const moving = e.movement.intent.x !== 0 || e.movement.intent.z !== 0;
     if (moving) {

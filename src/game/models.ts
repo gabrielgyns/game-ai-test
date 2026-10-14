@@ -10,13 +10,60 @@ export interface CharacterModel {
   weaponArm?: THREE.Object3D;
   /** Altura aproximada em metros, para posicionar a barra de vida. */
   height: number;
+  /** Materiais com glow de raridade (arma, armadura), para pulsar a intensidade. */
+  glowMaterials?: { material: THREE.MeshStandardMaterial; baseIntensity: number }[];
+}
+
+const RARITY_GLOW: Record<Rarity, string | null> = {
+  common: null,
+  uncommon: "#5fd36b",
+  rare: "#5b8def",
+  epic: "#b06cf0",
+};
+
+/** Material da peça: tingido leve na cor da raridade (a cor do item continua legível). */
+function glowMaterial(rarity: Rarity, intensity: number): { material: THREE.MeshStandardMaterial; baseIntensity: number } | null {
+  const color = RARITY_GLOW[rarity];
+  if (!color) return null;
+  const material = voxelMaterial();
+  material.emissive = new THREE.Color(color);
+  material.emissiveIntensity = intensity;
+  return { material, baseIntensity: intensity };
+}
+
+/**
+ * Aura neon: uma casca da mesma geometria, um pouco maior, aditiva e acima do limiar do bloom.
+ * É o que dá o contorno brilhante em volta da peça sem mudar a cor dela.
+ */
+function addAura(part: THREE.Mesh, rarity: Rarity, strength = 1): THREE.Mesh | null {
+  const color = RARITY_GLOW[rarity];
+  if (!color) return null;
+  const geometry = part.geometry;
+  geometry.computeBoundingBox();
+  const center = geometry.boundingBox!.getCenter(new THREE.Vector3());
+  const k = 1.09;
+  const aura = new THREE.Mesh(
+    geometry,
+    new THREE.MeshBasicMaterial({
+      color: new THREE.Color(color).multiplyScalar(1.7 * strength),
+      transparent: true,
+      opacity: 0.24,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    }),
+  );
+  aura.scale.setScalar(k);
+  aura.position.copy(center).multiplyScalar(1 - k); // cresce em volta do centro da peça, não dos pés
+  part.add(aura);
+  return aura;
 }
 
 /** Tamanho de um voxel de personagem, em metros (8 voxels = 1 m). */
 const V = 1 / 8;
 
-function mesh(builder: VoxelBuilder, scale = V): THREE.Mesh {
-  const m = new THREE.Mesh(builder.build(scale), voxelMaterial());
+function mesh(builder: VoxelBuilder, scale = V, material: THREE.Material = voxelMaterial()): THREE.Mesh {
+  const m = new THREE.Mesh(builder.build(scale), material);
   m.castShadow = true;
   m.receiveShadow = false;
   return m;
@@ -67,40 +114,67 @@ function buildWeapon(arm: VoxelBuilder, weapon: Item | null): void {
 export function createHero(equipment?: Equipment): CharacterModel {
   const skin = "#e8b893", hair = "#4a2e1a", eye = "#1b1b1b";
   const armor = equipment?.armor ?? null;
+  const accessory = equipment?.accessory ?? null;
+  const weapon = equipment?.weapon ?? null;
   const visual = armor?.visual ?? "none";
   const cloth = visual === "none" ? "#3b5aa6" : visual === "tunic" ? "#8a5a2b" : visual === "chain" ? "#8c94a3" : "#4a4f5c";
   const trim = visual === "plate" ? "#c9a227" : visual === "chain" ? "#b9c0cc" : "#6b4a2b";
-  const boots = equipment?.accessory?.icon === "boots" ? "#c9a227" : "#2b2b2b";
-  const b = new VoxelBuilder();
-  b.box(-3, 0, -1, -1, 6, 1, "#6b4a2b").box(1, 0, -1, 3, 6, 1, "#6b4a2b"); // pernas
-  b.box(-3, 0, -1, -1, 2, 1, boots).box(1, 0, -1, 3, 2, 1, boots); // botas
-  b.box(-4, 6, -2, 4, 13, 2, cloth); // tronco
-  b.box(-4, 6, -2, 4, 7, 2, trim); // cinto
+  const boots = accessory?.icon === "boots" ? "#c9a227" : "#2b2b2b";
+  const glows: NonNullable<CharacterModel["glowMaterials"]> = [];
+
+  // Corpo (pele, cabelo, pernas): sem glow.
+  const body = new VoxelBuilder();
+  body.box(-3, 0, -1, -1, 6, 1, "#6b4a2b").box(1, 0, -1, 3, 6, 1, "#6b4a2b"); // pernas
+  body.box(-6, 7, -1, -4, 13, 1, skin); // braço esquerdo
+  body.box(-3, 13, -3, 3, 19, 3, skin); // cabeça
+  body.box(-3, 18, -3, 3, 20, 3, hair).box(-3, 15, 1, 3, 19, 3, hair).box(-3, 17, -3, 3, 18, -2, hair); // cabelo
+  body.set(-2, 16, -3, eye).set(1, 16, -3, eye); // olhos
+
+  // Armadura e roupa: glow na raridade da armadura equipada.
+  const gear = new VoxelBuilder();
+  gear.box(-4, 6, -2, 4, 13, 2, cloth); // tronco
+  gear.box(-4, 6, -2, 4, 7, 2, trim); // cinto
   if (visual === "plate") {
-    b.box(-6, 11, -2, -4, 14, 2, trim).box(4, 11, -2, 6, 14, 2, trim); // ombreiras
-    b.box(-2, 9, -3, 2, 12, -2, "#5c6170"); // peitoral
+    gear.box(-6, 11, -2, -4, 14, 2, trim).box(4, 11, -2, 6, 14, 2, trim); // ombreiras
+    gear.box(-2, 9, -3, 2, 12, -2, "#5c6170"); // peitoral
+    gear.box(-3, 18, -3, 3, 21, 3, "#4a4f5c"); // elmo
   }
-  if (visual === "chain") b.box(-4, 12, -2, 4, 13, 2, trim); // gola de malha
-  if (equipment?.accessory?.icon === "amulet") b.set(0, 11, -3, "#c9a227"); // amuleto no peito
-  b.box(-6, 7, -1, -4, 13, 1, skin); // braço esquerdo
-  if (equipment?.accessory?.icon === "ring") b.set(-5, 7, -1, "#c9a227"); // anel na mão esquerda
-  b.box(-3, 13, -3, 3, 19, 3, skin); // cabeça
-  b.box(-3, 18, -3, 3, 20, 3, hair).box(-3, 15, 1, 3, 19, 3, hair).box(-3, 17, -3, 3, 18, -2, hair); // cabelo
-  if (visual === "plate") b.box(-3, 18, -3, 3, 21, 3, "#4a4f5c"); // elmo
-  b.set(-2, 16, -3, eye).set(1, 16, -3, eye); // olhos
+  if (visual === "chain") gear.box(-4, 12, -2, 4, 13, 2, trim); // gola de malha
+  const armorGlow = armor ? glowMaterial(armor.rarity, 0.08) : null;
+  if (armorGlow) glows.push(armorGlow);
+
+  // Acessório: botas, amuleto ou anel, com glow na própria raridade.
+  const acc = new VoxelBuilder();
+  acc.box(-3, 0, -1, -1, 2, 1, boots).box(1, 0, -1, 3, 2, 1, boots); // botas
+  if (accessory?.icon === "amulet") acc.set(0, 11, -3, "#c9a227");
+  if (accessory?.icon === "ring") acc.set(-5, 7, -1, "#c9a227");
+  const accGlow = accessory ? glowMaterial(accessory.rarity, 0.15) : null;
+  if (accGlow) glows.push(accGlow);
 
   const root = new THREE.Group();
-  root.add(mesh(b));
+  const gearMesh = mesh(gear, V, armorGlow?.material ?? voxelMaterial());
+  const accMesh = mesh(acc, V, accGlow?.material ?? voxelMaterial());
+  if (armor) addAura(gearMesh, armor.rarity, 0.8);
+  if (accessory) addAura(accMesh, accessory.rarity, 0.9);
+  root.add(mesh(body), gearMesh, accMesh);
 
-  // Braço direito + arma equipada, com pivô no ombro para o golpe.
+  // Braço direito (pele) + arma em malha própria, com glow na raridade da arma.
   const arm = new VoxelBuilder();
   arm.box(-1, -6, -1, 1, 0, 1, skin);
-  buildWeapon(arm, equipment?.weapon ?? null);
+  const weaponVox = new VoxelBuilder();
+  buildWeapon(weaponVox, weapon);
+  const weaponGlow = weapon ? glowMaterial(weapon.rarity, 0.22) : null;
+  if (weaponGlow) glows.push(weaponGlow);
   const weaponArm = new THREE.Group();
   weaponArm.position.set(5 * V, 13 * V, 0);
   weaponArm.add(mesh(arm));
+  if (weapon) {
+    const weaponMesh = mesh(weaponVox, V, weaponGlow?.material ?? voxelMaterial());
+    addAura(weaponMesh, weapon.rarity, 1.1);
+    weaponArm.add(weaponMesh);
+  }
   root.add(weaponArm);
-  return { root, weaponArm, height: 20 * V + 0.1 };
+  return { root, weaponArm, height: 20 * V + 0.1, glowMaterials: glows };
 }
 
 export function createSlime(): CharacterModel {
