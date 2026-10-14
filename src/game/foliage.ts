@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { biomeWeights, DESERT_BOSS_HOME, SWAMP_BOSS_HOME } from "../domain/biomes";
-import { isWater, terrainHeight, WATER_LEVEL, WORLD_HALF } from "../domain/terrain";
+import { FOREST_BOSS_HOME, FOREST_CAMP, FOREST_RUINS, isWater, terrainHeight, WATER_LEVEL, WORLD_HALF } from "../domain/terrain";
+import { ZONES, type ZoneDefinition } from "../domain/zones";
 import { BOSS_HOME, seededRandom } from "../domain/worldgen";
 import { VoxelBuilder, voxelMaterial } from "./voxel";
 
@@ -20,7 +21,7 @@ const VIEW_DISTANCE_TALL = 72;
 const FULL_DETAIL_DISTANCE = 30;
 const FAR_FRACTION = 0.35;
 
-type Kind = "grass" | "flowerRed" | "flowerYellow" | "flowerWhite" | "flowerBlue" | "reed";
+type Kind = "grass" | "flowerRed" | "flowerYellow" | "flowerWhite" | "flowerBlue" | "reed" | "fern" | "glowShroom";
 
 function blade(b: VoxelBuilder, x: number, z: number, h: number, color: string): void {
   b.box(x, 0, z, x + 1, h, z + 1, color);
@@ -55,7 +56,36 @@ function reedGeometry(): THREE.BufferGeometry {
   return b.build(FV, { jitter: 0, ao: false, skipGroundFaces: true });
 }
 
+/** Samambaia da floresta: folhas em arco saindo do centro, com folíolos alternados. */
+function fernGeometry(): THREE.BufferGeometry {
+  const b = new VoxelBuilder();
+  const greens = ["#2f6a2a", "#3a7a30", "#4a8a38"];
+  for (let k = 0; k < 6; k++) {
+    const a = (k / 6) * Math.PI * 2 + 0.3;
+    for (let r = 0; r < 9; r++) {
+      const x = Math.round(Math.cos(a) * r * 0.9), z = Math.round(Math.sin(a) * r * 0.9);
+      const y = Math.round(r < 5 ? r * 1.1 : 5.5 - (r - 5) * 0.8);
+      b.set(x, y, z, greens[(k + r) % 3]!);
+      if (r > 2 && r % 2 === 0) b.set(x + Math.round(-Math.sin(a)), y, z + Math.round(Math.cos(a)), greens[(k + 1) % 3]!);
+    }
+  }
+  b.set(0, 0, 0, "#2a4a20");
+  return b.build(FV, { jitter: 0, ao: false, skipGroundFaces: true });
+}
+
+/** Cogumelinhos azuis que brilham de leve (acima de 1 no bloom, à noite fazem diferença). */
+function glowShroomGeometry(): THREE.BufferGeometry {
+  const b = new VoxelBuilder();
+  for (const [x, z, h] of [[0, 0, 4], [3, 1, 3], [-2, 2, 2]] as const) {
+    blade(b, x, z, h, "#d8e0e8");
+    b.box(x - 1, h, z - 1, x + 2, h + 1, z + 2, "#5ac8ff").set(x, h + 1, z, "#9ae0ff");
+  }
+  return b.build(FV, { jitter: 0, ao: false, skipGroundFaces: true });
+}
+
 const GEOMETRIES: Record<Kind, () => THREE.BufferGeometry> = {
+  fern: fernGeometry,
+  glowShroom: glowShroomGeometry,
   grass: grassGeometry,
   flowerRed: () => flowerGeometry("#e5484d", "#ffd54a"),
   flowerYellow: () => flowerGeometry("#ffd54a", "#c9822a"),
@@ -72,6 +102,8 @@ export const FOLIAGE_BUILDERS: Record<string, () => THREE.BufferGeometry> = {
   "Flor branca": GEOMETRIES.flowerWhite,
   "Flor azul": GEOMETRIES.flowerBlue,
   "Junco do pântano": reedGeometry,
+  "Samambaia": fernGeometry,
+  "Cogumelinhos que brilham": glowShroomGeometry,
 };
 
 /** Ruído suave por valor, para a grama crescer em manchas e as flores em canteiros. */
@@ -96,6 +128,35 @@ interface Placement {
   yaw: number;
   scale: number;
   tint: THREE.Color;
+}
+
+/** Floresta Ancestral: capim escuro em manchas, samambaias por toda parte e cogumelinhos azuis. */
+function placeForestFoliage(seed: number, zone: ZoneDefinition): Placement[] {
+  const rand = seededRandom(seed + 77);
+  const out: Placement[] = [];
+  const tint = (r: number, g: number, b: number) => new THREE.Color(r, g, b);
+  for (let cx = -WORLD_HALF + 1; cx < WORLD_HALF - 1; cx++) {
+    for (let cz = -WORLD_HALF + 1; cz < WORLD_HALF - 1; cz++) {
+      const lx = cx + 0.5, lz = cz + 0.5;
+      const x = zone.center.x + lx, z = zone.center.z + lz;
+      const h = terrainHeight(x, z);
+      if (h > 7 || isWater(x, z)) continue;
+      if (Math.hypot(lx - FOREST_CAMP.x, lz - FOREST_CAMP.z) < 9) continue;
+      if (Math.hypot(lx - FOREST_BOSS_HOME.x, lz - FOREST_BOSS_HOME.z) < 12) continue;
+      if (Math.hypot(lx - FOREST_RUINS.x, lz - FOREST_RUINS.z) < 14) continue; // pátio das ruínas
+      const patch = valueNoise(lx / 8, lz / 8, seed);
+      let count = Math.floor(0.25 + patch * 0.8 + rand());
+      while (count-- > 0) {
+        const k = 0.7 + rand() * 0.25;
+        out.push({ kind: "grass", x: x - 0.3 + rand() * 0.6, y: h, z: z - 0.3 + rand() * 0.6, yaw: Math.floor(rand() * 4) * (Math.PI / 2), scale: 0.8 + rand() * 0.5, tint: tint(k * 0.7, k * 0.85, k * 0.6) });
+      }
+      if (rand() < 0.16 + patch * 0.12) out.push({ kind: "fern", x: x - 0.3 + rand() * 0.6, y: h, z: z - 0.3 + rand() * 0.6, yaw: rand() * Math.PI * 2, scale: 0.9 + rand() * 0.6, tint: tint(1, 1, 1) });
+      if (valueNoise(lx / 6 + 20, lz / 6, seed) > 0.72 && rand() < 0.25) {
+        out.push({ kind: "glowShroom", x: x - 0.3 + rand() * 0.6, y: h, z: z - 0.3 + rand() * 0.6, yaw: rand() * Math.PI * 2, scale: 0.9 + rand() * 0.4, tint: tint(1, 1, 1) });
+      }
+    }
+  }
+  return out;
 }
 
 /** Decide o que cresce em cada metro quadrado do mapa. Determinístico pela seed. */
@@ -184,13 +245,13 @@ export class Foliage {
   private readonly chunks: { mesh: THREE.InstancedMesh; center: THREE.Vector2; full: number; range: number }[] = [];
   private readonly uniforms = { uTime: { value: 0 }, uPlayer: { value: new THREE.Vector3(0, -999, 0) } };
   /** Instâncias por tipo (para medir e testar). */
-  readonly counts: Record<Kind, number> = { grass: 0, flowerRed: 0, flowerYellow: 0, flowerWhite: 0, flowerBlue: 0, reed: 0 };
+  readonly counts: Record<Kind, number> = { grass: 0, flowerRed: 0, flowerYellow: 0, flowerWhite: 0, flowerBlue: 0, reed: 0, fern: 0, glowShroom: 0 };
 
-  constructor(seed = 9173) {
+  constructor(seed = 9173, zone: ZoneDefinition = ZONES.vale) {
     const material = foliageMaterial(this.uniforms);
     const geometries = new Map<Kind, THREE.BufferGeometry>();
     const buckets = new Map<string, Placement[]>();
-    for (const p of placeFoliage(seed)) {
+    for (const p of zone.id === "floresta" ? placeForestFoliage(seed, zone) : placeFoliage(seed)) {
       const key = `${p.kind}|${Math.floor(p.x / CHUNK)}|${Math.floor(p.z / CHUNK)}`;
       let list = buckets.get(key);
       if (!list) buckets.set(key, (list = []));

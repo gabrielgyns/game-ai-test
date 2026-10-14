@@ -10,6 +10,7 @@ import { DUNGEON_REGION_X, terrainHeight } from "./terrain";
 import { seededRandom } from "./worldgen";
 import { applyDamage } from "./systems/combat";
 import type { World } from "./world";
+import { zoneAt } from "./zones";
 
 /**
  * Dungeons instanciadas, no estilo Minecraft Dungeons: um portal no mapa leva a uma cripta gerada na
@@ -343,7 +344,11 @@ export function exitDungeon(world: World, player: Entity, reason: "complete" | "
 /** Onde o herói renasce: na sala inicial do andar enquanto houver vidas; sem vidas, no santuário. */
 export function playerRespawnPoint(world: World, player: Entity): Vec3 {
   const run = world.dungeon;
-  if (!run || !inDungeonSpace(player.transform.position.x)) return { x: 0, y: 0, z: 0 };
+  if (!run || !inDungeonSpace(player.transform.position.x)) {
+    // Fora da cripta: renasce no ponto seguro da zona (santuário no vale, acampamento na floresta).
+    const zone = zoneAt(player.transform.position.x, player.transform.position.z);
+    return { x: zone.respawn.x, y: terrainHeight(zone.respawn.x, zone.respawn.z), z: zone.respawn.z };
+  }
   run.livesLeft = Math.max(0, run.livesLeft - 1);
   world.emit({ type: "dungeonLifeLost", livesLeft: run.livesLeft });
   if (run.livesLeft > 0) return roomCenterWorld(run.layout.rooms[0]!);

@@ -9,6 +9,7 @@ const LOOK: Record<HazardKind, { edge: string; mid: string; core: string; emissi
   acid: { edge: "#3f8a24", mid: "#6cc63a", core: "#9ce85a", emissive: "#3f9a20", glow: 0.45, bit: "#c8ff8a", opacity: 0.9 },
   fire: { edge: "#8a2a10", mid: "#e0601a", core: "#ffc24a", emissive: "#ff6a1a", glow: 0.9, bit: "#ffb84a", opacity: 0.85 },
   arrows: { edge: "#5a4028", mid: "#7a5a38", core: "#8a6a44", emissive: "#000000", glow: 0, bit: "#d8d0c0", opacity: 0.55 },
+  spores: { edge: "#4a2a5a", mid: "#7a4a8a", core: "#b07ad0", emissive: "#6a2a9a", glow: 0.5, bit: "#d8a8ff", opacity: 0.8 },
 };
 
 /**

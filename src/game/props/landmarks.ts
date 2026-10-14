@@ -7,7 +7,7 @@ import { blob, bough, coatSurface, coatTop, hash3, limb, noise3, pickTone, rng, 
  */
 
 /** Cogumelos gigantes: um grande e dois pequenos, chapéu roxo com pintas e lamelas por baixo. */
-export function mushrooms(seed: number): VoxelBuilder {
+export function mushrooms(seed: number, glow = false): VoxelBuilder {
   const b = new VoxelBuilder();
   const rand = rng(seed);
   const stem: Paint = (x, y, z) => pickTone(["#e2d4b4", "#ece0c4", "#f4ead4"], hash3(x, Math.floor(y / 2), z, seed));
@@ -26,7 +26,7 @@ export function mushrooms(seed: number): VoxelBuilder {
     const capPaint: Paint = (x, y, z) => {
       if (y <= c.h + 1) return pickTone(["#d8c8a8", "#c4b090"], hash3(x, y, z, seed + i));
       if (noise3(x / 2.5, y / 2.5, z / 2.5, seed + i * 7) > 0.74) return "#f0e6cc";
-      return pickTone(["#5e2a78", "#6e3388", "#7d3f98", "#8f4da8"], Math.min(0.999, (y - c.h) / (c.r * 0.7) * 0.6 + hash3(x, y, z, seed) * 0.4));
+      return pickTone(glow ? ["#1e5a8a", "#2a6aa0", "#3a80b8", "#5aa8e0"] : ["#5e2a78", "#6e3388", "#7d3f98", "#8f4da8"], Math.min(0.999, (y - c.h) / (c.r * 0.7) * 0.6 + hash3(x, y, z, seed) * 0.4));
     };
     blob(b, [top[0], c.h, top[2]], [c.r, c.r * 0.62, c.r], capPaint, { rough: 0.08, grain: 4, seed: seed + i, floor: c.h });
   }

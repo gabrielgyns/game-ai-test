@@ -78,6 +78,16 @@ Grito deixa todos lentos, o Segundo Fôlego dispara sozinho quando a vida fica c
 vira uma rajada de três flechas que atordoam, a Chuva de Flechas vira tempestade, a Bola de Fogo dobra e
 deixa o chão em chamas, a Nova Gélida congela, o Teleporte explode na partida e o Escudo Arcano explode
 ao acabar. Chefes resistem a atordoamento e lentidão (metade do tempo). Reiniciar a árvore custa ouro.
+O mundo é feito de **zonas** ligadas por portões, como os mapas do Ragnarok. Ao norte do vale, perto do
+platô do Rei Goblin, uma passagem na muralha leva à **Floresta Ancestral** (inimigos do nível 12 ao 20):
+uma mata escura e enevoada cortada por um rio, com árvores ancestrais de raízes expostas, samambaias e
+cogumelos que brilham, as ruínas élficas de Elar a leste e, ao norte, a clareira do **Ente Ancião**
+(chicote de vinhas, raízes que esmagam o chão, nuvens de esporos que envenenam o terreno e lobos na
+fúria). Lobos cinzentos caçam em matilha, entes jovens batem devagar e forte, e espíritos élficos
+atiram das ruínas. No acampamento ao sul, a **Guardiã Lyra** tem quatro quests. O Ente Ancião guarda o
+conjunto **Coração da Floresta** (3 peças: quem te fere leva 30% do dano de volta). Cair na floresta
+leva ao acampamento, não ao santuário.
+
 No santuário ficam o **baú**, compartilhado entre todos os seus heróis (3 abas de 30 espaços: guarde
 num e tire no outro), e o **Altar das Eras**, onde se escolhe a **dificuldade do mundo**: Aventureiro,
 Veterano (+10 níveis), Apocalipse (+20) e Pesadelo (+30). Vencer os três chefes numa era abre a

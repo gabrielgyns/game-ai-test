@@ -1,7 +1,7 @@
 import type { Entity, EntityId } from "./components";
 import { createEquipment as createEquipmentSlots, createInventory } from "./inventory";
 import type { Vec2, Vec3 } from "./math";
-import { ACID_POOL, type PoolSpec } from "./hazards";
+import { ACID_POOL, SPORE_POOL, type PoolSpec } from "./hazards";
 import { createAbilities } from "./skills";
 
 /** Forma do aviso de golpe, desenhada no chão pela apresentação. */
@@ -280,4 +280,36 @@ export function createSkeletonLord(id: EntityId, position: Vec3, level = 5): Ent
 }
 
 /** Que lacaio cada chefe convoca na fase final. */
-export const BOSS_MINION: Record<string, string> = { goblinKing: "goblin", spiderQueen: "spider", scorpionEmperor: "banditArcher", skeletonLord: "skeleton" };
+export const BOSS_MINION: Record<string, string> = { goblinKing: "goblin", spiderQueen: "spider", scorpionEmperor: "banditArcher", skeletonLord: "skeleton", ancientTreant: "wolf" };
+
+export const ANCIENT_TREANT_PATTERNS: AttackPattern[] = [
+  { id: "vineLash", name: "Chicote de Vinhas", kind: "melee", range: 4.4, windup: 0.9, damageMultiplier: 1, cooldown: 2.3, minPhase: 1 },
+  { id: "rootSlam", name: "Raiz Esmagadora", kind: "slam", range: 6.5, windup: 1.4, damageMultiplier: 1.7, cooldown: 6.5, minPhase: 1 },
+  { id: "spores", name: "Nuvem de Esporos", kind: "lob", range: 16, projectile: "acidGlob", count: 3, pool: SPORE_POOL, impactRadius: 2, windup: 1.1, damageMultiplier: 0.6, cooldown: 7, minPhase: 1 },
+  { id: "barkFan", name: "Lascas de Casca", kind: "fan", range: 15, projectile: "stinger", count: 9, spreadDeg: 120, windup: 1.0, damageMultiplier: 0.6, cooldown: 6, minPhase: 2 },
+];
+
+/**
+ * Ente Ancião, chefe da Floresta Ancestral (nível 20): uma árvore que anda. Chicoteia com vinhas, esmaga
+ * o chão com as raízes, cospe nuvens de esporos que envenenam o chão e, ferido, solta lascas de casca
+ * em leque. Na fúria, chama os lobos da floresta.
+ */
+export function createAncientTreant(id: EntityId, position: Vec3): Entity {
+  const maxHealth = 4200;
+  return {
+    id,
+    kind: "enemy",
+    name: "Ente Ancião",
+    archetype: "ancientTreant",
+    level: 20,
+    transform: { position: { ...position }, yaw: 0 },
+    movement: { speed: 3.6, speedMultiplier: 1, intent: { x: 0, z: 0 } },
+    health: { current: maxHealth, max: maxHealth, baseMax: maxHealth, regenPerSecond: 12, lastDamagedAt: -Infinity },
+    combat: { damage: 70, baseDamage: 70, range: 4.4, cooldown: 2.3, cooldownLeft: 0, wantsAttack: false, windupTime: 0.9, windupLeft: 0 },
+    ai: { state: "idle", home: { ...position }, aggroRange: 18, leashRange: 45, xpReward: 5000, goldReward: 900, respawnSeconds: 180 },
+    boss: { title: "Ente Ancião", patterns: ANCIENT_TREANT_PATTERNS, cooldowns: {}, phase: 1, phaseThresholds: [0.6, 0.3], windupScale: 1, summoned: false, engaged: false },
+    abilities: { ...createAbilities(), skills: [] },
+    inventory: createInventory(0),
+    equipment: createEquipmentSlots(),
+  };
+}

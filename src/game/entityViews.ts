@@ -378,6 +378,9 @@ class EntityView {
     if (legs) {
       legs[0]!.rotation.x = stride * 0.75;
       legs[1]!.rotation.x = -stride * 0.75;
+      // Quadrúpedes: traseiras em diagonal com as dianteiras (trote).
+      if (legs[2]) legs[2].rotation.x = -stride * 0.75;
+      if (legs[3]) legs[3].rotation.x = stride * 0.75;
     }
     if (offArm) offArm.rotation.x = -stride * 0.55;
     const rest = this.model.weaponArmRest ?? 0;

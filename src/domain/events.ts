@@ -53,6 +53,7 @@ export type GameEvent =
   | { type: "stairsOpen" }
   | { type: "shrineBlessing"; entity: EntityId; seconds: number }
   | { type: "trapSpring" }
+  | { type: "zoneTravel"; from: string; to: string }
   | { type: "worldTierChanged"; tier: number }
   | { type: "worldTierUnlocked"; tier: number }
   | { type: "chestOpened"; gold: number; items: string[] }

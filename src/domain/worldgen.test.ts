@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { zoneAt } from "./zones";
 import { generateWorld } from "./worldgen";
 import { WORLD_HALF } from "./terrain";
 
@@ -14,9 +15,11 @@ describe("geração de mundo", () => {
     expect(world.player).toBeDefined();
     const enemies = [...world.enemies()];
     expect(enemies.length).toBeGreaterThan(20);
+    // Cada inimigo fica dentro do quadrado da zona onde nasceu (vale ou floresta).
     for (const e of enemies) {
-      expect(Math.abs(e.transform.position.x)).toBeLessThan(WORLD_HALF);
-      expect(Math.abs(e.transform.position.z)).toBeLessThan(WORLD_HALF);
+      const zone = zoneAt(e.transform.position.x, e.transform.position.z);
+      expect(Math.abs(e.transform.position.x - zone.center.x)).toBeLessThan(WORLD_HALF);
+      expect(Math.abs(e.transform.position.z - zone.center.z)).toBeLessThan(WORLD_HALF);
     }
   });
 });

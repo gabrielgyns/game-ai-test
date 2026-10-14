@@ -179,6 +179,22 @@ com screenshots antes de serem considerados prontos.
     ar, guardião 35% maior, HUD com o andar, minimapa com armadilhas, escada e santuário. Custo: ~0,9 s
     para montar um andar, ~140k triângulos de cenário por andar, ~430k no quadro da arena. 17 testes
     novos ou refeitos.
+29. **Sistema de zonas e Floresta Ancestral** (pedido do dono: "como vamos aumentar o mundo? mapas tipo
+    Ragnarok"). Domínio: `zones.ts` (zonas como quadrados próprios no mesmo `World`: Vale em 0,0 e
+    Floresta em 0,−420; `zoneAt`, portões `ZONE_GATES` e `travel`), `terrainHeight`, `isWater`,
+    `biomeAt` e o limite do movimento passam a perguntar a zona; respawn no ponto seguro da zona;
+    marcadores do mapa só da zona do herói, com o portão. Floresta (níveis 12 a 20): relevo com rio,
+    acampamento ao sul, ruínas de Elar a leste e clareira ao norte; Lobo Cinzento (matilhas), Ente
+    Jovem e Espírito Élfico (arqueiro de raios); Ente Ancião (nível 20: Chicote de Vinhas, Raiz
+    Esmagadora, Nuvem de Esporos com poça `spores`, Lascas de Casca, lobos na fúria); conjunto Coração
+    da Floresta (2 peças: +6 vida/s; 3: Casca de Espinhos devolve 30% do dano); Guardiã Lyra com 4
+    quests; recompensas de quest no nível do herói. Apresentação: `createTerrainMesh`, `Foliage` e
+    `createEnvironment` por zona (samambaias, cogumelinhos azuis, árvores ancestrais em 1/9 m,
+    carvalhos sombrios, troncos caídos, arcos, estátuas e colunas élficas, barracas e fogueira);
+    zonas montadas na primeira visita (~1 s), só a zona do herói visível; portões com véu verde;
+    neblina esverdeada na floresta; minimapa por zona; modelos de lobo (quatro patas no trote), ente,
+    espírito translúcido, Ente Ancião (voxels duas vezes maiores) e Guardiã. ~1,1M triângulos no quadro
+    da floresta. 10 testes novos.
 
 ## Pedidos do dono ainda não atendidos ou adiados
 - Lock-on de câmera (explicado, adiado por escolha dele).

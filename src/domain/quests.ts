@@ -163,6 +163,63 @@ export const QUESTS: QuestDefinition[] = [
       complete: "Isso é ferro de orc, do bom. Forjei o que prometi. Use bem.",
     },
   },
+  // Floresta Ancestral: Guardiã Lyra, no acampamento ao sul.
+  {
+    id: "wolves",
+    title: "Matilha Faminta",
+    giver: "ranger",
+    description: "Lobos cinzentos cercam o acampamento da floresta. Derrote 8 deles.",
+    objective: { kind: "kill", archetype: "wolf", count: 8, label: "Lobos derrotados" },
+    reward: { xp: 2500, gold: 400, item: { kind: "potion", size: "large", quantity: 3 } },
+    requires: [],
+    dialogue: {
+      offer: "Você atravessou o portão? Então sabe lutar. A matilha cinzenta cerca o acampamento faz três noites. Eles atacam juntos e rodeiam: oito lobos a menos e a gente dorme em paz.",
+      progress: "Lobo não ataca sozinho. Quando um avançar, os outros já estão te cercando. Use o terreno.",
+      complete: "A mata ficou em silêncio. Bom sinal. Tome, poções de quem vive aqui.",
+    },
+  },
+  {
+    id: "ents",
+    title: "Árvores que Andam",
+    giver: "ranger",
+    description: "Entes jovens acordaram com raiva e derrubam quem entra na mata. Derrote 5 deles.",
+    objective: { kind: "kill", archetype: "ent", count: 5, label: "Entes derrotados" },
+    reward: { xp: 4000, gold: 600, item: { kind: "equipment", tier: 3, rarity: "rare" } },
+    requires: ["wolves"],
+    dialogue: {
+      offer: "Algo acordou os entes. Eles eram pacíficos; agora esmagam qualquer um que pisa nas raízes. Cinco deles, por favor. Eles são lentos, mas cada golpe vale por três.",
+      progress: "O aviso deles é longo. Saia da área e bata pelas costas.",
+      complete: "A mata respira melhor. Leve isto: um caçador deixou no acampamento e nunca voltou para buscar.",
+    },
+  },
+  {
+    id: "spirits",
+    title: "Ecos de Elar",
+    giver: "ranger",
+    description: "Espíritos élficos assombram as ruínas a leste e atiram em quem se aproxima. Derrote 6 deles.",
+    objective: { kind: "kill", archetype: "elvenSpirit", count: 6, label: "Espíritos derrotados" },
+    reward: { xp: 4000, gold: 600, item: { kind: "equipment", tier: 3, rarity: "rare" } },
+    requires: ["wolves"],
+    dialogue: {
+      offer: "A leste ficam as ruínas de Elar, uma cidade élfica. Os espíritos dos arqueiros ainda guardam os muros e atiram de longe. Seis deles, e a gente volta a passar por lá.",
+      progress: "Eles fogem para atirar de novo. Feche a distância rápido ou saia da linha do tiro.",
+      complete: "Os ecos se calaram. Isto estava num altar das ruínas; é seu por direito.",
+    },
+  },
+  {
+    id: "treant",
+    title: "O Ente Ancião",
+    giver: "ranger",
+    description: "Na clareira ao norte desperta o Ente Ancião, coração doente da floresta. Derrote-o.",
+    objective: { kind: "kill", archetype: "ancientTreant", count: 1, label: "Ente Ancião derrotado" },
+    reward: { xp: 9000, gold: 1500, item: { kind: "equipment", tier: 3, rarity: "epic" } },
+    requires: ["ents", "spirits"],
+    dialogue: {
+      offer: "Lobos, entes, espíritos: tudo vem de um lugar. Na clareira ao norte, depois do rio, o Ente Ancião acordou doente. Ele cospe esporos que envenenam o chão e chama a matilha quando sangra. Derrube o velho e a floresta volta a dormir.",
+      progress: "Atravesse o rio rumo ao norte. Cuidado com as nuvens de esporos: o chão fica tóxico por um bom tempo.",
+      complete: "A floresta adormeceu de novo. Você fez o que nenhum de nós conseguiu. Isto é seu, e as peças da casca dele também.",
+    },
+  },
 ];
 
 export function questById(id: string): QuestDefinition | undefined {
@@ -222,7 +279,8 @@ export function completeQuest(world: World, player: Entity, id: string): boolean
   log[id] = { state: "completed", progress: def.objective.count };
 
   const rewardItems: Item[] = [];
-  if (def.reward.item?.kind === "equipment") rewardItems.push(createEquipment(world.random, def.reward.item.tier, def.reward.item.rarity));
+  // O equipamento de recompensa vem no nível do herói (acima de 10, mais forte).
+  if (def.reward.item?.kind === "equipment") rewardItems.push(createEquipment(world.random, def.reward.item.tier, def.reward.item.rarity, player.progression?.level ?? 1));
   if (def.reward.item?.kind === "potion") rewardItems.push(createPotion(def.reward.item.size, def.reward.item.quantity));
   for (const item of rewardItems) {
     if (player.inventory && addItem(player.inventory, item)) continue;

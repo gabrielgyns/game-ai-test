@@ -272,6 +272,11 @@ export function applyDamage(world: World, source: Entity, target: Entity, amount
     source.health.current = Math.min(source.health.max, source.health.current + (dealt * lifesteal) / 100);
   }
 
+  // Casca de Espinhos (Ente Ancião, 3 peças): quem fere leva parte do dano de volta.
+  if (kind !== "hazard" && dealt > 0 && source !== target && isAlive(source) && hasSetPower(target, "thorns")) {
+    applyDamage(world, target, source, Math.max(1, Math.round(dealt * SET_POWERS.thornsFraction)), "hazard");
+  }
+
   // Veneno (Rainha, 3 peças): golpe básico deixa o alvo lento.
   if (kind === "basic" && hasSetPower(source, "venom") && target.health.current > 0) {
     applySlow(world, target, SET_POWERS.venomSlow, SET_POWERS.venomSeconds);
@@ -331,6 +336,7 @@ export const SET_POWERS = {
   venomSeconds: 2,
   soulHarvestHeal: 0.06,
   soulHarvestCooldown: 1,
+  thornsFraction: 0.3,
 };
 
 const REGEN_DELAY_SECONDS = 5;

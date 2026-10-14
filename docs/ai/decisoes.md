@@ -189,3 +189,10 @@ das paredes (só as duas camadas de voxel que dão para o chão), o topo, arcos 
 `VoxelBuilder` por andar, e o piso noutro: o greedy meshing funde o que é igual e o recorte de paredes
 continua no shader. Custa ~0,9 s ao entrar ou descer, em troca de relevo nos blocos sem pesar no quadro.
 
+## D37. Zonas como regiões do mesmo World
+Como a cripta (D28), cada zona é um quadrado próprio no plano (Vale em 0,0; Floresta em 0,−420). As
+funções do terreno, a água, o bioma e o limite de movimento perguntam `zoneAt(x, z)`. Assim simulação,
+save (a posição já diz a zona), respawn e IA continuam iguais, e todas as zonas existem ao mesmo tempo
+(poucos inimigos por zona: custo pequeno). A apresentação monta o desenho de uma zona na primeira
+visita e só mostra a zona do herói. Viajar é um portão com F, como um warp do Ragnarok.
+

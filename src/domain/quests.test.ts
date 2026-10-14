@@ -83,10 +83,11 @@ describe("quests", () => {
     expect(questState(player.quests!, "king")).toBe("available");
   });
 
-  it("mundo gerado tem os quatro NPCs no santuário e eles não são alvo de golpes", () => {
+  it("mundo gerado tem os quatro NPCs no santuário (e a Guardiã na floresta); nenhum é alvo de golpes", () => {
     const world = generateWorld();
-    const npcs = [...world.npcs()];
+    const npcs = [...world.npcs()].filter((n) => n.npc!.id !== "ranger");
     expect(npcs.map((n) => n.npc!.id).sort()).toEqual(["elder", "guard", "merchant", "smith"]);
+    expect([...world.npcs()].some((n) => n.npc!.id === "ranger")).toBe(true);
     for (const n of npcs) expect(Math.hypot(n.transform.position.x, n.transform.position.z)).toBeLessThan(10);
     const player = world.player!;
     player.combat.wantsAttack = true;
@@ -99,7 +100,7 @@ describe("quests", () => {
   it("todas as quests referenciam NPCs e pré-requisitos existentes", () => {
     const ids = new Set(QUESTS.map((q) => q.id));
     for (const q of QUESTS) {
-      expect(["elder", "smith", "guard"]).toContain(q.giver);
+      expect(["elder", "smith", "guard", "ranger"]).toContain(q.giver);
       for (const r of q.requires) expect(ids.has(r)).toBe(true);
     }
     expect(ids.has("spiderQueen")).toBe(true);

@@ -1,5 +1,6 @@
 import { clamp, lerpAngle, yawFromDirection } from "../math";
 import { isWater, terrainHeight, WORLD_HALF } from "../terrain";
+import { zoneAt } from "../zones";
 import type { World } from "../world";
 import { speedFactor } from "../status";
 import { canStand, inDungeonSpace } from "../dungeon";
@@ -24,8 +25,10 @@ export function movementSystem(world: World, dt: number): void {
         if (canStand(world, nx, pos.z)) pos.x = nx;
         if (canStand(world, pos.x, nz)) pos.z = nz;
       } else {
-        pos.x = clamp(nx, -WORLD_HALF + 2, WORLD_HALF - 2);
-        pos.z = clamp(nz, -WORLD_HALF + 2, WORLD_HALF - 2);
+        // Cada zona é um quadrado próprio: ninguém sai pela borda.
+        const zone = zoneAt(pos.x, pos.z);
+        pos.x = clamp(nx, zone.center.x - WORLD_HALF + 2, zone.center.x + WORLD_HALF - 2);
+        pos.z = clamp(nz, zone.center.z - WORLD_HALF + 2, zone.center.z + WORLD_HALF - 2);
       }
     }
     const targetYaw = dash ? yawFromDirection(intent) : (e.movement.faceYaw ?? (moving ? yawFromDirection(intent) : undefined));

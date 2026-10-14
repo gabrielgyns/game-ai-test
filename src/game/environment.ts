@@ -2,7 +2,8 @@ import * as THREE from "three";
 import { terrainHeight, SPAWN_FLAT_RADIUS, WORLD_HALF } from "../domain/terrain";
 import { BOSS_HOME, seededRandom } from "../domain/worldgen";
 import { biomeAt, DESERT_BOSS_HOME, SWAMP_BOSS_HOME } from "../domain/biomes";
-import { isWater } from "../domain/terrain";
+import { FOREST_BOSS_HOME, FOREST_CAMP, FOREST_RUINS, forestRiverZ, isWater } from "../domain/terrain";
+import { ZONE_GATES, ZONES, type ZoneDefinition } from "../domain/zones";
 import { DUNGEON_ENTRANCE } from "../domain/dungeon";
 import { ALTAR_SPOT, STASH_SPOT } from "../domain/sanctuary";
 import { VoxelBuilder, voxelMaterial } from "./voxel";
@@ -99,6 +100,76 @@ export function placeProps(seed = 4242): PropPlacement[] {
   return out;
 }
 
+/** Adereços da Floresta Ancestral (coordenadas locais da zona, convertidas para o mundo). */
+interface ForestScatter {
+  kind: PropKind;
+  count: number;
+  scale: [number, number];
+  /** Onde pode nascer, em coordenadas locais da zona. */
+  where?: (lx: number, lz: number, h: number) => boolean;
+}
+
+const notRuins = (lx: number) => lx < 42;
+const FOREST_SCATTER: ForestScatter[] = [
+  { kind: "giantTree1", count: 30, scale: [0.9, 1.15], where: notRuins },
+  { kind: "giantTree2", count: 30, scale: [0.9, 1.15], where: notRuins },
+  { kind: "darkOak", count: 100, scale: [0.9, 1.2], where: notRuins },
+  { kind: "birch", count: 25, scale: [0.9, 1.1], where: notRuins },
+  { kind: "pine", count: 30, scale: [0.9, 1.25], where: (_x, _z, h) => h > 3 },
+  { kind: "fallenLog", count: 24, scale: [0.8, 1.2] },
+  { kind: "boulder1", count: 25, scale: [0.8, 1.4] },
+  { kind: "boulder2", count: 25, scale: [0.8, 1.4] },
+  { kind: "rocks", count: 10, scale: [0.9, 1.2] },
+  { kind: "bush", count: 45, scale: [0.8, 1.2] },
+  { kind: "berryBush", count: 15, scale: [0.8, 1.1] },
+  { kind: "glowMushrooms", count: 30, scale: [0.6, 1.1] },
+  { kind: "elvenArch", count: 7, scale: [0.95, 1.1], where: (lx, lz) => Math.hypot(lx - FOREST_RUINS.x, lz - FOREST_RUINS.z) < 34 },
+  { kind: "elvenStatue", count: 7, scale: [0.95, 1.1], where: (lx, lz) => Math.hypot(lx - FOREST_RUINS.x, lz - FOREST_RUINS.z) < 34 },
+  { kind: "brokenColumn", count: 14, scale: [0.9, 1.2], where: (lx) => lx > 38 },
+];
+
+export function placeForestProps(seed = 5151): PropPlacement[] {
+  const zone = ZONES.floresta;
+  const rand = seededRandom(seed);
+  const out: PropPlacement[] = [];
+  const world = (lx: number, lz: number) => ({ x: zone.center.x + lx, z: zone.center.z + lz });
+  const push = (kind: PropKind, lx: number, lz: number, yaw: number, scale: number, sink = SINK) => {
+    const p = world(lx, lz);
+    out.push({ kind, x: p.x, y: terrainHeight(p.x, p.z) - sink, z: p.z, yaw, scale });
+  };
+  const free = (lx: number, lz: number) => {
+    const p = world(lx, lz);
+    if (isWater(p.x, p.z) || Math.abs(lz - forestRiverZ(lx)) < 6) return false;
+    if (Math.hypot(lx - FOREST_CAMP.x, lz - FOREST_CAMP.z) < 15) return false;
+    if (Math.hypot(lx - FOREST_BOSS_HOME.x, lz - FOREST_BOSS_HOME.z) < 20) return false;
+    return Math.max(Math.abs(lx), Math.abs(lz)) < zone.half - 6;
+  };
+  for (const s of FOREST_SCATTER) {
+    let placed = 0;
+    for (let tries = 0; placed < s.count && tries < s.count * 60; tries++) {
+      const lx = (rand() * 2 - 1) * (zone.half - 6), lz = (rand() * 2 - 1) * (zone.half - 6);
+      const p = world(lx, lz);
+      if (!free(lx, lz) || (s.where && !s.where(lx, lz, terrainHeight(p.x, p.z)))) continue;
+      push(s.kind, lx, lz, rand() * Math.PI * 2, s.scale[0] + rand() * (s.scale[1] - s.scale[0]));
+      placed++;
+    }
+  }
+  // Acampamento da Guardiã: duas barracas e a fogueira no meio.
+  push("tent", FOREST_CAMP.x - 7, FOREST_CAMP.z - 3, 0.6, 1, 0);
+  push("tent", FOREST_CAMP.x + 8, FOREST_CAMP.z + 3, -2.2, 1, 0);
+  push("campfire", FOREST_CAMP.x, FOREST_CAMP.z, 0, 1, 0);
+  // Clareira do Ente Ancião: anel de cogumelos azuis e árvores ancestrais em volta.
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    push("glowMushrooms", FOREST_BOSS_HOME.x + Math.cos(a) * 15, FOREST_BOSS_HOME.z + Math.sin(a) * 15, a, 0.8 + (i % 3) * 0.15);
+  }
+  for (let i = 0; i < 7; i++) {
+    const a = (i / 7) * Math.PI * 2 + 0.3;
+    push(i % 2 ? "giantTree1" : "giantTree2", FOREST_BOSS_HOME.x + Math.cos(a) * 24, FOREST_BOSS_HOME.z + Math.sin(a) * 24, a, 1.1);
+  }
+  return out;
+}
+
 export interface Environment {
   group: THREE.Group;
   props: PropField;
@@ -106,11 +177,12 @@ export interface Environment {
   update(camera: THREE.Camera): void;
 }
 
-/** Árvores, pedras, marcos das arenas e a barraca da Mercadora. */
-export function createEnvironment(seed = 4242): Environment {
+/** Árvores, pedras e marcos de uma zona; no vale, também a barraca da Mercadora. */
+export function createEnvironment(seed = 4242, zone: ZoneDefinition = ZONES.vale): Environment {
   const group = new THREE.Group();
-  const props = new PropField(placeProps(seed));
+  const props = new PropField(zone.id === "floresta" ? placeForestProps() : placeProps(seed));
   group.add(props.group);
+  if (zone.id !== "vale") return { group, props, update: (camera) => (props.buildPending(), props.update(camera)) };
 
   // Barraca da Mercadora, atrás dela, com o balcão virado para o centro do santuário.
   const merchantSpot = { x: 6, z: 3.5 };
@@ -173,6 +245,7 @@ function randomPoint(rand: () => number, minRadius: number, biome?: Biome, heigh
     if (biome && biomeAt(x, z) !== biome) continue;
     if (isWater(x, z)) continue;
     if (Math.hypot(x - DUNGEON_ENTRANCE.x, z - DUNGEON_ENTRANCE.z) < 5) continue; // portal da cripta
+    if (ZONE_GATES.some((g) => Math.hypot(x - g.at.x, z - g.at.z) < 7)) continue; // portões entre zonas
     if (height) {
       const h = terrainHeight(x, z);
       if (h < height[0] || h > height[1]) continue;

@@ -4,6 +4,7 @@ import { parseVox, voxToBuilder } from "../vox";
 import { ageAltar, bones, cactus, cocoon, goblinTotem, mushrooms, obelisk, shrinePillar, stashChest } from "./landmarks";
 import { boulder, rockCluster, sandstone, slab } from "./rocks";
 import { birch, bush, deadTree, oak, pine } from "./trees";
+import { brokenColumn, campfire, elvenArch, elvenStatue, fallenLog, giantTree, tent } from "./forest";
 
 /**
  * Catálogo do cenário. Cada modelo tem um id (que também é o nome do arquivo .vox que pode
@@ -55,6 +56,18 @@ export const PROP_MODELS = {
   obelisk: model("obelisco", "Obelisco do deserto", () => obelisk(4, false)),
   obeliskBroken: model("obelisco-quebrado", "Obelisco quebrado", () => obelisk(9, true)),
   stash: model("bau-do-santuario", "Baú do santuário", () => stashChest(3)),
+  // Floresta Ancestral.
+  // Árvores ancestrais: gigantes (~8 m), em voxels de 1/9 m para caber no orçamento de triângulos.
+  giantTree1: model("arvore-ancestral-1", "Árvore ancestral 1", () => giantTree(5, 72), 1 / 9),
+  giantTree2: model("arvore-ancestral-2", "Árvore ancestral 2", () => giantTree(17, 64), 1 / 9),
+  darkOak: model("carvalho-sombrio", "Carvalho sombrio", () => oak({ seed: 51, height: 54, leaves: ["#173a1e", "#1f4a24", "#28592a", "#326a30", "#3d7c36", "#5a9a44"] })),
+  fallenLog: model("tronco-caido", "Tronco caído", () => fallenLog(7)),
+  glowMushrooms: model("cogumelos-azuis", "Cogumelos azuis", () => mushrooms(11, true)),
+  elvenArch: model("arco-elfico", "Arco élfico", () => elvenArch(3)),
+  elvenStatue: model("estatua-elfica", "Estátua élfica", () => elvenStatue(8)),
+  brokenColumn: model("coluna-quebrada", "Coluna élfica quebrada", () => brokenColumn(4)),
+  tent: model("barraca", "Barraca do acampamento", () => tent(2)),
+  campfire: model("fogueira", "Fogueira", () => campfire(3)),
   altar: model("altar-das-eras", "Altar das Eras", () => ageAltar(6)),
 } satisfies Record<string, PropModel>;
 

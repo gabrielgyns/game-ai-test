@@ -4,7 +4,7 @@ import type { Item, Rarity } from "../domain/items";
 import type { ClassId } from "../domain/classes";
 import { CLASSES, CLASS_ORDER } from "../domain/classes";
 import { ENEMY_TEMPLATES, createEnemy, createPlayer, type EnemyKind } from "../domain/factories";
-import { createGoblinKing, createScorpionEmperor, createSkeletonLord, createSpiderQueen } from "../domain/boss";
+import { createAncientTreant, createGoblinKing, createScorpionEmperor, createSkeletonLord, createSpiderQueen } from "../domain/boss";
 import { NPC_DEFS, createNpc } from "../domain/npc";
 import { SKILLS, type SkillId } from "../domain/skills";
 import { RARITY_LABEL } from "../domain/items";
@@ -128,6 +128,9 @@ const ENEMY_DESCRIPTIONS: Record<EnemyKind, string> = {
   skeleton: "Esqueleto da cripta: costelas vazadas, trapo roxo na cintura, olhos azuis nas órbitas e espada enferrujada.",
   skeletonArcher: "Esqueleto com capuz e aljava. Atira de longe na cripta; os olhos verdes entregam a posição.",
   banditArcher: "Salteador de roupa anil, arco longo e aljava. O aviso é uma linha no chão: saia dela de lado.",
+  wolf: "Lobo cinzento da Floresta Ancestral: caça em matilha, trota com quatro patas e morde rápido.",
+  ent: "Ente Jovem: uma árvore que anda, com pés de raiz, braços de galho e olhos verdes no tronco. Lento e devastador.",
+  elvenSpirit: "Espírito élfico das ruínas de Elar: arqueiro translúcido de capuz azul, que atira de longe e foge.",
 };
 
 const PROJECTILE_DESCRIPTIONS: Record<string, string> = {
@@ -212,6 +215,15 @@ export function buildCatalog(): Exhibit[] {
       description: "Chefe da Cripta Esquecida. Armadura negra sobre costelas expostas, capa roxa rasgada, coroa enferrujada e montante de osso com runa. Golpe Sepulcral, Rajada de Ossos em leque, Pisão Sepulcral, Investida Fantasma e esqueletos na fúria. Escala com o nível da cripta.",
       size: 5,
       spawn: (id) => createSkeletonLord(id, { x: 0, y: 0, z: 0 }),
+    },
+    {
+      kind: "character",
+      id: "boss.ancientTreant",
+      group: "Chefes",
+      label: "Ente Ancião",
+      description: "Chefe da Floresta Ancestral (nível 20). Uma árvore gigante coberta de musgo e cogumelos que brilham. Chicote de Vinhas, Raiz Esmagadora, Nuvem de Esporos que envenena o chão, Lascas de Casca em leque e lobos na fúria.",
+      size: 6.5,
+      spawn: (id) => createAncientTreant(id, { x: 0, y: 0, z: 0 }),
     },
   );
 

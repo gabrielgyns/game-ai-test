@@ -38,6 +38,7 @@ export const NPC_DEFS: NpcDefinition[] = [
       "Quando a área vermelha aparecer no chão, sai dela ou rola com Espaço. Dentro dela, o golpe acerta.",
       "Gosmas perto, goblins no meio, orcs na borda. O norte é coisa de gente preparada.",
       "Shift corre. Andar de ré com S é mais lento, mas mantém o inimigo na sua frente.",
+      "Ao norte, perto do platô do Rei Goblin, a muralha tem uma passagem: um portão leva à Floresta Ancestral. Lá a coisa é séria, nível 12 para cima.",
     ],
   },
   {
@@ -49,6 +50,16 @@ export const NPC_DEFS: NpcDefinition[] = [
       "Ouro parado não mata gosma. Vendo poções a qualquer hora, e o que chega nas caravanas muda todo dia.",
       "Repare nos nomes: \"da Serpente\" cura sempre, \"da Águia\" acerta crítico, \"do Vampiro\" bebe a vida de quem apanha.",
       "Vendeu sem querer? Eu guardo os últimos itens. Recompra pelo mesmo preço, sem choro.",
+    ],
+  },
+  {
+    id: "ranger",
+    name: "Guardiã Lyra",
+    archetype: "ranger",
+    idle: [
+      "A floresta é antiga e não gosta de pressa. Os lobos caçam em bando: recue até um tronco e lute de costas para ele.",
+      "Os entes batem devagar, mas cada golpe derruba um homem. Leia o aviso e saia do caminho.",
+      "O portão ao sul leva de volta ao Vale. Se cair aqui, acorda no acampamento.",
     ],
   },
 ];

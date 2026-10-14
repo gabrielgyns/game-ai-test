@@ -10,10 +10,10 @@ import { itemPower, newItemId, scaleStats, type EquipSlot, type Item, type ItemS
  *
  * Analogia: as peças avulsas são boas cartas; o conjunto é a combinação que vira a mão.
  */
-export type SetId = "goblinKing" | "spiderQueen" | "scorpionEmperor" | "skeletonLord";
+export type SetId = "goblinKing" | "spiderQueen" | "scorpionEmperor" | "skeletonLord" | "ancientTreant";
 
 /** Poderes de 3 peças. Cada um é lido num ponto do combate (ver `combat.ts`). */
-export type SetPower = "royalFury" | "venom" | "sandShell" | "soulHarvest";
+export type SetPower = "royalFury" | "venom" | "sandShell" | "soulHarvest" | "thorns";
 
 interface PieceTemplate {
   name: string;
@@ -91,6 +91,20 @@ export const SETS: Record<SetId, SetDefinition> = {
     accessory: { name: "Anel de Ossos", icon: "ring", stats: { damage: 8, maxHealth: 25 } },
     two: { stat: "cooldownPercent", value: 10, text: "-10% de recarga das habilidades" },
     three: { power: "soulHarvest", text: "Colheita de Almas: cada abate cura 6% da vida e adianta as habilidades em 1 s" },
+  },
+  ancientTreant: {
+    id: "ancientTreant",
+    name: "Coração da Floresta",
+    boss: "ancientTreant",
+    weapon: {
+      warrior: { name: "Machado de Cerne", icon: "axe", stats: { damage: 34 } },
+      archer: { name: "Arco de Freixo", icon: "bow", stats: { damage: 33 } },
+      mage: { name: "Cajado de Raiz", icon: "staff", stats: { damage: 35 } },
+    },
+    armor: { name: "Casca do Ancião", icon: "armor", visual: "chain", stats: { maxHealth: 160 } },
+    accessory: { name: "Amuleto de Seiva", icon: "amulet", stats: { damage: 9, maxHealth: 30 } },
+    two: { stat: "regen", value: 6, text: "+6 vida/s, mesmo em combate" },
+    three: { power: "thorns", text: "Casca de Espinhos: quem te fere leva 30% do dano de volta" },
   },
 };
 

@@ -3,9 +3,10 @@ import type { Entity } from "../domain/components";
 import { DUNGEON_ORIGIN, type DungeonRun } from "../domain/dungeon";
 import { Tile, tileOf } from "../domain/dungeonLayout";
 import { mapMarkers, type MapMarker } from "../domain/mapMarkers";
-import { DUNGEON_REGION_X, isWater, terrainHeight, WORLD_HALF } from "../domain/terrain";
+import { DUNGEON_REGION_X, FOREST_RUINS, isWater, terrainHeight, WORLD_HALF } from "../domain/terrain";
 import type { World } from "../domain/world";
-import { placeProps } from "./environment";
+import { placeForestProps, placeProps } from "./environment";
+import { zoneAt, type ZoneDefinition } from "../domain/zones";
 
 /** Uma imagem de fundo do mapa e o retângulo do mundo que ela cobre. */
 interface MapBase {
@@ -18,7 +19,7 @@ interface MapBase {
 /** Metros visíveis do centro à borda do minimapa. */
 const MINI_RANGE = 48;
 /** Marcadores que, fora do alcance, ficam presos na borda apontando a direção. */
-const PINNED = new Set<MapMarker["kind"]>(["boss", "questOffer", "questTurnIn", "portal", "chest", "exit", "stairs"]);
+const PINNED = new Set<MapMarker["kind"]>(["boss", "questOffer", "questTurnIn", "portal", "chest", "exit", "stairs", "gate"]);
 
 const LEGEND: { kind: MapMarker["kind"]; label: string }[] = [
   { kind: "questOffer", label: "Quest nova" },
@@ -27,6 +28,7 @@ const LEGEND: { kind: MapMarker["kind"]; label: string }[] = [
   { kind: "enemy", label: "Inimigo" },
   { kind: "boss", label: "Chefe" },
   { kind: "portal", label: "Portal da cripta" },
+  { kind: "gate", label: "Portão para outra região" },
   { kind: "exit", label: "Saída" },
   { kind: "chest", label: "Baú da cripta" },
   { kind: "stairs", label: "Escada" },
@@ -40,7 +42,7 @@ const LEGEND: { kind: MapMarker["kind"]; label: string }[] = [
  * Fundo do vale, desenhado uma vez: cor por bioma e altura, sombreado de relevo (luz vindo do
  * noroeste), água, a praça do santuário e as árvores como pontinhos escuros.
  */
-function overworldBase(): MapBase {
+function overworldBase(zone: ZoneDefinition): MapBase {
   const ppm = 2; // pixels por metro
   const size = WORLD_HALF * 2;
   const canvas = document.createElement("canvas");
@@ -48,13 +50,18 @@ function overworldBase(): MapBase {
   const ctx = canvas.getContext("2d")!;
   const img = ctx.createImageData(canvas.width, canvas.height);
   const rgb = (hex: string): [number, number, number] => [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
-  const COLORS = { meadow: rgb("#5f9a46"), swamp: rgb("#4a5e3a"), desert: rgb("#d4b47a"), water: rgb("#3c6b86"), rock: rgb("#8a8a84"), snow: rgb("#e8ecf0"), plaza: rgb("#cdb88a") };
+  const COLORS = {
+    meadow: rgb("#5f9a46"), swamp: rgb("#4a5e3a"), desert: rgb("#d4b47a"), forest: rgb("#2f5a2c"), ruins: rgb("#3a6232"),
+    water: rgb("#3c6b86"), rock: rgb("#8a8a84"), snow: rgb("#e8ecf0"), plaza: rgb("#cdb88a"),
+  };
+  const ox = zone.center.x, oz = zone.center.z;
   for (let py = 0; py < canvas.height; py++)
     for (let px = 0; px < canvas.width; px++) {
-      const x = -WORLD_HALF + (px + 0.5) / ppm, z = -WORLD_HALF + (py + 0.5) / ppm;
+      const x = ox - WORLD_HALF + (px + 0.5) / ppm, z = oz - WORLD_HALF + (py + 0.5) / ppm;
       const h = terrainHeight(x, z);
       let c = isWater(x, z) ? COLORS.water : h > 10 ? COLORS.snow : h > 7 ? COLORS.rock : COLORS[biomeAt(x, z)];
-      if (Math.hypot(x, z) < 10) c = COLORS.plaza;
+      if (zone.id === "vale" && Math.hypot(x, z) < 10) c = COLORS.plaza;
+      if (zone.id === "floresta" && Math.hypot(x - ox - FOREST_RUINS.x, z - oz - FOREST_RUINS.z) < 14) c = COLORS.rock; // pátio das ruínas
       // Relevo: degrau virado para o noroeste clareia, para o sudeste escurece.
       const slope = h - terrainHeight(x - 1, z - 1);
       const k = 1 + Math.max(-0.25, Math.min(0.25, slope * 0.12)) + h * 0.012;
@@ -66,15 +73,15 @@ function overworldBase(): MapBase {
     }
   ctx.putImageData(img, 0, 0);
   // Árvores e pedras grandes: pontos escuros (dão textura e ajudam a se orientar).
-  for (const p of placeProps()) {
-    const big = /oak|birch|pine|deadTree|mushrooms|cactus|boulder|rocks|sandstone|slab/.test(p.kind);
+  for (const p of zone.id === "floresta" ? placeForestProps() : placeProps()) {
+    const big = /oak|Oak|birch|pine|deadTree|mushrooms|Mushrooms|cactus|boulder|rocks|sandstone|slab|giantTree|elven|Column/.test(p.kind);
     if (!big) continue;
     ctx.fillStyle = /pine/.test(p.kind) ? "rgba(20, 50, 30, 0.55)" : /boulder|rocks|sandstone|slab/.test(p.kind) ? "rgba(70, 66, 60, 0.5)" : "rgba(25, 55, 25, 0.45)";
     ctx.beginPath();
-    ctx.arc((p.x + WORLD_HALF) * ppm, (p.z + WORLD_HALF) * ppm, /pine|oak|birch|deadTree/.test(p.kind) ? 2.6 : 1.6, 0, Math.PI * 2);
+    ctx.arc((p.x - ox + WORLD_HALF) * ppm, (p.z - oz + WORLD_HALF) * ppm, /giantTree/.test(p.kind) ? 4 : /pine|oak|Oak|birch|deadTree/.test(p.kind) ? 2.6 : 1.6, 0, Math.PI * 2);
     ctx.fill();
   }
-  return { canvas, x0: -WORLD_HALF, z0: -WORLD_HALF, size };
+  return { canvas, x0: ox - WORLD_HALF, z0: oz - WORLD_HALF, size };
 }
 
 /** Fundo da cripta, a partir da planta do domínio: chão claro, pilares escuros, salas limpas em verde. */
@@ -135,6 +142,17 @@ function drawMarker(ctx: CanvasRenderingContext2D, kind: MapMarker["kind"], x: n
       ctx.rotate(-Math.PI / 4);
       ctx.fillStyle = "#ffe0e0";
       ctx.fillRect(-r * 0.25, -r * 0.8, r * 0.5, r * 1.6);
+      break;
+    case "gate":
+      ctx.fillStyle = "#7ad86a";
+      ctx.beginPath();
+      ctx.moveTo(-r * 1.1, r * 1.1);
+      ctx.lineTo(-r * 1.1, -r * 0.2);
+      ctx.arc(0, -r * 0.2, r * 1.1, Math.PI, 0);
+      ctx.lineTo(r * 1.1, r * 1.1);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
       break;
     case "portal":
     case "exit":
@@ -210,7 +228,7 @@ export class Minimap {
   private readonly region: HTMLElement;
   private readonly full: HTMLElement;
   private readonly fullCanvas: HTMLCanvasElement;
-  private overworld: MapBase | null = null;
+  private readonly zoneBases = new Map<string, MapBase>();
   private dungeon: { base: MapBase; key: string } | null = null;
 
   constructor() {
@@ -246,8 +264,10 @@ export class Minimap {
       if (this.dungeon?.key !== key) this.dungeon = { base: dungeonBase(run), key };
       return this.dungeon.base;
     }
-    this.overworld ??= overworldBase();
-    return this.overworld;
+    const zone = zoneAt(player.transform.position.x, player.transform.position.z);
+    let base = this.zoneBases.get(zone.id);
+    if (!base) this.zoneBases.set(zone.id, (base = overworldBase(zone)));
+    return base;
   }
 
   update(world: World, player: Entity, cameraYaw: number): void {

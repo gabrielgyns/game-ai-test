@@ -24,6 +24,9 @@ const LOOT_TABLES: Record<string, LootTable> = {
   skeletonArcher: { tier: 2, equipmentChance: 0.4, potionChance: 0.3, largePotionChance: 0.4 },
   goblinArcher: { tier: 2, equipmentChance: 0.45, potionChance: 0.3, largePotionChance: 0.25 },
   banditArcher: { tier: 3, equipmentChance: 0.7, potionChance: 0.35, largePotionChance: 0.6 },
+  wolf: { tier: 3, equipmentChance: 0.45, potionChance: 0.3, largePotionChance: 0.7 },
+  ent: { tier: 3, equipmentChance: 0.9, potionChance: 0.5, largePotionChance: 0.8 },
+  elvenSpirit: { tier: 3, equipmentChance: 0.7, potionChance: 0.35, largePotionChance: 0.7 },
 };
 
 /** Sorteia e espalha os drops de um inimigo morto ao redor de onde ele caiu. */

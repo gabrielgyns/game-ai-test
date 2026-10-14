@@ -46,6 +46,10 @@ import { roomAt } from "./domain/dungeonLayout";
 import { ShopUI } from "./game/shopUI";
 import { SkillTreeUI } from "./game/skillTreeUI";
 import { Minimap } from "./game/minimap";
+import { gateNear, travel, ZONE_GATES, ZONES, zoneAt, type ZoneId } from "./domain/zones";
+import { FOREST_CAMP } from "./domain/terrain";
+import type { Environment } from "./game/environment";
+import type { Portal } from "./game/portal";
 import { StashUI } from "./game/stashUI";
 import { TierUI } from "./game/tierUI";
 import { sanctuaryInteraction } from "./domain/sanctuary";
@@ -71,7 +75,7 @@ renderer.toneMapping = THREE.NoToneMapping;
 const scene = new THREE.Scene();
 // Céu, sol, lua e neblina seguem o relógio do mundo (dayCycle no domínio).
 const sky = new DayNightSky(scene);
-const foliage = new Foliage();
+const foliage = new Foliage(9173, ZONES.vale);
 const minimap = new Minimap();
 scene.add(foliage.group);
 const particles = new Particles(scene);
@@ -79,7 +83,7 @@ const shake = new CameraShake();
 /** Congela a simulação por alguns centésimos num golpe forte ("hit-stop"), para o impacto pesar. */
 let hitStop = 0;
 
-const terrainMesh = createTerrainMesh();
+const terrainMesh = createTerrainMesh(ZONES.vale);
 scene.add(terrainMesh);
 // Modelos desenhados no MagicaVoxel (assets/vox/*.vox) substituem os esculpidos por código.
 await loadVoxOverrides();
@@ -93,6 +97,53 @@ scene.add(entrancePortal.group);
 // Braseiros nos pilares do santuário: chamas que brilham mais à noite e uma luz quente no centro.
 const braziers = createBraziers();
 scene.add(braziers.group);
+
+/**
+ * O que se desenha de cada zona: terreno, vegetação, cenário e os portões. O vale já existe no boot
+ * (os objetos acima); as outras zonas são montadas na primeira visita (leva ~1 s, na hora do portão).
+ */
+interface ZoneVisuals {
+  group: THREE.Group;
+  environment: Environment;
+  foliage: Foliage;
+  gates: Portal[];
+}
+const zoneVisuals = new Map<ZoneId, ZoneVisuals>();
+const FOREST_FOG = new THREE.Color("#3a5a48");
+const campfireLight = new THREE.PointLight("#ff9a4a", 0, 18, 1.4);
+
+function gatePortals(zone: ZoneId, group: THREE.Group): Portal[] {
+  return ZONE_GATES.filter((g) => g.from === zone).map((g) => {
+    const portal = createPortal("#7ad86a");
+    portal.group.position.set(g.at.x, terrainHeight(g.at.x, g.at.z), g.at.z);
+    portal.group.rotation.y = g.yaw;
+    group.add(portal.group);
+    return portal;
+  });
+}
+
+function ensureZoneVisuals(id: ZoneId): ZoneVisuals {
+  let zv = zoneVisuals.get(id);
+  if (zv) return zv;
+  const group = new THREE.Group();
+  if (id === "vale") {
+    group.add(terrainMesh, foliage.group, environment.group, braziers.group, entrancePortal.group);
+    zv = { group, environment, foliage, gates: gatePortals(id, group) };
+  } else {
+    const zone = ZONES[id];
+    const env = createEnvironment(5151, zone);
+    const fol = new Foliage(9173 + 31, zone);
+    group.add(createTerrainMesh(zone), fol.group, env.group);
+    const camp = { x: zone.center.x + FOREST_CAMP.x, z: zone.center.z + FOREST_CAMP.z };
+    campfireLight.position.set(camp.x, terrainHeight(camp.x, camp.z) + 1.2, camp.z);
+    group.add(campfireLight);
+    zv = { group, environment: env, foliage: fol, gates: gatePortals(id, group) };
+  }
+  scene.add(group);
+  zoneVisuals.set(id, zv);
+  return zv;
+}
+ensureZoneVisuals("vale");
 
 // Saves em slots. Três jeitos de abrir a página:
 // - pedido de novo jogo na sessão (escolhido na tela de saves): gera o mundo com a classe e o nome;
@@ -209,6 +260,11 @@ function currentInteraction(): { label: string; act: () => void } | null {
         if (confirm("Sair agora fecha a cripta. Na próxima entrada ela será outra. Sair?")) afterDungeonChange(() => exitDungeon(world, player, "leave"));
       },
     };
+  }
+  const gate = gateNear(player.transform.position);
+  if (gate) {
+    const to = ZONES[gate.to];
+    return { label: `Viajar para ${to.name} (inimigos nível ${to.levels[0]} a ${to.levels[1]})`, act: () => afterDungeonChange(() => travel(world, player)) };
   }
   const spot = sanctuaryInteraction(player);
   if (spot === "stash") return { label: "Abrir o baú do santuário", act: () => openPanel(stashUI) };
@@ -809,6 +865,14 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         hud.pushLog(`Você entrou na ${DUNGEON_NAME} (nível ${ev.level}): ${ev.rooms} salas e um chefe. Três vidas.`, "level");
         floats.spawn(player.transform.position, DUNGEON_NAME.toUpperCase(), "#c08aff", 1.4);
         break;
+      case "zoneTravel": {
+        const to = ZONES[ev.to as ZoneId];
+        audio.play("bossPhase");
+        floats.spawn(player.transform.position, to.name.toUpperCase(), "#9ae08a", 1.4);
+        hud.pushLog(`Você chegou a ${to.name} (inimigos nível ${to.levels[0]} a ${to.levels[1]}).`, "level");
+        saveGame("auto");
+        break;
+      }
       case "dungeonFloor":
         audio.play("bossPhase");
         floats.spawn(player.transform.position, `ANDAR ${ev.floor}`, "#c08aff", 1.4);
@@ -1000,17 +1064,31 @@ function frame(): void {
   cam.update(focus, frameDt);
   shake.intensity = menu.shakeIntensity;
   cam.applyShake(shake.update(frameDt));
-  // Na cripta: o vale some (economiza e não vaza luz), a câmera fica mais de cima e o céu escurece.
+  // Na cripta: as zonas somem (economiza e não vaza luz), a câmera fica mais de cima e o céu escurece.
+  // Fora dela, só a zona onde o herói está aparece (a floresta é montada na primeira visita).
   const indoor = inDungeonSpace(p.x);
-  terrainMesh.visible = environment.group.visible = foliage.group.visible = braziers.group.visible = entrancePortal.group.visible = !indoor;
+  const zoneId = zoneAt(p.x, p.z).id;
+  const current = indoor ? null : ensureZoneVisuals(zoneId);
+  for (const [id, zv] of zoneVisuals) zv.group.visible = !indoor && id === zoneId;
   cam.minPitch = indoor ? 0.8 : -0.15;
   cam.maxDistance = indoor ? 13 : 18;
   sky.update(world.time, cam.camera, focus, frameDt, indoor);
-  if (!indoor) {
-    environment.update(cam.camera);
-    foliage.update(world.time, p);
-    braziers.update(world.time, sky.night);
-    entrancePortal.update(world.time);
+  if (current) {
+    current.environment.update(cam.camera);
+    current.foliage.update(world.time, p);
+    for (const gate of current.gates) gate.update(world.time);
+    if (zoneId === "vale") {
+      braziers.update(world.time, sky.night);
+      entrancePortal.update(world.time);
+    } else {
+      // Floresta: neblina mais fechada e esverdeada, sob a copa.
+      const fog = scene.fog as THREE.Fog;
+      fog.color.lerp(FOREST_FOG, 0.55);
+      fog.near *= 0.45;
+      fog.far *= 0.62;
+      (scene.background as THREE.Color).lerp(FOREST_FOG, 0.35);
+      campfireLight.intensity = 6 + Math.sin(world.time * 11) * 0.8 + sky.night * 10;
+    }
   }
   dungeonView.update(world.dungeon, focus, world.time, cam.camera);
   views.prune(world);

@@ -1,5 +1,6 @@
 import { smoothstep } from "./math";
 import { biomeWeights, DESERT_BOSS_HOME, SWAMP_BOSS_HOME } from "./biomes";
+import { zoneAt } from "./zones";
 
 /** Metade do tamanho do mundo. O mundo vai de -WORLD_HALF a +WORLD_HALF em X e Z. */
 export const WORLD_HALF = 110;
@@ -22,6 +23,43 @@ export const STEP_HEIGHT = 0.5;
  * Altura contínua (suave) do relevo. Usada como base para a versão em blocos.
  */
 export function terrainHeightSmooth(x: number, z: number): number {
+  const zone = zoneAt(x, z);
+  if (zone.id === "floresta") return forestHeightSmooth(x - zone.center.x, z - zone.center.z);
+  return valeHeightSmooth(x, z);
+}
+
+/** Nível da água do rio da Floresta Ancestral. */
+export const FOREST_WATER = -2;
+/** Lugares planos da floresta, em coordenadas locais: acampamento, clareira do chefe e ruínas élficas. */
+export const FOREST_CAMP = { x: 0, z: 84 };
+export const FOREST_BOSS_HOME = { x: 0, z: -78 };
+export const FOREST_RUINS = { x: 70, z: 6 };
+
+/** Centro do rio (em z local) para cada x local: serpenteia de oeste a leste pelo meio da floresta. */
+export const forestRiverZ = (lx: number): number => 10 * Math.sin(lx * 0.032 + 1) - 4 + 4 * Math.sin(lx * 0.09);
+
+/**
+ * Relevo da Floresta Ancestral: colinas suaves cheias de raízes, um rio que corta a mata de lado a
+ * lado, o platô das ruínas élficas a leste, e duas clareiras planas (acampamento ao sul, perto do
+ * portão, e a clareira do Ente Ancião ao norte). Bordas sobem em penhascos, com uma passagem no portão.
+ */
+function forestHeightSmooth(lx: number, lz: number): number {
+  const hills =
+    Math.sin(lx * 0.05 + 0.7) * Math.cos(lz * 0.045) * 3 + Math.sin((lx - lz) * 0.03) * 2 + Math.cos(lx * 0.11) * Math.sin(lz * 0.13) * 0.9;
+  const dCamp = Math.hypot(lx - FOREST_CAMP.x, lz - FOREST_CAMP.z);
+  const dBoss = Math.hypot(lx - FOREST_BOSS_HOME.x, lz - FOREST_BOSS_HOME.z);
+  const dRuins = Math.hypot(lx - FOREST_RUINS.x, lz - FOREST_RUINS.z);
+  const flatten = Math.min(smoothstep(12, 26, dCamp), smoothstep(18, 30, dBoss), smoothstep(18, 28, dRuins));
+  const ruins = 2.5 * (1 - smoothstep(18, 28, dRuins));
+  const river = (1 - smoothstep(3.5, 8, Math.abs(lz - forestRiverZ(lx)))) * 6 * smoothstep(10, 22, dBoss) * smoothstep(10, 20, dCamp);
+  const edge = Math.max(Math.abs(lx), Math.abs(lz));
+  // Penhascos na borda, abertos no portão (sul, no meio).
+  const gate = lz > 0 ? smoothstep(5, 14, Math.abs(lx)) : 1;
+  const wall = smoothstep(WORLD_HALF - 18, WORLD_HALF, edge) * 16 * gate;
+  return hills * flatten + ruins - river + wall;
+}
+
+function valeHeightSmooth(x: number, z: number): number {
   const hills =
     Math.sin(x * 0.045) * Math.cos(z * 0.05) * 4.5 +
     Math.sin(x * 0.13 + 1.3) * Math.cos(z * 0.11 - 0.7) * 1.4 +
@@ -46,7 +84,9 @@ export function terrainHeightSmooth(x: number, z: number): number {
 
   // Bordas sobem para formar uma "muralha" natural, mantendo o jogador dentro.
   const edge = Math.max(Math.abs(x), Math.abs(z));
-  const wall = smoothstep(WORLD_HALF - 18, WORLD_HALF, edge) * 14;
+  // Passagem na muralha norte, onde fica o portão para a Floresta Ancestral.
+  const gateNotch = smoothstep(5, 13, Math.hypot(x - 22, z + 102));
+  const wall = smoothstep(WORLD_HALF - 18, WORLD_HALF, edge) * 14 * gateNotch;
 
   // Arenas dos chefes: platô de 6 m ao norte; clareira seca no nível do pântano a oeste;
   // tablado de areia batida, um degrau acima das dunas, a leste.
@@ -66,6 +106,8 @@ export function terrainHeight(x: number, z: number): number {
   const cx = Math.floor(x / CELL_SIZE) * CELL_SIZE + CELL_SIZE / 2;
   const cz = Math.floor(z / CELL_SIZE) * CELL_SIZE + CELL_SIZE / 2;
   const h = Math.round(terrainHeightSmooth(cx, cz) / STEP_HEIGHT) * STEP_HEIGHT;
+  // No rio da floresta, o fundo vira espelho d'água plano.
+  if (h < FOREST_WATER && zoneAt(cx, cz).id === "floresta") return FOREST_WATER;
   // No pântano, tudo abaixo do nível da água vira um espelho plano (o fundo não importa).
   if (h < WATER_LEVEL && biomeWeights(cx).swamp > 0.5) return WATER_LEVEL;
   return h;
@@ -74,5 +116,7 @@ export function terrainHeight(x: number, z: number): number {
 
 /** Água só existe no pântano; o herói anda mais devagar dentro dela. */
 export function isWater(x: number, z: number): boolean {
+  const zone = zoneAt(x, z);
+  if (zone.id === "floresta") return terrainHeight(x, z) <= FOREST_WATER && Math.abs(z - zone.center.z - forestRiverZ(x - zone.center.x)) < 9;
   return biomeWeights(x).swamp > 0.5 && terrainHeight(x, z) <= WATER_LEVEL;
 }

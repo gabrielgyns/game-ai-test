@@ -1,7 +1,8 @@
 import { createEnemy, createPlayer, type EnemyKind } from "./factories";
-import { terrainHeight, SPAWN_FLAT_RADIUS, WORLD_HALF } from "./terrain";
+import { FOREST_BOSS_HOME, FOREST_CAMP, isWater, terrainHeight, SPAWN_FLAT_RADIUS, WORLD_HALF } from "./terrain";
+import { ZONES } from "./zones";
 import { World } from "./world";
-import { createGoblinKing, createScorpionEmperor, createSpiderQueen } from "./boss";
+import { createAncientTreant, createGoblinKing, createScorpionEmperor, createSpiderQueen } from "./boss";
 import { biomeAt, DESERT_BOSS_HOME, SWAMP_BOSS_HOME } from "./biomes";
 import { createNpc, npcById } from "./npc";
 import type { ClassId } from "./classes";
@@ -99,5 +100,48 @@ export function generateWorld(options: WorldGenOptions = {}): World {
   world.spawn((id) => createGoblinKing(id, { x: BOSS_HOME.x, y: terrainHeight(BOSS_HOME.x, BOSS_HOME.z), z: BOSS_HOME.z }));
   world.spawn((id) => createSpiderQueen(id, { x: SWAMP_BOSS_HOME.x, y: terrainHeight(SWAMP_BOSS_HOME.x, SWAMP_BOSS_HOME.z), z: SWAMP_BOSS_HOME.z }));
   world.spawn((id) => createScorpionEmperor(id, { x: DESERT_BOSS_HOME.x, y: terrainHeight(DESERT_BOSS_HOME.x, DESERT_BOSS_HOME.z), z: DESERT_BOSS_HOME.z }));
+  populateForest(world, rand);
   return world;
+}
+
+/**
+ * Floresta Ancestral: lobos em matilhas pela mata, entes na mata funda (oeste e norte), espíritos
+ * élficos nas ruínas a leste, a Guardiã Lyra no acampamento e o Ente Ancião na clareira ao norte.
+ */
+function populateForest(world: World, rand: () => number): void {
+  const zone = ZONES.floresta;
+  const at = (lx: number, lz: number) => {
+    const x = zone.center.x + lx, z = zone.center.z + lz;
+    return { x, y: terrainHeight(x, z), z };
+  };
+  const free = (lx: number, lz: number) => {
+    const p = at(lx, lz);
+    return (
+      !isWater(p.x, p.z) &&
+      Math.hypot(lx - FOREST_CAMP.x, lz - FOREST_CAMP.z) > 24 &&
+      Math.hypot(lx - FOREST_BOSS_HOME.x, lz - FOREST_BOSS_HOME.z) > 22 &&
+      Math.max(Math.abs(lx), Math.abs(lz)) < zone.half - 20
+    );
+  };
+  const scatter = (kind: EnemyKind, count: number, area: (lx: number, lz: number) => boolean, pack = 1) => {
+    let placed = 0;
+    for (let tries = 0; placed < count && tries < count * 40; tries++) {
+      const lx = (rand() * 2 - 1) * (zone.half - 20), lz = (rand() * 2 - 1) * (zone.half - 20);
+      if (!free(lx, lz) || !area(lx, lz)) continue;
+      for (let k = 0; k < pack && placed < count; k++) {
+        const px = lx + (rand() - 0.5) * 5, pz = lz + (rand() - 0.5) * 5;
+        if (!free(px, pz)) continue;
+        world.spawn((id) => createEnemy(id, kind, at(px, pz)));
+        placed++;
+      }
+    }
+  };
+  scatter("wolf", 24, (lx) => lx < 45, 3);
+  scatter("ent", 10, (lx, lz) => lx < 30 && lz < 50);
+  scatter("elvenSpirit", 10, (lx) => lx > 45);
+  scatter("elvenSpirit", 3, (lx) => lx < 45);
+  const ranger = npcById("ranger")!;
+  const r = at(FOREST_CAMP.x + 4, FOREST_CAMP.z - 2);
+  world.spawn((id) => createNpc(id, ranger, r, Math.atan2(4, -2)));
+  world.spawn((id) => createAncientTreant(id, at(FOREST_BOSS_HOME.x, FOREST_BOSS_HOME.z)));
 }
