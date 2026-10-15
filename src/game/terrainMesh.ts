@@ -5,6 +5,8 @@ import { voxelMaterial } from "./voxel";
 import { biomeWeights } from "../domain/biomes";
 import { forestRiverZ, isIce, isLava, isWater, PEAKS_VILLAGE, VOLCANO_CALDERA, VOLCANO_FORT, WATER_LEVEL } from "../domain/terrain";
 import { ZONES, type ZoneDefinition } from "../domain/zones";
+import { HQ_STYLE } from "./style";
+import { paintedGroundMaterial } from "./cartoon/ground";
 
 const GRASS = new THREE.Color("#79b857");
 const GRASS_DRY = new THREE.Color("#a3b85a");
@@ -58,6 +60,10 @@ export function createTerrainMesh(zone: ZoneDefinition = ZONES.vale): THREE.Mesh
   const normals: number[] = [];
   const colors: number[] = [];
   const indices: number[] = [];
+  // Estilo HQ: guarda só a cor e o tipo de pintura de cada célula; a malha lisa vem depois.
+  const smooth = HQ_STYLE;
+  const cellColor = smooth ? new Float32Array(cells * cells * 3) : new Float32Array(0);
+  const cellPaint = smooth ? new Float32Array(cells * cells * 3) : new Float32Array(0);
   const c = new THREE.Color();
 
   const quad = (pts: [number, number, number][], n: [number, number, number], color: THREE.Color) => {
@@ -81,12 +87,15 @@ export function createTerrainMesh(zone: ZoneDefinition = ZONES.vale): THREE.Mesh
       const dist = Math.hypot(cx, cz);
       const w = biomeWeights(cx);
       const isWaterCell = forest ? isWater(cx, cz) : w.swamp > 0.5 && h <= WATER_LEVEL;
+      /** Praça calçada (só pesa no chão pintado do estilo HQ). */
+      let paved = false;
       if (volcano) {
         // Vulcão: basalto escuro, cinza nas partes planas, chão chamuscado perto da lava e terra no forte.
         const lx = cx - ox, lz = cz - oz;
         const nearLava = isLava(cx + 1.5, cz) || isLava(cx - 1.5, cz) || isLava(cx, cz + 1.5) || isLava(cx, cz - 1.5);
         const fort = Math.hypot(lx - VOLCANO_FORT.x, lz - VOLCANO_FORT.z) < 9 || (lz > VOLCANO_FORT.z && Math.abs(lx) < 1.6);
         const caldera = Math.hypot(lx - VOLCANO_CALDERA.x, lz - VOLCANO_CALDERA.z) < 17;
+        paved = fort;
         if (isLava(cx, cz)) c.copy(LAVA_CRUST);
         else if (nearLava) c.copy(SCORCH).lerp(BASALT_DARK, hash(i, j) * 0.5);
         else if (fort) c.copy(FORT_DIRT).lerp(ASH, hash(i * 3, j) * 0.4);
@@ -100,6 +109,7 @@ export function createTerrainMesh(zone: ZoneDefinition = ZONES.vale): THREE.Mesh
           Math.abs(h - heights[idx(i, j + 1)]!), Math.abs(h - heights[idx(i, j - 1)]!),
         );
         const plaza = Math.hypot(lx - PEAKS_VILLAGE.x, lz - PEAKS_VILLAGE.z) < 9 || (lz > PEAKS_VILLAGE.z && Math.abs(lx) < 1.6);
+        paved = plaza;
         if (isIce(cx, cz)) {
           const streak = Math.abs(Math.sin(lx * 0.35 + lz * 0.6) + Math.sin(lx * 0.13 - lz * 0.2)) < 0.12;
           c.copy(ICE).lerp(ICE_DEEP, clamp(hash(i, j * 3) * 0.35 + (streak ? 0.5 : 0), 0, 1));
@@ -112,12 +122,16 @@ export function createTerrainMesh(zone: ZoneDefinition = ZONES.vale): THREE.Mesh
         // Pátio de lajes no centro das ruínas (com juntas), o resto é mata com musgo.
         const ruins = Math.hypot(lx - 70, lz - 6) < 14 && (Math.floor(lx / 2) + Math.floor(lz / 2)) % 5 !== 0;
         const bank = Math.abs(lz - forestRiverZ(lx)) < 10;
+        paved = Math.hypot(lx - 70, lz - 6) < 14;
         if (isWaterCell) c.copy(FOREST_WATER_COLOR);
         else if (h > 7) c.copy(STONE);
         else if (ruins) c.copy(RUIN_STONE).lerp(MOSS, hash(i * 3, j) * 0.5);
         else if (bank) c.copy(FOREST_DIRT).lerp(MOSS, 0.35);
         else c.copy(MOSS).lerp(MOSS_DARK, clamp(hash(i, j * 7) * 0.6 + (2 - h) / 8, 0, 1));
-      } else if (dist < 9) c.copy(SAND);
+      } else if (dist < 9) {
+        c.copy(SAND);
+        paved = true;
+      }
       else if (h > 11) c.copy(SNOW);
       else if (h > 7) c.copy(STONE);
       else {
@@ -127,6 +141,15 @@ export function createTerrainMesh(zone: ZoneDefinition = ZONES.vale): THREE.Mesh
         c.copy(meadow).multiplyScalar(w.meadow).add(swamp.multiplyScalar(w.swamp)).add(desert.multiplyScalar(w.desert));
       }
       c.multiplyScalar(isWaterCell ? 0.98 + hash(i, j) * 0.04 : 0.94 + hash(i, j) * 0.12);
+      if (smooth) {
+        const k = i * cells + j;
+        cellColor[k * 3] = c.r; cellColor[k * 3 + 1] = c.g; cellColor[k * 3 + 2] = c.b;
+        const greenish = c.g > c.r * 1.08 && c.g > c.b * 1.1;
+        cellPaint[k * 3] = paved ? 0 : greenish ? 1 : 0;
+        cellPaint[k * 3 + 1] = paved ? 1 : 0;
+        cellPaint[k * 3 + 2] = paved || greenish ? 0 : 1;
+        continue;
+      }
       quad([[x0, h, z0], [x0, h, z1], [x1, h, z1], [x1, h, z0]], [0, 1, 0], c);
 
       // Laterais expostas: terra (ou pedra quando alto); areia no deserto, lama no pântano.
@@ -150,6 +173,8 @@ export function createTerrainMesh(zone: ZoneDefinition = ZONES.vale): THREE.Mesh
     }
   }
 
+  if (smooth) return smoothTerrainMesh(cells, ox + origin, oz + origin, heights, idx, cellColor, cellPaint);
+
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
   geometry.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
@@ -158,6 +183,76 @@ export function createTerrainMesh(zone: ZoneDefinition = ZONES.vale): THREE.Mesh
   geometry.computeBoundingSphere();
 
   const mesh = new THREE.Mesh(geometry, voxelMaterial());
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+/**
+ * Chão liso do estilo HQ: uma grade nos cantos das células, cada canto na média das 4 células em
+ * volta (mesma conta de `cornerHeight`), com cor e pintura também na média, o que funde as bordas
+ * entre grama, terra e calçada como tinta molhada. Encostas íngremes puxam para a terra.
+ */
+function smoothTerrainMesh(
+  cells: number, x0: number, z0: number,
+  heights: Float32Array, idx: (i: number, j: number) => number,
+  cellColor: Float32Array, cellPaint: Float32Array,
+): THREE.Mesh {
+  const n = cells + 1;
+  const positions = new Float32Array(n * n * 3);
+  const colors = new Float32Array(n * n * 3);
+  const paint = new Float32Array(n * n * 3);
+  const cornerH = new Float32Array(n * n);
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      cornerH[i * n + j] = (heights[idx(i - 1, j - 1)]! + heights[idx(i, j - 1)]! + heights[idx(i - 1, j)]! + heights[idx(i, j)]!) / 4;
+    }
+  }
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      const v = i * n + j;
+      positions[v * 3] = x0 + i;
+      positions[v * 3 + 1] = cornerH[v]!;
+      positions[v * 3 + 2] = z0 + j;
+      let count = 0;
+      for (const [a, b] of [[i - 1, j - 1], [i, j - 1], [i - 1, j], [i, j]] as const) {
+        if (a < 0 || b < 0 || a >= cells || b >= cells) continue;
+        const k = a * cells + b;
+        for (let q = 0; q < 3; q++) {
+          colors[v * 3 + q]! += cellColor[k * 3 + q]!;
+          paint[v * 3 + q]! += cellPaint[k * 3 + q]!;
+        }
+        count++;
+      }
+      for (let q = 0; q < 3; q++) {
+        colors[v * 3 + q]! /= Math.max(count, 1);
+        paint[v * 3 + q]! /= Math.max(count, 1);
+      }
+      // Encosta: quanto mais inclinado, mais vira "barranco" de terra escura.
+      const hx = cornerH[Math.min(i + 1, n - 1) * n + j]! - cornerH[Math.max(i - 1, 0) * n + j]!;
+      const hz = cornerH[i * n + Math.min(j + 1, n - 1)]! - cornerH[i * n + Math.max(j - 1, 0)]!;
+      const slope = clamp((Math.hypot(hx, hz) / 2 - 0.45) / 0.5, 0, 1);
+      if (slope > 0) {
+        for (let q = 0; q < 3; q++) colors[v * 3 + q] = colors[v * 3 + q]! * (1 - slope * 0.45);
+        paint[v * 3] = paint[v * 3]! * (1 - slope);
+        paint[v * 3 + 2] = paint[v * 3 + 2]! + slope;
+      }
+    }
+  }
+  const index: number[] = [];
+  for (let i = 0; i < cells; i++) {
+    for (let j = 0; j < cells; j++) {
+      const a = i * n + j, b = (i + 1) * n + j, c = i * n + j + 1, d = (i + 1) * n + j + 1;
+      index.push(a, c, b, b, c, d);
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  geometry.setAttribute("paint", new THREE.BufferAttribute(paint, 3));
+  geometry.setIndex(index);
+  geometry.computeVertexNormals();
+  geometry.computeBoundingSphere();
+  const mesh = new THREE.Mesh(geometry, paintedGroundMaterial());
   mesh.receiveShadow = true;
   return mesh;
 }

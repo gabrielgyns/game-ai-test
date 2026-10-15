@@ -2,6 +2,8 @@ import type { Equipment } from "../domain/inventory";
 import type { ClassId } from "../domain/classes";
 import type { CharacterModel } from "./characters/common";
 import { createHero } from "./characters/hero";
+import { createCartoonHero } from "./cartoon/hero";
+import { HQ_STYLE } from "./style";
 import { createBandit, createBogZombie, createGoblin, createOrc, createScorpion, createSkeleton, createSlime, createSpider } from "./characters/mobs";
 import { createGoblinKing, createScorpionEmperor, createSkeletonLord, createSpiderQueen } from "./characters/bosses";
 import { createVillager } from "./characters/npcs";
@@ -24,7 +26,7 @@ export const ARCHETYPES = [
 
 export function createModel(archetype: string, equipment?: Equipment, classId?: ClassId): CharacterModel {
   switch (archetype) {
-    case "hero": return createHero(equipment, classId);
+    case "hero": return HQ_STYLE ? createCartoonHero(equipment, classId) : createHero(equipment, classId);
     case "slime": return createSlime();
     case "goblin": return createGoblin();
     case "goblinArcher": return createGoblin(true);

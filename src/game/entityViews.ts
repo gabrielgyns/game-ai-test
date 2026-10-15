@@ -3,6 +3,7 @@ import { isAlive, type Entity, type EntityId } from "../domain/components";
 import type { World } from "../domain/world";
 import { createModel, equipmentSignature, type CharacterModel } from "./models";
 import { addHeroRim, HQ_STYLE } from "./style";
+import { groundOffset } from "./cartoon/ground";
 import { VoxelBuilder } from "./voxel";
 import type { TelegraphShape } from "../domain/boss";
 import { questsForNpc } from "../domain/quests";
@@ -301,7 +302,9 @@ class EntityView {
     const alive = isAlive(e);
     const p = e.transform.position;
     // O terreno é em degraus: a altura visual persegue a real para a subida parecer um passo, não um salto.
-    this.visualY = this.visualY === null ? p.y : this.visualY + (p.y - this.visualY) * clamp(dt * 14, 0, 1);
+    // No estilo HQ o chão é desenhado liso: os pés acompanham a rampa em vez do degrau.
+    const groundY = HQ_STYLE ? p.y + groundOffset(p.x, p.y, p.z) : p.y;
+    this.visualY = this.visualY === null ? groundY : this.visualY + (groundY - this.visualY) * clamp(dt * 14, 0, 1);
     root.position.set(p.x, this.visualY, p.z);
     root.rotation.y = e.transform.yaw;
 
@@ -388,6 +391,7 @@ class EntityView {
     if (offArm) offArm.rotation.x = -stride * 0.55;
     const rest = this.model.weaponArmRest ?? 0;
     if (weaponArm) weaponArm.rotation.x = rest + stride * 0.45;
+    this.model.update?.(dt, moving, time);
     if (head) {
       head.rotation.x = Math.abs(stride) * 0.04;
       head.rotation.y = Math.sin(time * 0.7 + e.id) * 0.06; // olha em volta de leve

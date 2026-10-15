@@ -171,6 +171,21 @@ export function inkRenderTarget(renderer: THREE.WebGLRenderer): THREE.WebGLRende
 const RIM_COLOR = new THREE.Color("#ff2a2a").multiplyScalar(1.25);
 const RIM_STENCIL = 1;
 
+/** Casca do contorno do herói para peças lisas: inflada ~4 cm pelas normais, só fora da silhueta. */
+const smoothRim = new THREE.MeshBasicMaterial({
+  color: RIM_COLOR,
+  side: THREE.BackSide,
+  fog: false,
+  stencilWrite: true,
+  stencilRef: RIM_STENCIL,
+  stencilFunc: THREE.NotEqualStencilFunc,
+  stencilZPass: THREE.KeepStencilOp,
+});
+smoothRim.onBeforeCompile = (shader) => {
+  shader.vertexShader = shader.vertexShader.replace("#include <begin_vertex>", "vec3 transformed = vec3( position ) + normalize( normal ) * 0.03;");
+};
+smoothRim.customProgramCacheKey = () => "hero-rim-smooth";
+
 /**
  * Contorno vermelho do herói: cada peça ganha uma casca um pouco maior, só com as faces de trás
  * (o truque do "casco invertido"). As peças marcam o estêncil e a casca só pinta fora dessa marca,
@@ -195,6 +210,20 @@ export function addHeroRim(root: THREE.Object3D): void {
   });
   for (const part of parts) {
     const body = part.material as THREE.MeshStandardMaterial;
+    body.stencilWrite = true;
+    body.stencilRef = RIM_STENCIL;
+    body.stencilFunc = THREE.AlwaysStencilFunc;
+    body.stencilZPass = THREE.ReplaceStencilOp;
+    part.renderOrder = 1;
+    // Formas lisas (cartoon): a casca infla pelas normais, espessura igual em toda a volta.
+    if (part.userData.smooth) {
+      const hull = new THREE.Mesh(part.geometry, smoothRim);
+      hull.userData.rim = true;
+      hull.renderOrder = 2;
+      hull.castShadow = false;
+      part.add(hull);
+      continue;
+    }
     body.stencilWrite = true;
     body.stencilRef = RIM_STENCIL;
     body.stencilFunc = THREE.AlwaysStencilFunc;

@@ -22,6 +22,8 @@ export interface CharacterModel {
   weaponArmRest?: number;
   /** Materiais com glow de raridade (arma, armadura), para pulsar a intensidade. */
   glowMaterials?: { material: THREE.MeshStandardMaterial; baseIntensity: number }[];
+  /** Movimento secundário (molas de capa e cabelo), chamado a cada quadro depois da caminhada. */
+  update?: (dt: number, moving: boolean, time: number) => void;
 }
 
 /** Tamanho de um voxel de personagem, em metros (16 voxels = 1 m). */

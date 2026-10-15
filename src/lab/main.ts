@@ -13,8 +13,12 @@ import { createModel as createLegacyModel } from "./legacyModels";
 import { buildCatalog, type Exhibit, type LodLevel } from "./catalog";
 import { builderToVox, parseVox, voxToBuilder } from "../game/vox";
 import { loadVoxOverrides, SCENERY_VOXEL } from "../game/props/catalog";
+import { applyToonLighting, HQ_STYLE } from "../game/style";
 
 /* ---------- Renderer e cena ---------- */
+
+// Mesma luz em degraus do jogo quando o estilo HQ está ligado.
+if (HQ_STYLE) applyToonLighting();
 
 const canvas = document.getElementById("lab") as HTMLCanvasElement;
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });

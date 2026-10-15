@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import { HQ_STYLE } from "./style";
+import { groundOffset } from "./cartoon/ground";
 import { biomeWeights, DESERT_BOSS_HOME, SWAMP_BOSS_HOME } from "../domain/biomes";
 import { FOREST_BOSS_HOME, FOREST_CAMP, FOREST_RUINS, isIce, isWater, PEAKS_BOSS_HOME, PEAKS_VILLAGE, terrainHeight, WATER_LEVEL, WORLD_HALF } from "../domain/terrain";
 import { ZONES, type ZoneDefinition } from "../domain/zones";
@@ -278,6 +280,11 @@ export class Foliage {
     // Nas Terras Vulcânicas não cresce nada.
     const placements = zone.id === "floresta" ? placeForestFoliage(seed, zone) : zone.id === "picos" ? placePeaksFoliage(seed, zone) : zone.id === "vulcao" ? [] : placeFoliage(seed);
     for (const p of placements) {
+      // Estilo HQ: o chão pintado já tem pinceladas de grama; ficam só ~35% dos tufos, colados no chão liso.
+      if (HQ_STYLE) {
+        if (p.kind === "grass" && Math.abs(Math.sin(p.x * 12.9898 + p.z * 78.233) * 43758.5453) % 1 > 0.35) continue;
+        p.y += groundOffset(p.x, p.y, p.z);
+      }
       const key = `${p.kind}|${Math.floor(p.x / CHUNK)}|${Math.floor(p.z / CHUNK)}`;
       let list = buckets.get(key);
       if (!list) buckets.set(key, (list = []));
