@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { isAlive, type Entity, type EntityId } from "../domain/components";
 import type { World } from "../domain/world";
 import { createModel, equipmentSignature, type CharacterModel } from "./models";
+import { addHeroRim, HQ_STYLE } from "./style";
 import { VoxelBuilder } from "./voxel";
 import type { TelegraphShape } from "../domain/boss";
 import { questsForNpc } from "../domain/quests";
@@ -61,6 +62,7 @@ class EntityView {
     this.modelSignature = equipmentSignature(entity.equipment);
     this.model = createModel(entity.archetype, entity.equipment, entity.classId);
     this.model.root.rotation.order = "YXZ"; // yaw primeiro, depois a cambalhota em torno do próprio eixo
+    if (HQ_STYLE && entity.kind === "player") addHeroRim(this.model.root);
     scene.add(this.model.root);
     this.collectMaterials();
     this.shieldMesh = new THREE.Mesh(
@@ -158,6 +160,7 @@ class EntityView {
     this.scene.remove(this.model.root);
     this.model = createModel(this.entity.archetype, this.entity.equipment, this.entity.classId);
     this.model.root.rotation.order = "YXZ";
+    if (HQ_STYLE && this.entity.kind === "player") addHeroRim(this.model.root);
     this.scene.add(this.model.root);
     this.collectMaterials();
   }

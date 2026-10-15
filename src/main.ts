@@ -67,7 +67,11 @@ import { Foliage } from "./game/foliage";
 import { HIT_COLORS, Particles } from "./game/particles";
 import { attenuate, CameraShake, traumaFromDamage } from "./game/shake";
 import { createBraziers } from "./game/environment";
+import { applyToonLighting, ComicBursts, HQ_STYLE, InkPass, inkRenderTarget } from "./game/style";
 import { clockAt, DAY_LENGTH, formatClock, START_HOUR } from "./domain/dayCycle";
+
+// Estilo HQ (nanquim + luz em degraus): a troca no shader precisa vir antes de qualquer material compilar.
+if (HQ_STYLE) applyToonLighting();
 
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -216,6 +220,7 @@ const input = new Input(canvas);
 const cam = new ThirdPersonCamera(window.innerWidth / window.innerHeight);
 const hud = new Hud();
 const floats = new FloatingTexts(scene);
+const bursts = new ComicBursts(scene);
 const menu = new PauseMenu();
 const audio = new GameAudio();
 menu.setVolumes(audio.volumes.music, audio.volumes.sfx);
@@ -630,8 +635,11 @@ input.onEscape = () => {
 
 // Pós-processamento: bloom só no que passa de 1.0 de brilho (os itens de raridade têm emissivo
 // acima disso); o resto da cena fica intocado. Força baixa para um neon leve.
-const composer = new EffectComposer(renderer);
+// No estilo HQ a cena vai para um alvo com profundidade, que o passe de nanquim lê para riscar as linhas.
+const composer = HQ_STYLE ? new EffectComposer(renderer, inkRenderTarget(renderer)) : new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, cam.camera));
+const inkPass = HQ_STYLE ? new InkPass(cam.camera) : null;
+if (inkPass) composer.addPass(inkPass);
 const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.45, 0.35, 1.0);
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
@@ -739,6 +747,7 @@ function handleEvents(events: ReturnType<typeof stepWorld>): void {
         const tp = target.transform.position;
         const heavy = ev.amount >= target.health.max * 0.2 || !!ev.crit;
         particles.hit({ x: tp.x, y: tp.y + (tview?.model.height ?? 1.6) * 0.55, z: tp.z }, HIT_COLORS[target.archetype] ?? ["#cccccc"], heavy);
+        if (HQ_STYLE) bursts.spawn({ x: tp.x, y: tp.y + (tview?.model.height ?? 1.6) * 0.6, z: tp.z }, heavy, toPlayer ? "#ff4a3a" : ev.crit ? "#ffb02e" : "#e8358a");
         if (toPlayer) shake.add(traumaFromDamage(ev.amount, player.health.max));
         else if (ev.source === player.id) {
           const melee = !player.classId || CLASSES[player.classId].attackStyle === "melee";
@@ -1217,6 +1226,7 @@ function frame(): void {
   projectileViews.update(world, frameDt, world.time);
   hazardViews.update(world, frameDt, world.time);
   floats.update(frameDt);
+  bursts.update(frameDt);
   hud.update(player, target);
   hud.updateBoss(world);
   minimap.update(world, player, cam.yaw);
@@ -1231,6 +1241,9 @@ if (import.meta.env.DEV) {
     player,
     cam,
     renderer,
+    inkPass,
+    bursts,
+    floats,
     openMenu: () => {
       started = true;
       paused = true;

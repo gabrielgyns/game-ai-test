@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { HQ_STYLE } from "./style";
 
 interface FloatingText {
   sprite: THREE.Sprite;
@@ -14,7 +15,8 @@ export class FloatingTexts {
 
   spawn(position: { x: number; y: number; z: number }, text: string, color: string, scale = 1): void {
     const canvas = document.createElement("canvas");
-    const font = "bold 56px system-ui, sans-serif";
+    // No estilo HQ: letra pesada, contorno grosso de tinta e uma leve inclinação, como onomatopeia.
+    const font = HQ_STYLE ? "900 60px 'Arial Black', Impact, system-ui, sans-serif" : "bold 56px system-ui, sans-serif";
     const measure = canvas.getContext("2d")!;
     measure.font = font;
     const width = Math.max(96, Math.ceil(measure.measureText(text).width) + 24);
@@ -24,15 +26,16 @@ export class FloatingTexts {
     ctx.font = font;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.lineWidth = 8;
-    ctx.strokeStyle = "rgba(0,0,0,0.8)";
+    ctx.lineWidth = HQ_STYLE ? 13 : 8;
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = HQ_STYLE ? "#1c1410" : "rgba(0,0,0,0.8)";
     ctx.strokeText(text, width / 2, 48);
     ctx.fillStyle = color;
     ctx.fillText(text, width / 2, 48);
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
-    const material = new THREE.SpriteMaterial({ map: texture, depthTest: false, transparent: true });
+    const material = new THREE.SpriteMaterial({ map: texture, depthTest: false, transparent: true, rotation: HQ_STYLE ? (Math.random() - 0.5) * 0.35 : 0 });
     const sprite = new THREE.Sprite(material);
     sprite.scale.set((width / 96) * 0.82 * scale, 0.82 * scale, 1);
     sprite.position.set(position.x + (Math.random() - 0.5) * 0.6, position.y + 1.8, position.z);
